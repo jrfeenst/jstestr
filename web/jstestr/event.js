@@ -36,4 +36,4 @@ define([
     };
 
     return queue;
-}());
+});

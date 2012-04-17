@@ -194,13 +194,13 @@ define([
     
     
 
-    Testr.MOUSE_BUTTON = {
+    queue.MOUSE_BUTTON = {
         LEFT: 0,
         MIDDLE: 1,
         RIGHT: 2
     };
 
-    Testr.prototype._mouseDefaults = {
+    queue.prototype._mouseDefaults = {
         canBubble: true,
         cancelable: true,
         view: global,

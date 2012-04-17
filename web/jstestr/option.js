@@ -16,8 +16,8 @@ define([
     };
     
     
-    var previousKeyDownDefaultAction = event.prototype._keyDownDefaultAction;
-    event.prototype._keyDownDefaultAction = function _keyDownDefaultAction (event) {
+    var previousKeyDownDefaultAction = queue.prototype._keyDownDefaultAction;
+    queue.prototype._keyDownDefaultAction = function _keyDownDefaultAction (event) {
         if (event.charCode === this._lookupCharCode("[tab]")) {
             this._focus(event.target);
         }
@@ -78,5 +78,6 @@ define([
     queue.prototype._isOptionElement = function _isOptionElement(element) {
         return "option" === element.tagName.toLowerCase();
     };
-        
-}());
+    
+    return queue;
+});
