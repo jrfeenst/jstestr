@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+
+        <title>jstestr demo</title>
+
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <style type="text/css">
+            html, body {
+                margin: 0;
+                padding: 0;
+                width: 100%;
+            }
+            
+            .border {
+                border: 1px black solid;
+                margin: 2px;
+                padding: 2px;
+            }
+            
+            #movable {
+                background-color: lightcyan;
+                border: 2px red solid;
+                width: 10px;
+                height: 10px;
+                position: absolute;
+                left: 200px;
+                top: 200px;
+            }
+            
+            #eventLog {
+                position: absolute;
+                bottom: 0;
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                height: 300px;
+                overflow: auto;
+            }
+            
+            #paint {
+                position: absolute;
+                left: 250px;
+                top: 200px;
+                border: 1px solid black;
+                background-color: lightgray;
+            }
+        </style>
+    </head>
+    <body>
+
+        <div class="border">
+            
+            <div id="movable"></div>
+            <canvas id="paint" width="200" height="200"></canvas>
+                    
+            <a href="#">Link</a>
+
+            <br>
+            
+            <div class="border">
+                DIV <span class="border"> SPAN </span>
+                <div id="div1" class="border">
+                    Nested DIV 1
+                </div>
+                <div id="div2" class="border">
+                    Nested DIV 2
+                </div>
+            </div>
+
+            <form>
+                <label for="input1">Text: 
+                    <input id="input1" type="text">
+                </label>
+
+                <br>
+                <label for="input2">Check box: 
+                    <input id="input2" type="checkbox">
+                </label>
+
+                <br>
+                Radio: 
+                <input id="input3a" name="radio" type="radio">
+                <input id="input3b" name="radio" type="radio">
+
+                <br>
+                <label for="input4">Password: 
+                    <input id="input4" type="password">
+                </label>
+
+                <br>
+                <label for="input5">Button: 
+                    <input id="input5" type="button" value="Click">
+                </label>
+
+                <br>
+                <label for="input6">Submit: 
+                    <input id="input6" type="submit">
+                </label>
+
+                <br>
+                <textarea id="input7" rows="5" cols="20"></textarea>
+
+                <br>
+                <label for="input8">Select:
+                    <select id="input8">
+                        <option id="input8a" label="option1" value="option1">option1</option>
+                        <option id="input8b" label="option2" value="option2">option2</option>
+                        <option id="input8c" label="option3" value="option3">option3</option>
+                    </select>
+                </label>
+
+                <br>
+                <label for="input9">Select 2:
+                    <select id="input9" multiple="multiple" size="4">
+                        <option id="input9a" label="option1" value="option1">option1</option>
+                        <option id="input9b" label="option2" value="option2">option2</option>
+                        <option id="input9c" label="option3" value="option3">option3</option>
+                    </select>
+                </label>
+
+                <br>
+                <a id="input10" href="javascript:void(0)">Link</a>
+            </form>
+        </div>
+        
+        <pre id="eventLog"></pre>
+
+
+        <script type="text/javascript">
+            (function () {
+                var eventLog = document.getElementById("eventLog");
+        
+                var lastEventType = "";
+                
+                var props = ["type", "bubbles", "cancelable", "synthetic", "shiftKey", "ctrlKey",
+                    "altKey", "metaKey", "x", "y", "layerX", "layerY", "clientX", "clientY",
+                    "screenX", "screenY", "keyIdentifier", "keyLocation", "keyCode", "charCode"];
+                var eventListener = function (e) {
+                    var log = [];
+                    
+                    if (lastEventType === "mousemove" && lastEventType === e.type) {
+                        return;
+                    }
+                    
+                    lastEventType = e.type;
+
+                    for (var i = 0; i < props.length; i++) {
+                        props[i] in e && log.push(props[i] + ":" + e[props[i]]);
+                    }
+                    
+                    e.target.id && log.push("target:" + e.target.id);
+                    
+                    eventLog.innerHTML += (new Date()).getTime() + ": " + log.join(", ") + "\n";
+                    eventLog.scrollTop = eventLog.scrollHeight;
+                };
+                
+                document.body.addEventListener("click", eventListener, true);
+                document.body.addEventListener("dblclick", eventListener, true);
+                document.body.addEventListener("keydown", eventListener, true);
+                document.body.addEventListener("keypress", eventListener, true);
+                document.body.addEventListener("keyup", eventListener, true);
+                document.body.addEventListener("textInput", eventListener, true);
+                document.body.addEventListener("mousedown", eventListener, true);
+                document.body.addEventListener("mouseup", eventListener, true);
+                document.body.addEventListener("mousemove", eventListener, true);
+                document.body.addEventListener("mouseout", eventListener, true);
+                document.body.addEventListener("mouseover", eventListener, true);
+                
+                //document.body.addEventListener("mousewheel", eventListener, true);
+                //document.body.addEventListener("DOMMouseScroll", eventListener, true);
+                //document.body.addEventListener("scroll", eventListener, true);
+        
+                document.body.addEventListener("blur", eventListener, true);
+                document.body.addEventListener("focus", eventListener, true);
+                document.body.addEventListener("change", eventListener, true);
+                document.body.addEventListener("contextmenu", eventListener, true);
+                document.body.addEventListener("copy", eventListener, true);
+                document.body.addEventListener("cut", eventListener, true);
+                document.body.addEventListener("paste", eventListener, true);
+                document.body.addEventListener("error", eventListener, true);
+                document.body.addEventListener("reset", eventListener, true);
+                document.body.addEventListener("select", eventListener, true);
+                document.body.addEventListener("submit", eventListener, true);
+                document.body.addEventListener("activate", eventListener, true);
+                document.body.addEventListener("deactivate", eventListener, true);
+                document.body.addEventListener("focusin", eventListener, true);
+                document.body.addEventListener("focusout", eventListener, true);
+                document.body.addEventListener("beforecopy", eventListener, true);
+                document.body.addEventListener("beforecut", eventListener, true);
+                document.body.addEventListener("beforepaste", eventListener, true);
+                
+                function addNodeEventListeners(node) {
+                    node.addEventListener("mouseenter", eventListener, true);
+                    node.addEventListener("mouseleave", eventListener, true);
+                    
+                    var child = node.firstElementChild;
+                    while (child) {
+                        addNodeEventListeners(child);
+                        child = child.nextElementSibling;
+                    }
+                }
+                addNodeEventListeners(document.body);
+                
+                
+                var movable = document.getElementById("movable");
+                movable.addEventListener("mousedown", function () {
+                    var moveHandler = function (event) {
+                        movable.style.left = event.clientX - 5 + "px";
+                        movable.style.top = event.clientY - 5 + "px";
+                    }
+                    var upHandler = function () {
+                        document.body.removeEventListener("mousemove", moveHandler, false);
+                        document.body.removeEventListener("mouseup", upHandler, false);
+                    }
+                    document.body.addEventListener("mouseup", upHandler, false);
+                    document.body.addEventListener("mousemove", moveHandler, false);
+                }, false);
+                
+                var paint = document.getElementById("paint");
+                var context = paint.getContext("2d");
+                var lastX = -1;
+                var lastY = -1;
+                paint.addEventListener("mousemove", function (event) {
+                    var x = event.clientX - paint.getBoundingClientRect().left;
+                    var y = event.clientY- paint.getBoundingClientRect().top;
+                    
+                    if (lastX >= 0 && lastY >= 0) {
+                        context.fillStyle = "black";
+                        context.beginPath();
+                        context.moveTo(lastX, lastY);
+                        context.lineTo(x, y);
+                        context.stroke();
+                    }
+                    
+                    lastX = x;
+                    lastY = y;
+                }, false);
+            })();
+        </script>
+
+    </body>
+</html>

@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+
+        <title>jstestr tests</title>
+
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        <style>
+            html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+                outline: 0;
+                border: 0;
+                overflow: hidden;
+            }
+            
+            #pageUnderTest {
+                display: inline-block;
+                width: 50%;
+                height: 100%;
+                border: 0;
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+            
+            #eventLog {
+                vertical-align: top;
+                display: inline-block;
+                width: 49%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+                outline: 0;
+                overflow: auto;
+                box-sizing: border-box;
+            }
+        </style>
+
+    </head>
+    <body>
+
+        <iframe id="pageUnderTest" src="jstestr_demo.html"></iframe>
+
+        <pre id="eventLog"></pre>
+
+
+        <script src="require.js"></script>
+        <script type="text/javascript">
+            require(["jstestr/main"], function (jstestr) {
+                var eventLog = document.getElementById("eventLog");
+                var appendToLog = function appendToLog(message) {
+                    eventLog.innerHTML += (new Date()).getTime() + ": " + message + "\n";
+                };
+
+                var testr = new jstestr({document: document.getElementById("pageUnderTest").contentDocument});
+                
+                testr.delay(200, function delay1() {
+                    appendToLog("First delay done");
+                });
+                testr.delay(200, function delay2() {
+                    appendToLog("Second delay done");
+                });
+        
+                var counter = 0;
+                testr.waitFor(function wait1(done) {
+                    appendToLog("Checking condition: " + counter);
+                    if (counter++ > 3) {
+                        done();
+                    }
+                });
+
+                testr.query("#input1", function () {
+                    appendToLog("#input1 found");
+                });
+
+                testr.click("#input1", function () {
+                    appendToLog("input1 click done");
+                });
+        
+                testr.click("#input2", function () {
+                    appendToLog("input2 click done");
+                });
+        
+                testr.click("#input3a", function () {
+                    appendToLog("input3a click done");
+                });
+        
+                testr.click("#input3b", function () {
+                    appendToLog("input3b click done");
+                });
+        
+                testr.click("#input4", function () {
+                    appendToLog("input4 click done");
+                });
+        
+                testr.click("#input5", function () {
+                    appendToLog("input5 click done");
+                });
+        
+                //testr.click("#input6", function () {
+                //    appendToLog("input7 click done");
+                //});
+
+                testr.type("abc123", "#input1", function () {
+                    appendToLog("input1 typing done");
+                }, {keyDelay: 10});
+
+                testr.type("password", "#input4", function () {
+                    appendToLog("input4 typing done");
+                }, {keyDelay: 10});
+        
+                testr.type("this\nis a\nmultiline input", "#input7", function () {
+                    appendToLog("input7 typing done");
+                }, {keyDelay: 10});
+        
+                testr.delay(500, function delay3() {
+                    appendToLog("Third delay done");
+                });
+                
+                testr.click("#input5", function () {
+                    appendToLog("input 5 second click done");
+                });
+                
+                testr.click("#input8b", function () {
+                    appendToLog("input 8b click done");
+                });
+                
+                testr.click("#input9c", function () {
+                    appendToLog("input 9c click done");
+                });
+                testr.click("#input9b", function () {
+                    appendToLog("input 9b click done");
+                }, {ctrlKey: true});
+                
+                
+                testr.click("#input10", function () {
+                    appendToLog("input 10 click done")
+                });
+                
+                testr.drag("#movable", "#div1", function () {
+                    appendToLog("movable drag done");
+                });
+                
+                testr.move({element: "#paint", x: 10, y: 10}, {x: 150, y: 150}, function () {
+                    appendToLog("paint move done");
+                });
+        
+                appendToLog("Starting testr");
+        
+                testr.start(10000,
+                    function () {
+                        appendToLog("Successful completion");
+                    },
+                    function (message) {
+                      appendToLog("Failed: " + message);
+                    }
+                );
+            })();
+        </script>
+
+    </body>
+</html>
