@@ -18,12 +18,12 @@ define([
     event.prototype._beforeType = function _beforeType(string, element, options) {
         this._focus(element, options);
         previousBeforeType.apply(this, arguments);
-    }
+    };
     
     var previousKeyDownDefaultAction = event.prototype._keyDownDefaultAction;
     event.prototype._keyDownDefaultAction = function _keyDownDefaultAction (event) {
         if (event.charCode === this._lookupCharCode("[tab]")) {
-            this._focus(event.target);
+            // todo: focus on the next element in the tab order
         }
         previousKeyDownDefaultAction.apply(this, arguments);
     };
@@ -54,16 +54,20 @@ define([
             var event = this._createEvent("blur", currentlyFocused, options, this._blurDefaults);
             this._dispatchEvent(event, currentlyFocused, null, options);
             
-            event = this._createEvent("focusout", element, options, this._focusoutDefaults);
-            this._dispatchEvent(event, currentlyFocused, null, options);
+            if (this._supportsFocusout) {
+                event = this._createEvent("focusout", element, options, this._focusoutDefaults);
+                this._dispatchEvent(event, currentlyFocused, null, options);
+            }
             
             event = this._createEvent("focus", element, options, this._focusDefaults);
             this._dispatchEvent(event, element, function _focusDefaultAction() {
                 element.focus();
             }, options);
 
-            event = this._createEvent("focusin", element, options, this._focusinDefaults);
-            this._dispatchEvent(event, element, null, options);    
+            if (this._supportsFocusin) {
+                event = this._createEvent("focusin", element, options, this._focusinDefaults);
+                this._dispatchEvent(event, element, null, options);
+            }
         } else {
             element.focus();
         }
@@ -74,7 +78,7 @@ define([
         if (type && type.toLowerCase) {
             type = type.toLowerCase();
         }
-        return this._isTextInputElement(element) || type === "a";
+        return this._isTextInputElement(element) || type === "a" || element.tabIndex >= 0;
     };
 
     return event;

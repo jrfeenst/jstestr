@@ -6,35 +6,29 @@ define([
     "./focus"
 ], function (queue) {
     
-    var previousMouseClick = queue.prototype._click;
-    queue.prototype._click = function _click(element, options) {
+    var previousMouseClickDefaultAction = queue.prototype._mouseClickDefaultAction;
+    queue.prototype._mouseClickDefaultAction = function _mouseClickDefaultAction(event) {
+        if (this._needsChangeEvent) {
+            var select = this._findParentByType(event.target, "select");
+            var change = this._createEvent("change", select, {}, this._changeDefaults);
+            this._dispatchEvent(change, select, null, {});
+            this._needsChangeEvent = false;
+        }
+        previousMouseClickDefaultAction.apply(this, arguments);
+    };
+    
+    
+    var previousMouseDownDefaultAction = queue.prototype._mouseDownDefaultAction;
+    queue.prototype._mouseDownDefaultAction = function _mouseDownDefaultAction(event) {
+        var element = event.target;
         if (this._isOptionElement(element)) {
-            this._changeOption(element, options);
-        } else {
-            previousMouseClick.apply(this, arguments);
-        }
-    };
-    
-    
-    var previousKeyDownDefaultAction = queue.prototype._keyDownDefaultAction;
-    queue.prototype._keyDownDefaultAction = function _keyDownDefaultAction (event) {
-        if (event.charCode === this._lookupCharCode("[tab]")) {
-            this._focus(event.target);
-        }
-        previousKeyDownDefaultAction.apply(this, arguments);
-    };
-    
-    
-    queue.prototype._changeOption = function _changeOption(element, options) {
-        var select = this._findParentByType(element, "select");
-        
-        var defaultAction = function (event) {
+            var select = this._findParentByType(element, "select");
             var optionElements = select.querySelectorAll("option");
             var i, opt;
 
-            if (options.ctrlKey) {
+            if (event.ctrlKey) {
                 element.selected = true;
-            } else if (options.shiftKey) {
+            } else if (event.shiftKey) {
                 var started = false;
                 for (i = 0; i < optionElements.length; i++) {
                     opt = optionElements[i];
@@ -55,24 +49,51 @@ define([
                     optionElements[i].selected = optionElements[i] === element;
                 }
             }
+            this._needsChangeEvent = true;
         }
-        
-        var change = this._createEvent("change", element, options, this._changeDefaults);
-        if (!select.multiline) {
-            this._click(select, options);
-            this._dispatchEvent(change, select, defaultAction, options);
-        } else {
-            this._mouseDown(element, options);
-            this._focus(element, options);
-            this._mouseUp(element, options);
-            this._dispatchEvent(change, select, defaultAction, options);
-            this._mouseClick(element, options);
-        }
+        previousMouseDownDefaultAction.apply(this, arguments);
     };
+    
+    
+    var previousKeyDownDefaultAction = queue.prototype._keyDownDefaultAction;
+    queue.prototype._keyDownDefaultAction = function _keyDownDefaultAction (event) {
+        var select = event.target;
+        
+        if (select && (event.charCode === this._lookupCharCode("[up]") ||
+                event.charCode === this._lookupCharCode("[down]"))) {
+            
+            var optionElements = select.querySelectorAll("option");
+            
+            var element;
+            if (event.charCode === this._lookupCharCode("[up]")) {
+                element = optionElements[element.selectedIndex - 1];
+            } else {
+                element = optionElements[element.selectedIndex + 1];
+            }
+            
+            if (element) {
+                if (event.shiftKey) {
+                    element.selected = element.selected ? false : true;
+                } else {
+                    for (var i = 0; i < optionElements.length; i++) {
+                        optionElements[i].selected = optionElements[i] === element;
+                    }
+                }
+                var change = this._createEvent("change", select, {}, this._changeDefaults);
+                this._dispatchEvent(change, select, null, {});
+            }
+        }
+        previousKeyDownDefaultAction.apply(this, arguments);
+    };
+    
     
     queue.prototype._changeDefaults = {
         canBubble: true,
         cancelable: true
+    };
+    
+    queue.prototype._isSelectElement = function _isSelectElement(element) {
+        return "select" === element.tagName.toLowerCase();
     };
     
     queue.prototype._isOptionElement = function _isOptionElement(element) {

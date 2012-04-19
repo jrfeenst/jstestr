@@ -18,8 +18,8 @@ define([
             );
         return event;
     };
-
-
+    
+    
     queue.prototype._dispatchEvent = function _dispatchEvent(event, element, defaultAction, options) {
         var el = element || this.element;
         if (!el) {
@@ -34,6 +34,6 @@ define([
             }
         }
     };
-
+    
     return queue;
 });

@@ -4,7 +4,7 @@ define([
 ], function (queue) {
 
     var global = window;
-        
+    
     queue.prototype._controlRegExp = /\[[a-zA-Z]+\]/g;
     queue.prototype._beforeType = function _beforeType() {};
     
@@ -50,11 +50,11 @@ define([
         });
     };
     
-
+    
     queue.prototype._needsSyntheticTextInput = true;
     queue.prototype._typeChar = function _typeChar(character, element, options) {
         this._keyDown(character, element, options);
-        if (this._isPrintingCharacter(character)) {
+        if (this._isPrintingCharacter(character) && this._needsSyntheticTextInput) {
             this._keyPress(character, element, options);
             if (this._isTextInputElement(element)) {
                 this._textInput(character, element, options);
@@ -62,22 +62,26 @@ define([
         }
         this._keyUp(character, element, options);
     };
-
+    
     queue.prototype._keyDownDefaultAction = function () {};
     queue.prototype._keyDown = function _keyDown(character, element, options) {
         var event = this._createKeyEvent("keydown", character, element, options);
         this._dispatchEvent(event, element, this._keyDownDefaultAction, options);
     };
+    
+    queue.prototype._keyPressDefaultAction = function _keyPressDefaultAction(event) {
+        event.target.value += String.fromCharCode(event.charCode);
+    };
     queue.prototype._keyPress = function _keyPress(character, element, options) {
         var event = this._createKeyEvent("keypress", character, element, options);
-        this._dispatchEvent(event, element, function _keyPressDefaultAction(event) {
-            element.value += String.fromCharCode(event.charCode);
-        }, options);
+        this._dispatchEvent(event, element, this._keyPressDefaultAction, options);
     };
+    
     queue.prototype._textInput = function _textInput(character, element, options) {
         var event = this._createTextEvent("textInput", character, element, options);
         this._dispatchEvent(event, element, null, options);
     };
+    
     queue.prototype._keyUp = function _keyUp(character, element, options) {
         var event = this._createKeyEvent("keyup", character, element, options);
         this._dispatchEvent(event, element, null, options);
@@ -183,7 +187,9 @@ define([
     queue.prototype._keyMap = {
         "[escape]": {identifier: "U+001B", keyCode: 27},
         "[enter]": {identifier: "Enter", keyCode: 13},
-        "[tab]": {identifier: "U+0009", keyCode: 9}
+        "[tab]": {identifier: "U+0009", keyCode: 9},
+        "[up]": {identifier: "Up", keyCode: 38},
+        "[down]": {identifier: "Down", keyCode: 40}
     },
     
     queue.prototype._lookupKeyIdentifier = function _lookupKeyIdentifier(character) {
@@ -208,8 +214,7 @@ define([
         if (character.length === 1) {
             return character.charCodeAt(0);
         } else {
-            // todo: look up the code in a map based on browser
-            return 0;
+            return this._keyMap[character].charCode || 0;
         }
     };
     

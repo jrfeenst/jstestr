@@ -148,19 +148,21 @@ define([
         var event = this._createMouseEvent("mousedown", element, options);
         this._dispatchEvent(event, element, this._mouseDownDefaultAction, options);
     };
-
-    queue.prototype._mouseClick = function _mouseClick(element, options) {
-        this._updateMouseOver(element, options);
-        var event = this._createMouseEvent("click", element, options);
-        this._dispatchEvent(event, element, null, options);
-    };
-
+    
+    queue.prototype._mouseUpDefaultAction = function () {};
     queue.prototype._mouseUp = function _mouseUp(element, options) {
         this._updateMouseOver(element, options);
         var event = this._createMouseEvent("mouseup", element, options);
-        this._dispatchEvent(event, element, null, options);
+        this._dispatchEvent(event, element, this._mouseUpDefaultAction, options);
     };
-
+    
+    queue.prototype._mouseClickDefaultAction = function () {};
+    queue.prototype._mouseClick = function _mouseClick(element, options) {
+        this._updateMouseOver(element, options);
+        var event = this._createMouseEvent("click", element, options);
+        this._dispatchEvent(event, element, this._mouseClickDefaultAction, options);
+    };
+    
     queue.prototype._mouseMove = function _mouseMove(element, options) {
         this._updateMouseOver(element, options);
         var event = this._createMouseEvent("mousemove", element, options);
@@ -178,7 +180,6 @@ define([
     };
     
     
-    
     queue.prototype._updateMouseOver = function _updateMouseOver(element, options) {
         if (this._currentMouseOverElement != element) {
             if (this._currentMouseOverElement) {
@@ -193,13 +194,12 @@ define([
     };
     
     
-
     queue.MOUSE_BUTTON = {
         LEFT: 0,
         MIDDLE: 1,
         RIGHT: 2
     };
-
+    
     queue.prototype._mouseDefaults = {
         canBubble: true,
         cancelable: true,
@@ -208,7 +208,7 @@ define([
         button: 0,
         relatedTarget: null
     };
-
+    
     queue.prototype._createMouseEvent = function _createMouseEvent(type, element, options) {
         var x = element.getBoundingClientRect().left;
         var y = element.getBoundingClientRect().top;

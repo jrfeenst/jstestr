@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+
+        <title>jstestr demo</title>
+
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <style type="text/css">
+            html, body {
+                margin: 0;
+                padding: 0;
+                width: 100%;
+            }
+            
+            #eventLog {
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                height: 300px;
+                overflow: auto;
+            }
+        </style>
+    </head>
+    <body>
+
+        <div>Type the following key into the text area: <span id="instructions"></span></div>
+        <textarea id="inputArea"></textarea>
+        <pre id="eventLog"></pre>
+
+        <script type="text/javascript">
+            (function () {
+                var instructions = document.getElementById("instructions");
+                var eventLog = document.getElementById("eventLog");
+                var inputArea = document.getElementById("inputArea");
+                
+                var keys = [
+                    "a", "z", "A", "Z", "0", "1", "9", "!", "[up]", "[down]", "[tab]", "[enter]",
+                    "[escape]"
+                ];
+                
+                eventLog.innerHTML += "--------------------------" + keys[0] + "------------------------\n";
+                instructions.innerHTML = keys[0];
+        
+                var timeout, i = 0;
+                var eventListener = function (e) {
+                    eventLog.innerHTML +=
+                        "type: " + e.type +
+                        ", keyCode: " + e.keyCode +
+                        ", charCode: " + e.charCode +
+                        ", key: " + e.key +
+                        ", code: " + e.code +
+                        ", keyIdentifier: " + e.keyIdentifier +
+                        ", keyLocation: " + e.keyLocation + "\n";
+                    clearTimeout(timeout);
+                    timeout = setTimeout(function () {
+                        i++;
+                        eventLog.innerHTML += "-------------------------" + keys[i] + "-------------------------\n";
+                        instructions.innerHTML = keys[i];
+                        inputArea.value = "";
+                        inputArea.focus();
+                    }, 300);
+                };
+                
+                inputArea.addEventListener("keydown", eventListener, true);
+                inputArea.addEventListener("keypress", eventListener, true);
+                inputArea.addEventListener("keyup", eventListener, true);
+                inputArea.addEventListener("textInput", eventListener, true);
+            })();
+        </script>
+
+    </body>
+</html>
