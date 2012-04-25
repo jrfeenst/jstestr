@@ -3,6 +3,14 @@ define([
     "./queue"
 ], function (queue) {
     
+    queue.prototype.byId = function byId(id, handler, options) {
+        var self = this;
+        this.then(function () {
+            options = options || {};
+            self._query("#" + selector, self._wrapHandler(handler), options);
+        });
+    };
+    
     queue.prototype.query = function query(selector, handler, options) {
         var self = this;
         this.then(function () {

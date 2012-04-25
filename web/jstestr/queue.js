@@ -2,18 +2,13 @@
 define([], function () {
     
     var queue = function (args) {
-        args = args || {
-            document: document,
-            timeout: 10000
-        };
-        for (var key in args) {
-            if (!(args[key] instanceof Function)) {
-                this[key] = args[key];
-            }
-        }
+        this.document = args.document || document;
+        this.timeout = args.timeout || 10000;
         this._queue = [];
     };
     
+    queue.prototype.hooks = {};
+    queue.prototype.browser = {};
     
     /**
      * Add a function to be called at the end of the queue.
@@ -42,14 +37,22 @@ define([], function () {
                 
                 var self = this;
                 childQueue.onSuccess = function () {
+                    childQueue.onSuccess = null;
+                    childQueue.onFailure = null;
                     self.next();
                 };
                 childQueue.onFailure = function (message) {
+                    childQueue.onSuccess = null;
+                    childQueue.onFailure = null;
                     // propogate failures
                     self.done(false, message);
                 };
                 
-                this._queue.pop().call(this, childQueue);
+                try {
+                    this._queue.pop().call(this, childQueue);
+                } catch (e) {
+                    childQueue.done(false, e.message);
+                }
             } else {
                 this.done(true);
             }
@@ -156,6 +159,14 @@ define([], function () {
             self.next();
         };
     };
+    
+    queue.prototype._mixin = function _mixin(dest, source) {
+        for (var key in source) {
+            if (!(source[key] instanceof Function) && key !== "_queue" && key !== "_parent") {
+                dest[key] = source[key];
+            }
+        }
+    }
     
     return queue;
 });

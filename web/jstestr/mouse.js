@@ -1,6 +1,7 @@
 
 define([
-    "./queue"
+    "./queue",
+    "./event"
 ], function (queue) {
     
     var global = window;
@@ -142,41 +143,65 @@ define([
     };
     
     
-    queue.prototype._mouseDownDefaultAction = function () {};
+    queue.MOUSE_BUTTON = {
+        LEFT: 0,
+        MIDDLE: 1,
+        RIGHT: 2
+    };
+    
+    // defaults for all mouse events, can be overriden with more specific event type defaults
+    queue.prototype.eventDefaults.mouse = {
+        canBubble: true,
+        cancelable: true,
+        view: global,
+        count: 1,
+        button: queue.MOUSE_BUTTON.LEFT,
+        relatedTarget: null,
+        ctrlKey: false,
+        altKey: false,
+        metaKey: false,
+        shiftKey: false
+    };
+    
+    
+    queue.prototype.defaultActions.mousedown = function mouseDownDefaultAction() {};
     queue.prototype._mouseDown = function _mouseDown(element, options) {
         this._updateMouseOver(element, options);
         var event = this._createMouseEvent("mousedown", element, options);
-        this._dispatchEvent(event, element, this._mouseDownDefaultAction, options);
+        this._dispatchEvent(event, element, options);
     };
     
-    queue.prototype._mouseUpDefaultAction = function () {};
+    queue.prototype.defaultActions.mouseup = function mouseUpDefaultAction() {};
     queue.prototype._mouseUp = function _mouseUp(element, options) {
         this._updateMouseOver(element, options);
         var event = this._createMouseEvent("mouseup", element, options);
-        this._dispatchEvent(event, element, this._mouseUpDefaultAction, options);
+        this._dispatchEvent(event, element, options);
     };
     
-    queue.prototype._mouseClickDefaultAction = function () {};
+    queue.prototype.defaultActions.click = function mouseClickDefaultAction() {};
     queue.prototype._mouseClick = function _mouseClick(element, options) {
         this._updateMouseOver(element, options);
         var event = this._createMouseEvent("click", element, options);
-        this._dispatchEvent(event, element, this._mouseClickDefaultAction, options);
+        this._dispatchEvent(event, element, options);
     };
     
+    queue.prototype.defaultActions.mousemove = function mouseMoveDefaultAction() {};
     queue.prototype._mouseMove = function _mouseMove(element, options) {
         this._updateMouseOver(element, options);
         var event = this._createMouseEvent("mousemove", element, options);
-        this._dispatchEvent(event, element, null, options);
+        this._dispatchEvent(event, element, options);
     };
     
+    queue.prototype.defaultActions.mouseover = function mouseOverDefaultAction() {};
     queue.prototype._mouseOver = function _mouseOver(element, options) {
         var event = this._createMouseEvent("mouseover", element, options);
-        this._dispatchEvent(event, element, null, options);
+        this._dispatchEvent(event, element, options);
     };
     
+    queue.prototype.defaultActions.mouseout = function mouseOutDefaultAction() {};
     queue.prototype._mouseOut = function _mouseOut(element, options) {
         var event = this._createMouseEvent("mouseout", element, options);
-        this._dispatchEvent(event, element, null, options);
+        this._dispatchEvent(event, element, options);
     };
     
     
@@ -194,42 +219,28 @@ define([
     };
     
     
-    queue.MOUSE_BUTTON = {
-        LEFT: 0,
-        MIDDLE: 1,
-        RIGHT: 2
-    };
-    
-    queue.prototype._mouseDefaults = {
-        canBubble: true,
-        cancelable: true,
-        view: global,
-        count: 1,
-        button: 0,
-        relatedTarget: null
-    };
-    
     queue.prototype._createMouseEvent = function _createMouseEvent(type, element, options) {
+        var defaults = this.eventDefaults[type] || this.eventDefaults.mouse;
         var x = element.getBoundingClientRect().left;
         var y = element.getBoundingClientRect().top;
         
         var event = element.ownerDocument.createEvent("MouseEvent");
         event.initMouseEvent(
             type,
-            "canBubble" in options ? options.canBubble : this._mouseDefaults.canBubble,
-            "cancelable" in options ? options.cancelable : this._mouseDefaults.cancelable,
-            "view" in options ? options.view : this._mouseDefaults.view,
-            "count" in options ? options.count : this._mouseDefaults.count,
+            "canBubble" in options ? options.canBubble : defaults.canBubble,
+            "cancelable" in options ? options.cancelable : defaults.cancelable,
+            "view" in options ? options.view : defaults.view,
+            "count" in options ? options.count : defaults.count,
             "screenX" in options ? options.screenX : x,
             "screenY" in options ? options.screenY : y,
             "clientX" in options ? options.clientX : x,
             "clientY" in options ? options.clientY : y,
-            "ctrlKey" in options ? options.ctrlKey : this._keyDefaults.ctrlKey,
-            "altKey" in options ? options.altKey : this._keyDefaults.altKey,
-            "shiftKey" in options ? options.shiftKey : this._keyDefaults.shiftKey,
-            "metaKey" in options ? options.metaKey : this._keyDefaults.metaKey,
-            "button" in options ? options.button : this._mouseDefaults.button,
-            "relatedTarget" in options ? options.relatedTarget : this._mouseDefaults.relatedTarget
+            "ctrlKey" in options ? options.ctrlKey : defaults.ctrlKey,
+            "altKey" in options ? options.altKey : defaults.altKey,
+            "shiftKey" in options ? options.shiftKey : defaults.shiftKey,
+            "metaKey" in options ? options.metaKey : defaults.metaKey,
+            "button" in options ? options.button : defaults.button,
+            "relatedTarget" in options ? options.relatedTarget : defaults.relatedTarget
             );
         return event;
     };
@@ -244,6 +255,21 @@ define([
         
         return newObj;
     };
+    
+    
+    (function () {
+        /*
+            clickChanges : false,
+            clickSubmits : false,
+            mouseupSubmits: false,
+            elementFromClient : true,
+            elementFromPage : true,
+            radioClickChanges : false,
+            mouseDownUpClicks : false,
+            mouseDownUpRepeatClicks : false,
+            optionClickBubbles : false
+        */
+    }());
 
     return queue;
 });

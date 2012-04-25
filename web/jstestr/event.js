@@ -3,13 +3,15 @@ define([
     "./queue"
 ], function (queue) {
     
-    queue.prototype._eventDefaults = {
+    queue.prototype.eventDefaults = {};
+    queue.prototype.eventDefaults.generic = {
         canBubble: true,
         cancelable: true
     };
     
     queue.prototype._createEvent = function _createEvent(type, element, options, defaults) {
-        defaults = defaults || this._eventDefaults;
+        options = options || {};
+        defaults = defaults || this.eventDefaults.type || this.eventDefaults.generic;
         var event = element.ownerDocument.createEvent("Event");
         event.initEvent(
             type,
@@ -19,18 +21,21 @@ define([
         return event;
     };
     
-    
-    queue.prototype._dispatchEvent = function _dispatchEvent(event, element, defaultAction, options) {
-        var el = element || this.element;
-        if (!el) {
+    queue.prototype.defaultActions = {};
+    queue.prototype._dispatchEvent = function _dispatchEvent(event, element, options, defaultAction) {
+        if (!element) {
             this.done(false, "No element available to dispatch event to");
         } else if (!event) {
             this.done(false, "No event to dispatch");
         } else {
             event.synthetic = true;
-            var result = el.dispatchEvent(event) && !event.defaultPrevented;
-            if ((result || !event.cancelable) && defaultAction) {
-                defaultAction.apply(this, [event]);
+            var result = element.dispatchEvent(event) && !event.defaultPrevented;
+            if (result || !event.cancelable) {
+                if (defaultAction) {
+                    defaultAction.apply(this, [event]);
+                } else if (this.defaultActions[event.type]) {
+                    this.defaultActions[event.type].apply(this, [event]);
+                }
             }
         }
     };

@@ -1,12 +1,14 @@
 
 define([
-    "./queue"
+    "./queue",
+    "./event"
 ], function (queue) {
 
     var global = window;
     
     queue.prototype._controlRegExp = /\[[a-zA-Z]+\]/g;
-    queue.prototype._beforeType = function _beforeType() {};
+    
+    queue.prototype.hooks.beforeType = function beforeType() {};
     
     queue.prototype.type = function type(string, element, handler, options) {
         this.then(function _typeTask(testr) {
@@ -16,7 +18,7 @@ define([
             
             testr._normalizeElement(element, function (element) {
                 
-                testr._beforeType(string, element, options);
+                testr.hooks.beforeType.call(testr, string, element, options);
                 
                 var keyPressHandler = function (character) {
                     return function _keyPressHandler() {
@@ -51,10 +53,9 @@ define([
     };
     
     
-    queue.prototype._needsSyntheticTextInput = true;
     queue.prototype._typeChar = function _typeChar(character, element, options) {
         this._keyDown(character, element, options);
-        if (this._isPrintingCharacter(character) && this._needsSyntheticTextInput) {
+        if (this._isPrintingCharacter(character) && this.browser.needsSyntheticTextInput) {
             this._keyPress(character, element, options);
             if (this._isTextInputElement(element)) {
                 this._textInput(character, element, options);
@@ -63,32 +64,35 @@ define([
         this._keyUp(character, element, options);
     };
     
-    queue.prototype._keyDownDefaultAction = function () {};
+    
+    queue.prototype.defaultActions.keydown = function keyDownDefaultActions() {};
     queue.prototype._keyDown = function _keyDown(character, element, options) {
         var event = this._createKeyEvent("keydown", character, element, options);
-        this._dispatchEvent(event, element, this._keyDownDefaultAction, options);
+        this._dispatchEvent(event, element, options);
     };
     
-    queue.prototype._keyPressDefaultAction = function _keyPressDefaultAction(event) {
+    queue.prototype.defaultActions.keypress = function keyPressDefaultAction(event) {
         event.target.value += String.fromCharCode(event.charCode);
     };
     queue.prototype._keyPress = function _keyPress(character, element, options) {
         var event = this._createKeyEvent("keypress", character, element, options);
-        this._dispatchEvent(event, element, this._keyPressDefaultAction, options);
+        this._dispatchEvent(event, element, options);
     };
     
+    queue.prototype.defaultActions.textInput = function textInputDefaultActions() {};
     queue.prototype._textInput = function _textInput(character, element, options) {
         var event = this._createTextEvent("textInput", character, element, options);
-        this._dispatchEvent(event, element, null, options);
+        this._dispatchEvent(event, element, options);
     };
     
+    queue.prototype.defaultActions.keyup = function keyUpDefaultActions() {};
     queue.prototype._keyUp = function _keyUp(character, element, options) {
         var event = this._createKeyEvent("keyup", character, element, options);
-        this._dispatchEvent(event, element, null, options);
+        this._dispatchEvent(event, element, options);
     };
     
     
-    queue.prototype._keyDefaults = {
+    queue.prototype.eventDefaults.key = {
         canBubble: true,
         cancelable: true,
         view: global,
@@ -98,46 +102,72 @@ define([
         metaKey: false
     };
     
-    queue.prototype._supportsKeyEvents = true;
     queue.prototype._createKeyEvent = function _createKeyEvent(type, character, element, options) {
-        var keyCode = this._lookupKeyCode(character);
-        var charCode = this._lookupCharCode(character);
-
-        var event;
-        try {
-            if (this._supportsKeyEvents) {
-                event = element.ownerDocument.createEvent("KeyEvent");
-                var method = "initKeyEvent" in event ? "initKeyEvent" : "initKeyboardEvent";
-                event[method](
-                    type,
-                    "canBubble" in options ? options.canBubble : this._keyDefaults.canBubble,
-                    "cancelable" in options ? options.cancelable : this._keyDefaults.cancelable,
-                    "view" in options ? options.view : this._keyDefaults.view,
-                    "ctrlKey" in options ? options.ctrlKey : this._keyDefaults.ctrlKey,
-                    "altKey" in options ? options.altKey : this._keyDefaults.altKey,
-                    "shiftKey" in options ? options.shiftKey : this._keyDefaults.shiftKey,
-                    "metaKey" in options ? options.metaKey : this._keyDefaults.metaKey,
-                    "keyCode" in options ? options.keyCode : keyCode,
-                    "charCode" in options ? options.charCode : charCode
-                );
-            }
-
-        } catch (e) {
-            this._supportsKeyEvents = false;
-        }
+        var defaults = this.eventDefaults[type] || this.eventDefaults.key;
         
-        if (!this._supportsKeyEvent) {
-            event = this._createEvent(type, element, options, this._keyDefaults);
+        var keyCode = this._lookupKeyCode(type, character);
+        var charCode = this._lookupCharCode(type, character);
+        var keyIdentifier = this._lookupKeyIdentifier(type, character);
+        var keyLocation = this._lookupKeyLocation(type, character);
+        
+        var event;
+        if (this.browser.supportsKeyEvents) {
+            event = element.ownerDocument.createEvent("KeyEvent");
+            var method = "initKeyEvent" in event ? "initKeyEvent" : "initKeyboardEvent";
+            event.initKeyEvent(
+                type,
+                "canBubble" in options ? options.canBubble : defaults.canBubble,
+                "cancelable" in options ? options.cancelable : defaults.cancelable,
+                "view" in options ? options.view : defaults.view,
+                "ctrlKey" in options ? options.ctrlKey : defaults.ctrlKey,
+                "altKey" in options ? options.altKey : defaults.altKey,
+                "shiftKey" in options ? options.shiftKey : defaults.shiftKey,
+                "metaKey" in options ? options.metaKey : defaults.metaKey,
+                "keyCode" in options ? options.keyCode : keyCode,
+                "charCode" in options ? options.charCode : charCode
+                );
+                
+        } else if (this.browser.supportsKeyboardEvents) {
+            var modifiers = [];
+            if (options.ctrlKey) {
+                modifiers.push("Control");
+            }
+            if (options.altKey) {
+                modifiers.push("Alt");
+            }
+            if (options.shiftKey) {
+                modifiers.push("Shift");
+            }
+            if (options.metaKey) {
+                modifiers.push("Meta");
+            }
+            if (options.ctrlKey && options.altKey) {
+                modifiers.push("AltGraph");
+            }
             
-            var keyIdentifier = this._lookupKeyIdentifier(character);
-            var keyLocation = this._lookupKeyLocation(character);
+            event = element.ownerDocument.createEvent("KeyboardEvent");
+            event.initKeyboardEvent(
+                type,
+                "canBubble" in options ? options.canBubble : defaults.canBubble,
+                "cancelable" in options ? options.cancelable : defaults.cancelable,
+                "view" in options ? options.view : defaults.view,
+                "keyCode" in options ? options.keyCode : keyCode,
+                "keyLocation" in options ? options.keyLocation : keyLocation,
+                modifiers.join(" "),
+                1,
+                ""
+                );
+                
+        } else {
+            event = this._createEvent(type, element, options, defaults);
             
-            event.view = "view" in options ? options.view : this._keyDefaults.view;
-            event.keyIdentifier = "keyIdentifier" in options ? options.keyIdentifier : keyIdentifier;
-            event.keyLocation = "keyLocation" in options ? options.keyLocation : keyLocation;
+            event.view = "view" in options ? options.view : defaults.view;
             event.keyCode = "keyCode" in options ? options.keyCode : keyCode;
             event.charCode = "charCode" in options ? options.charCode : charCode;
         }
+        
+        event.keyIdentifier = "keyIdentifier" in options ? options.keyIdentifier : keyIdentifier;
+        event.keyLocation = "keyLocation" in options ? options.keyLocation : keyLocation;
         
         return event;
     };
@@ -149,35 +179,26 @@ define([
         view: global
     };
 
-    queue.prototype._supportsTextEvents = true;
-    
     queue.prototype._createTextEvent = function _createTextEvent(type, data, element, options) {
-        var event;
-        try {
-            if (this._supportsTextEvents) {
-                event = element.ownerDocument.createEvent("TextEvent");
-                if ("initTextEvent" in event) {
-                    event.initTextEvent(
-                        type,
-                        "canBubble" in options ? options.canBubble : this._keyDefaults.canBubble,
-                        "cancelable" in options ? options.cancelable : this._keyDefaults.cancelable,
-                        "view" in options ? options.view : this._keyDefaults.view,
-                        data,
-                        "", // input method
-                        "" // locale
-                        );
-                } else {
-                    this._supportsTextEvents = false;
-                }
-            }
-        } catch (e) {
-            this._supportsTextEvents = false;
-        }
+        var defaults = this.eventDefaults[type] || this.eventDefaults.key;
         
-        if (!this._supportsTextEvents) {
-            event = this._createEvent(type, element, options, this._keyDefaults);
+        var event;
+        if (this.browser.supportsTextEvents) {
+            event = element.ownerDocument.createEvent("TextEvent");
+            event.initTextEvent(
+                type,
+                "canBubble" in options ? options.canBubble : defaults.canBubble,
+                "cancelable" in options ? options.cancelable : defaults.cancelable,
+                "view" in options ? options.view : defaults.view,
+                data,
+                "", // input method
+                "" // locale
+                );
 
-            event.view = options.view || this._keyDefaults.view;
+        } else {
+            event = this._createEvent(type, element, options, defaults);
+
+            event.view = options.view || defaults.view;
             event.data = data;
         }
         return event;
@@ -185,32 +206,46 @@ define([
     
     
     queue.prototype._keyMap = {
-        "[escape]": {identifier: "U+001B", keyCode: 27},
-        "[enter]": {identifier: "Enter", keyCode: 13},
-        "[tab]": {identifier: "U+0009", keyCode: 9},
+        "[backspace]": {keyCode: 8},
+        "[escape]": {keyCode: 27},
+        "\n": {identifier: "Enter"},
+        "[left]": {identifier: "Left", keyCode: 37},
         "[up]": {identifier: "Up", keyCode: 38},
-        "[down]": {identifier: "Down", keyCode: 40}
+        "[right]": {identifier: "Right", keyCode: 39},
+        "[down]": {identifier: "Down", keyCode: 40},
+        "[pageup]": {identifier: "PageUp", keyCode: 38},
+        "[pagedown]": {identifier: "PageDown", keyCode: 40}
     },
     
     queue.prototype._lookupKeyIdentifier = function _lookupKeyIdentifier(character) {
-        if (this._keyMap.hasOwnProperty(character)) {
-            return this._keyMap[character].identifier || "";
+        if (character in this._keyMap && "identifier" in this._keyMap[character]) {
+            return this._keyMap[character].identifier;
+        } else if (character in this._keyMap && "keyCode" in this._keyMap[character]) {
+            return "U+" + "";
+        } else {
+            return "U+" + character.charCodeAt(0);
         }
-        return "";
     };
     
     queue.prototype._lookupKeyLocation = function _lookupKeyLocation(character) {
         return 0;
     };
     
-    queue.prototype._lookupKeyCode = function _lookupKeyCode(character) {
-        if (this._keyMap.hasOwnProperty(character)) {
-            return this._keyMap[character].keyCode || 0;
+    queue.prototype._lookupKeyCode = function _lookupKeyCode(eventType, character) {
+        if (eventType === "keydown") {
+            character = character.toUpperCase();
         }
-        return 0;
+        if (character in this._keyMap && "keyCode" in this._keyMap[character]) {
+            return this._keyMap[character].keyCode;
+        } else {
+            return character.charCodeAt(0);
+        }
     };
     
-    queue.prototype._lookupCharCode = function _lookupCharCode(character) {
+    queue.prototype._lookupCharCode = function _lookupCharCode(eventType, character) {
+        if (eventType === "keydown") {
+            return 0;
+        }
         if (character.length === 1) {
             return character.charCodeAt(0);
         } else {
@@ -232,5 +267,50 @@ define([
         return tag === "textarea" || (tag === "input" && (type === "text" || type === "password"));
     };
     
+    (function () {
+        var event;
+        
+        // feature test for key events
+        try {
+            event = document.createEvent("KeyEvent");
+            if ("initKeyEvent" in event) {
+                queue.prototype.browser.supportsKeyEvents = true;
+            }
+        } catch (e) {
+            queue.prototype.browser.supportsKeyEvents = false;
+        }
+        
+        // feature test for keyboard events
+        try {
+            event = document.createEvent("KeyboardEvent");
+            if ("initKeyboardEvent" in event) {
+                queue.prototype.browser.supportsKeyboardEvents = true;
+            }
+        } catch (e) {
+            queue.prototype.browser.supportsKeyboardEvents = false;
+        }
 
+        // feature test for text events
+        try {
+            event = document.createEvent("TextEvent");
+            if ("initTextEvent" in event) {
+                queue.prototype.browser.supportsTextEvents = true;
+            }
+        } catch (e) {
+            queue.prototype.browser.supportsTextEvents = false;
+        }
+        
+        queue.prototype.browser.needsSyntheticTextInput = true;
+        
+        /*
+            keypressSubmits : false,
+            keyCharacters : false,
+            backspaceWorks : false,
+            keysOnNotFocused : false,
+            textareaCarriage : false,
+            keypressOnAnchorClicks : false
+         */
+    }());
+    
+    return queue;
 });

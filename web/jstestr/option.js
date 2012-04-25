@@ -1,31 +1,37 @@
 
 define([
     "./queue",
+    "./event",
     "./mouse",
     "./key",
     "./focus"
 ], function (queue) {
     
-    var previousMouseClickDefaultAction = queue.prototype._mouseClickDefaultAction;
-    queue.prototype._mouseClickDefaultAction = function _mouseClickDefaultAction(event) {
+    queue.prototype.eventDefaults.change = {
+        canBubble: true,
+        cancelable: true
+    };
+    
+    var previousMouseClickDefaultAction = queue.prototype.defaultActions.click;
+    queue.prototype.defaultActions.click = function clickDefaultAction(event) {
         if (this._needsChangeEvent) {
             var select = this._findParentByType(event.target, "select");
-            var change = this._createEvent("change", select, {}, this._changeDefaults);
-            this._dispatchEvent(change, select, null, {});
+            var change = this._createEvent("change", select);
+            this._dispatchEvent(change, select);
             this._needsChangeEvent = false;
         }
         previousMouseClickDefaultAction.apply(this, arguments);
     };
     
     
-    var previousMouseDownDefaultAction = queue.prototype._mouseDownDefaultAction;
-    queue.prototype._mouseDownDefaultAction = function _mouseDownDefaultAction(event) {
+    var previousMouseDownDefaultAction = queue.prototype.defaultActions.mouseDown;
+    queue.prototype.defaultActions.mouseDown = function mouseDownDefaultAction(event) {
         var element = event.target;
         if (this._isOptionElement(element)) {
             var select = this._findParentByType(element, "select");
             var optionElements = select.querySelectorAll("option");
             var i, opt;
-
+            
             if (event.ctrlKey) {
                 element.selected = true;
             } else if (event.shiftKey) {
@@ -55,20 +61,20 @@ define([
     };
     
     
-    var previousKeyDownDefaultAction = queue.prototype._keyDownDefaultAction;
-    queue.prototype._keyDownDefaultAction = function _keyDownDefaultAction (event) {
+    var previousKeyDownDefaultAction = queue.prototype.defaultActions.keydown;
+    queue.prototype.defaultActions.keydown = function keyDownDefaultAction(event) {
         var select = event.target;
         
-        if (select && (event.charCode === this._lookupCharCode("[up]") ||
-                event.charCode === this._lookupCharCode("[down]"))) {
+        if (select && (event.charCode === this._lookupCharCode(event.type, "[up]") ||
+                event.charCode === this._lookupCharCode(event.type, "[down]"))) {
             
             var optionElements = select.querySelectorAll("option");
             
             var element;
-            if (event.charCode === this._lookupCharCode("[up]")) {
-                element = optionElements[element.selectedIndex - 1];
+            if (event.charCode === this._lookupCharCode(event.type, "[up]")) {
+                element = optionElements[select.selectedIndex - 1];
             } else {
-                element = optionElements[element.selectedIndex + 1];
+                element = optionElements[select.selectedIndex + 1];
             }
             
             if (element) {
@@ -79,17 +85,11 @@ define([
                         optionElements[i].selected = optionElements[i] === element;
                     }
                 }
-                var change = this._createEvent("change", select, {}, this._changeDefaults);
-                this._dispatchEvent(change, select, null, {});
+                var change = this._createEvent("change", select);
+                this._dispatchEvent(change, select);
             }
         }
         previousKeyDownDefaultAction.apply(this, arguments);
-    };
-    
-    
-    queue.prototype._changeDefaults = {
-        canBubble: true,
-        cancelable: true
     };
     
     queue.prototype._isSelectElement = function _isSelectElement(element) {
