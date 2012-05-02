@@ -3,7 +3,7 @@ define([
     "./queue",
     "./event"
 ], function (queue) {
-
+    
     var global = window;
     
     queue.prototype._controlRegExp = /\[[a-zA-Z]+\]/g;

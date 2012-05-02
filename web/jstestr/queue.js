@@ -2,12 +2,19 @@
 define([], function () {
     
     var queue = function (args) {
+        args = args || {};
         this.document = args.document || document;
         this.timeout = args.timeout || 10000;
+        this._currentTask = 0;
+        this._insertionPoint = 0;
         this._queue = [];
     };
     
-    queue.prototype.hooks = {};
+    queue.prototype.hooks = {
+        onBeforeTask: function () {},
+        onAfterTask: function () {}
+    };
+    
     queue.prototype.browser = {};
     
     /**
@@ -16,61 +23,41 @@ define([], function () {
      * done.
      */
     queue.prototype.then = function then(func) {
-        if (this.running) {
-            this._queue.unshift(func);
-        } else {
-            this._queue.unshift(func);
-        }
+        this._queue.splice(this._insertionPoint, 0, func);
+        this._insertionPoint++;
     };
-
+    
     /**
      * Call the next function in the queue.
      * @param func Optional function to call next. This will be prepended to the queue.
      */
     queue.prototype.next = function next(func) {
         if (func) {
-            this._queue.push(func);    
+            this.then(func);    
         }
+        
         if (this.running) {
-            if (this._queue.length > 0) {
-                var childQueue = new queue(this);
-                
-                var self = this;
-                childQueue.onSuccess = function () {
-                    childQueue.onSuccess = null;
-                    childQueue.onFailure = null;
-                    self.next();
-                };
-                childQueue.onFailure = function (message) {
-                    childQueue.onSuccess = null;
-                    childQueue.onFailure = null;
-                    // propogate failures
-                    self.done(false, message);
-                };
-                
+            if (this._currentTask < this._queue.length) {
                 try {
-                    this._queue.pop().call(this, childQueue);
+                    this.hooks.onBeforeTask();
+                    var taskToExecute = this._currentTask;
+                    this._currentTask++;
+                    this._queue[taskToExecute].call(this);
+                    this.hooks.onAfterTask();
                 } catch (e) {
-                    childQueue.done(false, e.message);
+                    this.done(false, e.message);
                 }
             } else {
                 this.done(true);
             }
         }
     };
-
+    
     /**
      * Start processing the queue of tasks.
      */
-    queue.prototype.start = function start(timeout, onSuccess, onFailure) {
+    queue.prototype.start = function start(timeout) {
         this.timeout = timeout === undefined ? this.timeout : timeout;
-        
-        if (onSuccess) {
-            this.onSuccess = onSuccess;
-        }
-        if (onFailure) {
-            this.onFailure = onFailure;
-        }
         
         var self = this;
         this._testTimeout = setTimeout(function testTimeout() {
@@ -79,6 +66,19 @@ define([], function () {
         this.running = true;
         
         this.next();
+        
+        return {
+            then: function (onSuccess, onFailure) {
+                self.onSuccess = onSuccess;
+                self.onFailure = onFailure;
+                if (!self.running) {
+                    self._signalDone();
+                }
+            },
+            cancel: function () {
+                self.done(false, "Queue execution was cancelled.");
+            }
+        };
     };
 
     /**
@@ -88,13 +88,19 @@ define([], function () {
         clearTimeout(this._testTimeout);
         this._queue = []; // reset the queue
         this.running = false;
-        if (result) {
+        this.result = result;
+        this.message = message;
+        this._signalDone();
+    };
+    
+    queue.prototype._signalDone = function _signalDone() {
+        if (this.result) {
             if (this.onSuccess) {
-                this.onSuccess(message);
+                this.onSuccess(this.message);
             }
         } else {
             if (this.onFailure) {
-                this.onFailure(message);
+                this.onFailure(this.message);
             }
         }
     };
@@ -125,22 +131,24 @@ define([], function () {
         var timeout = options.timeout || 10000;
         
         var start = (new Date()).getTime();
-        var args;
         
         var self = this;
         var checkCondition = function checkCondition() {
-            condition(function () {
-                args = arguments;
-            });
+            var output, error;
+            try {
+                output = condition();
+            } catch (e) {
+                error = e;
+            }
             
-            if (args) {
-                handler.apply(this, args);
+            if (!error) {
+                handler.call(this, output);
             } else if ((new Date()).getTime() - start < timeout) {
                 setTimeout(function () {
                     checkCondition();
                 }, pollingDelay);
             } else {
-                self.done(false, "Timeout waiting for condition.");
+                self.done(false, error.message);
             }
         };
         checkCondition();
@@ -152,21 +160,12 @@ define([], function () {
         return function () {
             try {
                 handler && handler.apply(self, arguments);
+                self.next();
             } catch (e) {
                 self.done(false, e.message);
-                return;
             }
-            self.next();
         };
     };
-    
-    queue.prototype._mixin = function _mixin(dest, source) {
-        for (var key in source) {
-            if (!(source[key] instanceof Function) && key !== "_queue" && key !== "_parent") {
-                dest[key] = source[key];
-            }
-        }
-    }
     
     return queue;
 });

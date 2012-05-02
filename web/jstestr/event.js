@@ -40,5 +40,16 @@ define([
         }
     };
     
+    queue.prototype.on = function on(type, element, handler, scope) {
+        var self = this;
+        element.addEventListener(type, function eventHandler() {
+            try {
+                handler.apply(scope, arguments);
+            } catch (e) {
+                self.done(false, e);
+            }
+        })
+    };
+    
     return queue;
 });
