@@ -47,12 +47,13 @@ define([
             framework.runAll();
             
             assert.assertTrue(ran, "First test should run");
+            assert.assertTrue(
+                framework.suites["fake suite"]["fake test 1c"].success, "First test should succeed");
             assert.assertFalse(
                 framework.suites["fake suite"]["fake test 2c"].success, "Second test should fail");
         },
         
         "Async Test": function () {
-            
             var framework = new test.Framework();
             framework.defineSuite("fake suite", {
                 "fake test 1d": function () {
@@ -80,6 +81,16 @@ define([
             console.log("This test needs to be manually verified.");
             console.log("This is output that should be indented one more level than the test start.");
             console.log("This line should also be indented");
+        },
+        
+        "Async Test With Done": function (done) {
+            setTimeout(function doneTestCallback() {
+                if (!test.suites["Testing Framework"]["Async Test With Done"].success) {
+                    done(true);
+                } else {
+                    done(false);
+                }
+            }, 0);
         }
     });
 });

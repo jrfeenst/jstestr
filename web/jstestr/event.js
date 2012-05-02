@@ -29,7 +29,7 @@ define([
             this.done(false, "No event to dispatch");
         } else {
             event.synthetic = true;
-            var result = element.dispatchEvent(event) && !event.defaultPrevented;
+            var result = element.dispatchEvent(event) === true && !event.defaultPrevented;
             if (result || !event.cancelable) {
                 if (defaultAction) {
                     defaultAction.apply(this, [event]);
@@ -40,15 +40,29 @@ define([
         }
     };
     
+    queue._callHandler = function _callHandler(handler, scope, args) {
+        if (typeof handler === "string") {
+            return scope[handler].apply(scope, args);
+        } else {
+            return handler.apply(scope, args);
+        }
+    };
+    
+    queue.on = function on(type, element, handler, scope) {
+        element.addEventListener(type, function queueOnHandler() {
+            return queue._callHandler(handler, scope, arguments);
+        }, false);
+    };
+    
     queue.prototype.on = function on(type, element, handler, scope) {
         var self = this;
-        element.addEventListener(type, function eventHandler() {
+        queue.on(type, element, function onHandler() {
             try {
-                handler.apply(scope, arguments);
+                return queue._callHandler(handler, scope, arguments);
             } catch (e) {
                 self.done(false, e);
             }
-        })
+        });
     };
     
     return queue;

@@ -1,7 +1,8 @@
 
 define([
+    "./event",
     "./queue"
-], function (queue) {
+], function (event, queue) {
     
     var global = this;
     
@@ -10,6 +11,7 @@ define([
         this.document = document;
         this.global = global;
         
+        event.on("error", global, "onError", this);
     };
     
     
@@ -84,6 +86,7 @@ define([
         }
     };
     
+    TestFramework.prototype.ASYNC_TEST_PATTERN = /^function\s*( [\w\-$]+)?\s*\(done\)/;
     
     TestFramework.prototype._runTest = function _runTest(suiteName, testName) {
         var self = this;
@@ -94,45 +97,63 @@ define([
                 
                 self.onTestStart(suiteName, testName);
                 
+                test.startTime = start;
                 test.elapsedTime = undefined;
                 test.success = undefined;
                 test.error = undefined;
                 
-                var success = function success() {
+                var oldOnError = self.onError;
+                
+                var done = function done(success) {
                     var end = new Date();
                     test.elapsedTime = end.getTime() - start.getTime();
-                    test.success = true;
+                    test.success = success;
                     self._cleanupTestNodes();
+                    self.onError = oldOnError;
+                }
+                
+                var success = function success() {
+                    done(true);
                     self.onSuccess(suiteName, testName);
                     self.onTestEnd(suiteName, testName);
                     self.testQueue.next();
                 }
                 
                 var failure = function failure(error) {
-                    var end = new Date();
-                    test.elapsedTime = end.getTime() - start.getTime();
+                    done(false);
                     test.error = error;
-                    test.success = false;
-                    self._cleanupTestNodes();
                     self.onFailure(suiteName, testName, error);
                     self.onTestEnd(suiteName, testName);
                     self.testQueue.next();
                 }
                 
+                self.onError = failure;
+                
                 try {
+                    var runner;
                     if (test.test.name) {
-                        test.future = test.test();
+                        runner = test.test;
                     } else {
                         // create a wrapper function with the testName as the name of the function so
                         // that the test function shows up in the stack trace
-                        eval("var runner = function " + testName.replace(/ /g, "_") +
-                            "() { return test.test(); };");
-                        test.future = runner();
+                        eval("runner = function " + testName.replace(/ /g, "_") +
+                            "(done) { return test.test(done); };");
                     }
+                    
+                    var doneCallback = function doneCallback(error) {
+                        if (error === true || error === undefined) {
+                            success();
+                        } else {
+                            failure(error);
+                        }
+                    };
+                    
+                    test.future = runner(doneCallback);
                     
                     if (test.future && test.future.then) {
                         test.future.then(success, failure);
-                    } else {
+                        
+                    } else if (!self.ASYNC_TEST_PATTERN.test(test.test.toString())) {
                         success();
                     }
                 } catch (e) {
@@ -146,6 +167,11 @@ define([
                 setTimeout(testExecutor, 0);
             }
         });
+    };
+    
+    
+    TestFramework.prototype.onError = function onError(error) {
+        global.console.error("Uncaught error: " + error.message);
     };
     
     

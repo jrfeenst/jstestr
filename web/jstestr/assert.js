@@ -1,6 +1,6 @@
 
 define([], function () {
-    var function_pattern = /function\s*([\w\-$]+)?\s*\(/i;
+    var function_pattern = /function\s*( [\w\-$]+)?\s*\(/i;
     
     function createError(message, help) {
         help = help || "";
