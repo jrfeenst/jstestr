@@ -10,8 +10,6 @@ define([
         this.suites = {};
         this.document = document;
         this.global = global;
-        
-        event.on("error", global, "onError", this);
     };
     
     
@@ -102,14 +100,25 @@ define([
                 test.success = undefined;
                 test.error = undefined;
                 
-                var oldOnError = self.onError;
+                
+                var errorHandler = registerErrorHandler(self.global, function (ev) {
+                    var message = ev.message + ", " + ev.filename + "@" + ev.lineno;
+                    if (test.future) {
+                        test.future.cancel(message);
+                    } else if (self.ASYNC_TEST_PATTERN.test(test.test.toString())) {
+                        failure(message);
+                    } else {
+                        test.error = message;
+                    }
+                });
+                
                 
                 var done = function done(success) {
                     var end = new Date();
                     test.elapsedTime = end.getTime() - start.getTime();
                     test.success = success;
                     self._cleanupTestNodes();
-                    self.onError = oldOnError;
+                    errorHandler.remove();
                 }
                 
                 var success = function success() {
@@ -126,8 +135,6 @@ define([
                     self.onTestEnd(suiteName, testName);
                     self.testQueue.next();
                 }
-                
-                self.onError = failure;
                 
                 try {
                     var runner;
@@ -147,12 +154,23 @@ define([
                             failure(error);
                         }
                     };
+                    doneCallback.wrap = function (func) {
+                        return function () {
+                            try {
+                                func.apply(this, arguments);
+                                success();
+                            } catch (e) {
+                                failure(e);
+                            }
+                        }
+                    }
                     
                     test.future = runner(doneCallback);
                     
-                    if (test.future && test.future.then) {
+                    if (test.error) {
+                        failure(test.error);
+                    } else if (test.future && test.future.then) {
                         test.future.then(success, failure);
-                        
                     } else if (!self.ASYNC_TEST_PATTERN.test(test.test.toString())) {
                         success();
                     }
@@ -167,11 +185,6 @@ define([
                 setTimeout(testExecutor, 0);
             }
         });
-    };
-    
-    
-    TestFramework.prototype.onError = function onError(error) {
-        global.console.error("Uncaught error: " + error.message);
     };
     
     
@@ -247,9 +260,33 @@ define([
             }
         }
         return lines.join("\n").replace(new RegExp("\n[ ]{" + offset + "}", "g"), "\n");
+    };
+    
+    
+    var errorHandlers = [];
+    //event.on("error", global, function (error) {
+    global.onerror = function (error, fileName, lineNumber) {
+        if (typeof error === "string") {
+            error = {
+                message: error,
+                filename: fileName,
+                lineno: lineNumber
+            }
+        }
+        if (errorHandlers.length > 0) {
+            errorHandlers[errorHandlers.length - 1](error);
+        }
+    };
+    
+    function registerErrorHandler(global, handler) {
+        errorHandlers.push(handler);
+        return {
+            remove: function () {
+                var i = errorHandlers.indexOf(handler);
+                errorHandlers.splice(i, 1);
+            }
+        }
     }
-    
-    
     
     
     var testr = new TestFramework();

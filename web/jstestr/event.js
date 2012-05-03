@@ -49,14 +49,22 @@ define([
     };
     
     queue.on = function on(type, element, handler, scope) {
-        element.addEventListener(type, function queueOnHandler() {
+        var listener = function queueOnHandler() {
             return queue._callHandler(handler, scope, arguments);
-        }, false);
+        };
+        
+        element.addEventListener(type, listener, false);
+        
+        return {
+            remove: function () {
+                element.removeEventListener(type, listener, false);
+            }
+        };
     };
     
     queue.prototype.on = function on(type, element, handler, scope) {
         var self = this;
-        queue.on(type, element, function onHandler() {
+        return queue.on(type, element, function onHandler() {
             try {
                 return queue._callHandler(handler, scope, arguments);
             } catch (e) {

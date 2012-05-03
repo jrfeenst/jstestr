@@ -91,6 +91,24 @@ define([
                     done(false);
                 }
             }, 0);
+        },
+        
+        "Async Test With Error": function (done) {
+            var ran = false;
+            var framework = new test.Framework();
+            framework.defineSuite("fake suite", {
+                "fake test 1d": function (done) {
+                    setTimeout(function () {
+                        ran = true;
+                        throw new Error();
+                    });
+                }
+            });
+            framework.runSync = true; // useful for testing the tests
+            framework.runAll().then(done.wrap(function () {
+                assert.assertTrue(ran, "First test should run");
+                assert.assertFalse(framework.suites["fake suite"]["fake test 1d"].success, "Test should fail");
+            }));
         }
     });
 });

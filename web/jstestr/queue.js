@@ -67,18 +67,7 @@ define([], function () {
         
         this.next();
         
-        return {
-            then: function (onSuccess, onFailure) {
-                self.onSuccess = onSuccess;
-                self.onFailure = onFailure;
-                if (!self.running) {
-                    self._signalDone();
-                }
-            },
-            cancel: function () {
-                self.done(false, "Queue execution was cancelled.");
-            }
-        };
+        return this._createFuture();
     };
 
     /**
@@ -91,6 +80,48 @@ define([], function () {
         this.result = result;
         this.message = message;
         this._signalDone();
+    };
+    
+    /**
+     * Create a future which can be used to listen for success or failure of the queue's execution
+     */
+    queue.prototype._createFuture = function _createFuture() {
+        var self = this;
+        var future = {
+            callbacks: [],
+            then: function (onSuccess, onFailure) {
+                future.callbacks.push({
+                    onSuccess: onSuccess,
+                    onFailure: onFailure
+                });
+                if (!self.running) {
+                    self._signalDone();
+                }
+                return future;
+            },
+            cancel: function () {
+                self.done(false, "Queue execution was cancelled.");
+            }
+        };
+        
+        this.onSuccess = function onSuccess() {
+            var args = arguments;
+            future.callbacks.forEach(function (callback) {
+                if (callback.onSuccess) {
+                    callback.onSuccess.apply(this, args);
+                }
+            }, this);
+        };
+        this.onFailure = function onFailure() {
+            var args = arguments;
+            future.callbacks.forEach(function (callback) {
+                if (callback.onFailure) {
+                    callback.onFailure.apply(this, args);
+                }
+            }, this);
+        };
+        
+        return future;
     };
     
     queue.prototype._signalDone = function _signalDone() {
