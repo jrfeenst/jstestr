@@ -1,23 +1,21 @@
 
 define([
-    "./event",
     "./queue"
-], function (event, queue) {
+], function (queue) {
     
     var global = this;
     
-    var TestFramework = function () {
+    var TestFramework = function (args) {
+        args = args || {};
         this.suites = {};
-        this.document = document;
-        this.global = global;
+        this.document = args.document || document;
+        this.global = args.global || global;
     };
     
     
     TestFramework.prototype._normalizeTest = function _normalizeTest(test) {
         if (typeof test === "function") {
-            return {
-                test: test
-            };
+            return {test: test};
         } else {
             return test;
         }
@@ -29,7 +27,7 @@ define([
             testsOrConfig = {};
         }
         for (var name in tests) {
-            this.defineTest(suiteName, name, this._normalizeTest(tests[name]));
+            this.defineTest(suiteName, name, tests[name]);
         }
     };
     
@@ -38,14 +36,22 @@ define([
         if (!suite) {
             suite = {};
             this.suites[suiteName] = suite;
+            this.onSuiteDefined(suiteName);
         }
+        test = this._normalizeTest(test);
         suite[name] = test;
         this.onTestDefined(suiteName, name, test);
     };
     
     TestFramework.prototype.runAll = function runAll() {
         this.testQueue = new queue();
+        
         var self = this;
+        this.testQueue.then(function startSuiteTask() {
+            self.onStart(suiteName);
+            self.testQueue.next();
+        });
+        
         for (var suiteName in this.suites) {
             var suite = this.suites[suiteName];
             
@@ -58,6 +64,11 @@ define([
             this.endSuite(suiteName);
         }
         
+        this.testQueue.then(function startSuiteTask() {
+            self.onEnd(suiteName);
+            self.testQueue.next();
+        });
+        
         return this.testQueue.start(suite.timeout);
     };
     
@@ -67,8 +78,8 @@ define([
     
     TestFramework.prototype.getNewTestNode = function getNewTestNode(cleanup) {
         if (!this.testNodeParent) {
-            this.testNodeParent = document.createElement("div");
-            document.body.appendChild(this.testNodeParent);
+            this.testNodeParent = this.document.createElement("div");
+            this.document.body.appendChild(this.testNodeParent);
         }
         if (cleanup) {
             this._cleanupTestNodes();
@@ -92,6 +103,9 @@ define([
             var testExecutor = function testExecutor() {
                 var start = new Date();
                 var test = self.suites[suiteName][testName];
+                
+                self.currentSuiteName = suiteName;
+                self.currentTestName = testName;
                 
                 self.onTestStart(suiteName, testName);
                 
@@ -117,6 +131,10 @@ define([
                     var end = new Date();
                     test.elapsedTime = end.getTime() - start.getTime();
                     test.success = success;
+                    
+                    self.currentSuiteName = undefined;
+                    self.currentTestName = undefined;
+                    
                     self._cleanupTestNodes();
                     errorHandler.remove();
                 }
@@ -162,7 +180,7 @@ define([
                             } catch (e) {
                                 failure(e);
                             }
-                        }
+                        };
                     }
                     
                     test.future = runner(doneCallback);
@@ -205,48 +223,20 @@ define([
     };
     
     
-    TestFramework.prototype.onSuccess = function logSuccess(suiteName, testName) {
-        testDepth--;
-        global.console.log("[Success]: " + suiteName + ", " + testName + ".");
-    };
+    TestFramework.prototype.onStart = function onStart() {};
+    TestFramework.prototype.onEnd = function onEnd() {};
     
-    TestFramework.prototype.onFailure = function logFailure(suiteName, testName, error) {
-        testDepth--;
-        global.console.error("[Failure]: " + suiteName + ", " + testName + ".", error);
-        testDepth++;
-        global.console.info("Failed function:");
-        testDepth++;
-        global.console.info(this._formatFunction(this.suites[suiteName][testName].test));
-        testDepth--;
-        if (error && (error.stack || error.stacktrace)) {
-            global.console.info("Stack trace:");
-            testDepth++;
-            global.console.info(error.stack || error.stacktrace);
-            testDepth--;
-        }
-        testDepth--;
-    };
+    TestFramework.prototype.onSuccess = function onSuccess(suiteName, testName) {};
+    TestFramework.prototype.onFailure = function onFailure(suiteName, testName, error) {};
     
-    TestFramework.prototype.onSuiteStart = function onSuiteStart(suiteName) {
-        global.console.log("Suite starting: " + suiteName + ".");
-        testDepth++;
-    };
+    TestFramework.prototype.onSuiteStart = function onSuiteStart(suiteName) {};
+    TestFramework.prototype.onSuiteEnd = function onSuiteEnd(suiteName) {};
     
-    TestFramework.prototype.onSuiteEnd = function onSuiteEnd(suiteName) {
-        testDepth--;
-    };
+    TestFramework.prototype.onTestStart = function onTestStart(suiteName, testName) {};
+    TestFramework.prototype.onTestEnd = function onTestEnd(suiteName, testName) {};
     
-    TestFramework.prototype.onTestStart = function logTestStart(suiteName, testName) {
-        global.console.log("Test starting: " + suiteName + ", " + testName + ".");
-        testDepth++;
-    };
-    
-    TestFramework.prototype.onTestEnd = function logTestEnd(suiteName, testName) {
-        global.console.log("-------------------------------------------------------------");
-    };
-    
-    TestFramework.prototype.onTestDefined = function logTestEnd(suiteName, testName) {
-    };
+    TestFramework.prototype.onSuiteDefined = function onSuiteDefined(suiteName) {};
+    TestFramework.prototype.onTestDefined = function onTestDefined(suiteName, testName, test) {};
     
     
     // normalize the indentation of the function to strip out extra indentation in the source code
@@ -264,14 +254,13 @@ define([
     
     
     var errorHandlers = [];
-    //event.on("error", global, function (error) {
     global.onerror = function (error, fileName, lineNumber) {
         if (typeof error === "string") {
             error = {
                 message: error,
                 filename: fileName,
                 lineno: lineNumber
-            }
+            };
         }
         if (errorHandlers.length > 0) {
             errorHandlers[errorHandlers.length - 1](error);
@@ -289,63 +278,48 @@ define([
     }
     
     
-    var testr = new TestFramework();
-    var testModule = {
-        defineSuite: function defineSuite() {
-            return testr.defineSuite.apply(testr, arguments);
-        },
-        runAll: function runAll() {
-            return testr.runAll.apply(testr, arguments);
-        },
-        suites: testr.suites,
-        
-        setTestNodeParent: function setTestNodeParent() {
-            return testr.setTestNodeParent.apply(testr, arguments);
-        },
-        
-        getNewTestNode: function getNewTestNode() {
-            return testr.getNewTestNode.apply(testr, arguments);
-        },
-        
-        log: function () {},
-        info: function () {},
-        error: function () {},
-        
-        Framework: TestFramework // for testing the test framework
-    };
-    
-    
-    var testDepth = 1;
-    function offset() {
-        return (new Array(testDepth)).join("    ");
-    }
+    var testModule = new TestFramework();
+    testModule.Framework = TestFramework;
     
     if (!global.console) {
         global.console = {
             log: function () {},
             info: function () {},
             error: function () {}
-        }
+        };
     }
+    
     var oldLog = global.console.log;
-    global.console.log = function log() {
-        oldLog.apply(this, arguments);
-        var message = Array.prototype.join.call(arguments, " ");
-        testModule.log(offset() + message.replace(/\n/g, "\n" + offset()));
-    };
-    
     var oldInfo = global.console.info;
-    global.console.info = function info() {
-        oldInfo.apply(this, arguments);
-        var message = Array.prototype.join.call(arguments, " ");
-        testModule.info(offset() + message.replace(/\n/g, "\n" + offset()));
+    var oldError = global.console.error;
+    
+    TestFramework.prototype.doLog = function () {
+        oldLog.apply(global.console, arguments);
     };
     
-    var oldError = global.console.error;
-    global.console.error = function error() {
-        oldError.apply(this, arguments);
-        var message = Array.prototype.join.call(arguments, " ");
-        testModule.error(offset() + message.replace(/\n/g, "\n" + offset()));
+    TestFramework.prototype.doInfo = function () {
+        oldInfo.apply(global.console, arguments);
+    };
+    
+    TestFramework.prototype.doError = function () {
+        oldError.apply(global.console, arguments);
+    };
+    
+    
+    testModule.onLog = function () {};
+    testModule.onInfo = function () {};
+    testModule.onError = function () {};
+    
+    global.console.log = function () {
+        testModule.onLog.apply(testModule, arguments);
+    };
+    
+    global.console.info = function () {
+        testModule.onInfo.apply(testModule, arguments);
+    };
+    
+    global.console.error = function () {
+        testModule.onError.apply(testModule, arguments);
     };
     
     return testModule;

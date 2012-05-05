@@ -1,0 +1,184 @@
+.graphicalLogger {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+}
+
+.graphicalLogger * {
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+}
+
+.graphicalLogger #top {
+    position: relative;
+    width: 100%;
+    height: 1.5em;
+    padding: 2px;
+}
+
+.graphicalLogger .progressBar {
+    border: 1px solid;
+    height: 1.25em;
+}
+
+.graphicalLogger #mainWrapper {
+    width: 100%;
+    height: 100%;
+    margin-top: -1.75em;
+    padding-top: 1.75em;
+}
+
+.graphicalLogger #main {
+    position: relative;
+    height: 100%;
+    width: 100%;
+    border: 1px solid black;
+}
+
+.graphicalLogger #testListWrapper {
+    position: absolute;
+    width: 20%;
+    height: 100%;
+    border-right: 1px solid black;
+    overflow: auto;
+}
+
+.graphicalLogger #testList {
+    position: absolute;
+    min-width: 100%;
+}
+
+.graphicalLogger #testList * {
+    white-space: pre;
+}
+
+.graphicalLogger #testList .suite {
+    border-bottom: 3px solid gray;
+}
+
+.graphicalLogger #testList .suiteName {
+    border-bottom: 1px solid gray;
+}
+
+.graphicalLogger #testList .test {
+    padding-left: 1em;
+    border-bottom: 1px solid lightgray;
+    color: black;
+    background-color: white;
+}
+
+.graphicalLogger #testList .test:last-child {
+    border-bottom: 0;
+}
+
+.graphicalLogger #testList .suite.success, .graphicalLogger #testList .test.success {
+    background-color: lightgreen;
+    color: black;
+}
+
+.graphicalLogger #testList .suite.failure, .graphicalLogger #testList .test.failure {
+    background-color: lightcoral;
+    color: black;
+}
+
+.graphicalLogger #testList .suite.running, .graphicalLogger #testList .test.running {
+    background-color: lightblue;
+    color: black;
+}
+
+.graphicalLogger #tabContainer {
+    position: absolute;
+    right: 0;
+    width: 80%;
+    height: 100%;
+}
+
+.graphicalLogger #tabs {
+    width: 100%;
+    height: 2em;
+}
+
+.graphicalLogger .tab {
+    display: inline-block;
+    border-left: 1px solid black;
+    border-top: 1px solid black;
+    border-right: 1px solid black;
+    margin: 2px;
+    margin-top: .25em;
+    padding: 2px;
+    padding-top: .25em;
+    height: 1.75em;
+    background-color: lightgray;
+}
+
+.graphicalLogger .tab.selected {
+    background-color: white;
+}
+
+.graphicalLogger .tabContent {
+    position: absolute;
+    left: -10000px;
+    top: -10000px;
+    padding: .25em;
+}
+
+.graphicalLogger .tabContent.selected {
+    position: inherit;
+    left: 0;
+    top: 0;
+}
+
+.graphicalLogger #tabContentsWrapper {
+    width: 100%;
+    height: 100%;
+    margin-top: -2em;
+    padding-top: 2em;
+}
+
+.graphicalLogger #tabContents {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-top: 1px solid black;
+    border-left: 1px solid black;
+    overflow: auto;
+}
+
+
+.graphicalLogger #logContent {
+    white-space: pre;
+    font-family: monospace;
+}
+
+.graphicalLogger #logContent .info {
+    color: darkgoldenrod;
+}
+
+.graphicalLogger #logContent .error {
+    color: red;
+}
+
+.graphicalLogger #logContent > * > * * {
+    padding-left: 2em;
+}
+
+.graphicalLogger #logContent .test {
+    border-bottom: 1px solid gray;
+}
+
+.graphicalLogger #logContent .suiteStart {
+    border-bottom: 1px solid gray;
+    background-color: lightgray;
+}
+
+.graphicalLogger #logContent .success {
+    color: green;
+}
+
+.graphicalLogger #logContent .failure {
+    color: red;
+}
+
+.graphicalLogger #logContent .results {
+    font-size: x-large;
+}

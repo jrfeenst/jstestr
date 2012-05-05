@@ -78,9 +78,9 @@ define([
         },
         
         "Test With Console Output": function () {
-            console.log("This test needs to be manually verified.");
-            console.log("This is output that should be indented one more level than the test start.");
-            console.log("This line should also be indented");
+            console.log("This is a log statement. This test needs to be manually verified.");
+            console.info("This info output should be indented one more level than the test start.");
+            console.error("This error line should also be indented");
         },
         
         "Async Test With Done": function (done) {

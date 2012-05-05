@@ -106,6 +106,10 @@ define([
             } catch (error) {
                 assert.assertTrue(error, "Error should be truthy: type");
             }
+        },
+        
+        "Mock Function": function () {
+            
         }
     });
 });

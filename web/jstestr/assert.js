@@ -89,10 +89,76 @@ define([], function () {
         }
     }
     
+    function createMockFunction() {
+        var expectedArgs;
+        var actualArgs = [];
+        var expectedCalls = 1;
+        var result;
+        var mock = function () {
+            actualArgs.push(Array.prototype.slice.call(arguments));
+            return result;
+        };
+        mock.expect = function () {
+            expectedArgs = arguments;
+            return mock;
+        };
+        mock.result = function (obj) {
+            result = obj;
+            return mock;
+        };
+        mock.times = function (num) {
+            expectedCalls = num;
+            return mock;
+        };
+        
+        mock.verify = function (help) {
+            assertEquals(expectedCalls, actualArgs.length, "Number of calls. " + help);
+            
+            if (expectedArgs) {
+                for (var i in actualArgs) {
+                    assertEquals(expectedArgs, actualArgs[i], "Argument missmatch. " + help);
+                }
+            }
+        };
+        
+        return mock;
+    }
+    
+    
+    function createMockObject(methodsOrObj) {
+        if (typeof methodsOrObj === "function") {
+            methodsOrObj = methodsOrObj.prototype;
+        }
+        
+        var mock = {};
+        if (methodsOrObj instanceof Array) {
+            methodsOrObj.forEach(function (method) {
+                mock[method] = createMockFunction();
+            });
+        } else if (typeof methodsOrObj === "object") {
+            for (var method in methodsOrObj) {
+                mock[method] = createMockFunction();
+            }
+        }
+        
+        mock.verify = function (help) {
+            for (var method in mock) {
+                if (mock.hasOwnProperty(method) && typeof method === "function" && mock[method].verify) {
+                    mock[method].verify(help);
+                }
+            }
+        };
+        
+        return mock;
+    }
+    
+    
     return {
         assertTrue: assertTrue,
         assertFalse: assertFalse,
         assertEquals: assertEquals,
-        assertThrows: assertThrows
+        assertThrows: assertThrows,
+        createMockFunction: createMockFunction,
+        createMockObject: createMockObject
     };
 });
