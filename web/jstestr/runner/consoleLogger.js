@@ -1,6 +1,8 @@
 
 define([], function () {
     
+    var global = this;
+    
     function on(obj, method, func) {
         var oldMethod = obj[method];
         obj[method] = function () {
@@ -12,42 +14,22 @@ define([], function () {
     
     return {
         listen: function (test) {
-
-            var testDepth = 1;
-            function offset() {
-                return (new Array(testDepth)).join("    ");
-            }
-
-
-            function offsetLog(message) {
-                test.doLog(offset() + message.replace(/\n/g, "\n" + offset()));
-            }
-
-            function offsetInfo(message) {
-                test.doInfo(offset() + message.replace(/\n/g, "\n" + offset()));
-            }
-
-            function offsetError(message) {
-                test.doError(offset() + message.replace(/\n/g, "\n" + offset()));
-            }
-            
             
             on(test, "onLog", function onLog() {
-                offsetLog.apply(this, [Array.prototype.join.call(arguments, " ")]);
+                this.doLog(Array.prototype.join.call(arguments, " "));
             });
             
             on(test, "onInfo", function onInfo() {
-                offsetInfo.apply(this, [Array.prototype.join.call(arguments, " ")]);
+                this.doInfo(Array.prototype.join.call(arguments, " "));
             });
             
             on(test, "onError", function onError() {
-                offsetError.apply(this, [Array.prototype.join.call(arguments, " ")]);
+                this.doError(Array.prototype.join.call(arguments, " "));
             });
             
             
             on(test, "onStart", function onStart() {
-                offsetLog("Tests Starting");
-                testDepth++;
+                global.console.group("Tests Starting");
             });
             
             on(test, "onEnd", function onEnd() {
@@ -61,57 +43,49 @@ define([], function () {
                         }
                     }
                 }
-                testDepth--;
-                offsetLog("Tests done. " + passingTests + "/" + totalTests + " Passed");
+                var message;
+                if (passingTests < totalTests) {
+                    message = "[TESTS FAILED] ";
+                } else {
+                    message = "[TESTS PASSED] ";
+                }
+                this.doLog(message + passingTests + "/" + totalTests + " passed!");
+                
+                global.console.groupEnd();
             });
             
             on(test, "onSuiteStart", function onSuiteStart(suiteName) {
-                offsetLog("Suite starting: " + suiteName + ".");
-                testDepth++;
+                global.console.group("Suite: " + suiteName + ".");
             });
             
             on(test, "onSuiteEnd", function onSuiteEnd(suiteName) {
-                testDepth--;
+                global.console.groupEnd();
             });
             
             on(test, "onTestStart", function onTestStart(suiteName, testName) {
-                offsetLog("Test starting: " + suiteName + ", " + testName + ".");
-                testDepth++;
+                global.console.group("Test: " + suiteName + ", " + testName + ".");
             });
             
             on(test, "onTestEnd", function onTestEnd(suiteName, testName) {
-                offsetLog("-------------------------------------------------------------");
             });
             
             on(test, "onSuccess", function onSuccess(suiteName, testName) {
-                testDepth--;
-                offsetLog("[Success]: " + suiteName + ", " + testName + ".");
+                this.doLog("[Success]: " + suiteName + ", " + testName + ".");
+                global.console.groupEnd();
             });
             
             on(test, "onFailure", function onFailure(suiteName, testName, error) {
-                testDepth--;
-                offsetError("[Failure]: " + suiteName + ", " + testName + ".", error);
-                testDepth++;
-                offsetInfo("Failed function:");
-                testDepth++;
-                offsetInfo(this._formatFunction(this.suites[suiteName][testName].test));
-                testDepth--;
+                this.doError("[Failure]: " + suiteName + ", " + testName + ". " + error.mesage);
+                global.console.group("Failed function:");
+                this.doInfo(this._formatFunction(this.suites[suiteName][testName].test));
+                global.console.groupEnd();
                 if (error && (error.stack || error.stacktrace)) {
-                    offsetInfo("Stack trace:");
-                    testDepth++;
-                    offsetInfo(error.stack || error.stacktrace);
-                    testDepth--;
+                    global.console.group("Stack trace:");
+                    this.doInfo(error.stack || error.stacktrace);
+                    global.console.groupEnd();
                 }
-                testDepth--;
-            });
-            
-            
-            on(test, "onSuiteDefined", function onSuiteDefined(suiteName) {
-                
-            });
-            
-            on(test, "onTestDefined", function onTestDefined(suiteName) {
-                
+                global.console.groupEnd();
+                global.console.groupEnd();
             });
         }
     };

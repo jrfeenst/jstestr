@@ -269,6 +269,7 @@ define([
     
     (function () {
         var event;
+        queue.prototype.browser = queue.prototype.browser || {};
         
         // feature test for key events
         try {

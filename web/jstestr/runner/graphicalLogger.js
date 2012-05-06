@@ -44,8 +44,6 @@ define([
         listen: function(test, containerDiv) {
             var doc = containerDiv.ownerDocument;
             
-            test.setTestNodeParent(doc.getElementById("testPageContent"));
-            
             var link = doc.createElement("link");
             link.setAttribute("rel", "stylesheet");
             link.setAttribute("type", "text/css");
@@ -53,6 +51,8 @@ define([
             doc.querySelector("head").appendChild(link);
             
             containerDiv.innerHTML = template;
+            
+            test.setTestNodeParent(doc.getElementById("testPageContent"));
             
             
             // update the tabs
@@ -217,35 +217,71 @@ define([
                 testList.querySelector(testSelector(suiteName, testName)).className = "test success";
             });
             
-            on(test, "onFailure", function (suiteName, testName) {
+            on(test, "onFailure", function (suiteName, testName, error) {
                 var testNode = doc.createElement("div");
                 testNode.className = "failure";
                 testNode.innerHTML = "[FAILURE] '" + testName + "' - elapsed time: " +
                     test.suites[suiteName][testName].elapsedTime + "ms";
+                
+                var errorNode = doc.createElement("div");
+                errorNode.className = "error";
+                errorNode.innerHTML = "Error: " + error.message;
+                testNode.appendChild(errorNode);
+                
+                var functionHeaderNode = doc.createElement("div");
+                functionHeaderNode.className = "functionHeader";
+                functionHeaderNode.innerHTML = "Failed test function: ";
+                testNode.appendChild(functionHeaderNode);
+                
+                var functionNode = doc.createElement("div");
+                functionNode.className = "function";
+                functionNode.innerHTML = this._formatFunction(this.suites[suiteName][testName].test);
+                functionHeaderNode.appendChild(functionNode);
+                
+                if (error && (error.stack || error.stacktrace)) {
+                    var stackHeaderNode = doc.createElement("div");
+                    stackHeaderNode.className = "stackHeader";
+                    stackHeaderNode.innerHTML = "Stack trace: ";
+                    testNode.appendChild(stackHeaderNode);
+
+                    var stackNode = doc.createElement("div");
+                    stackNode.className = "stack";
+                    stackNode.innerHTML = error.stack || error.stacktrace;
+                    stackHeaderNode.appendChild(stackNode);
+                }
                 
                 logContent.querySelector(testSelector(suiteName, testName)).appendChild(testNode);
                 testList.querySelector(testSelector(suiteName, testName)).className = "test failure";
             });
             
             on(test, "onLog", function () {
-                var logNode = doc.createElement("div");
-                logNode.className = "log";
-                logNode.innerHTML = Array.prototype.join.call(arguments, " ");
-                logContent.querySelector(testSelector(this.currentSuiteName, this.currentTestName) + " .testLog").appendChild(logNode);
+                if (this.currentSuiteName && this.currentTestName) {
+                    var logNode = doc.createElement("div");
+                    logNode.className = "log";
+                    logNode.innerHTML = Array.prototype.join.call(arguments, " ");
+                    logContent.querySelector(testSelector(this.currentSuiteName, this.currentTestName) +
+                        " .testLog").appendChild(logNode);
+                }
             });
             
             on(test, "onInfo", function () {
-                var logNode = doc.createElement("div");
-                logNode.className = "info";
-                logNode.innerHTML = Array.prototype.join.call(arguments, " ");
-                logContent.querySelector(testSelector(this.currentSuiteName, this.currentTestName) + " .testLog").appendChild(logNode);
+                if (this.currentSuiteName && this.currentTestName) {
+                    var logNode = doc.createElement("div");
+                    logNode.className = "info";
+                    logNode.innerHTML = Array.prototype.join.call(arguments, " ");
+                    logContent.querySelector(testSelector(this.currentSuiteName, this.currentTestName) +
+                        " .testLog").appendChild(logNode);
+                }
             });
             
             on(test, "onError", function () {
-                var logNode = doc.createElement("div");
-                logNode.className = "error";
-                logNode.innerHTML = Array.prototype.join.call(arguments, " ");
-                logContent.querySelector(testSelector(this.currentSuiteName, this.currentTestName) + " .testLog").appendChild(logNode);
+                if (this.currentSuiteName && this.currentTestName) {
+                    var logNode = doc.createElement("div");
+                    logNode.className = "error";
+                    logNode.innerHTML = Array.prototype.join.call(arguments, " ");
+                    logContent.querySelector(testSelector(this.currentSuiteName, this.currentTestName) +
+                        " .testLog").appendChild(logNode);
+                }
             });
         }
     };

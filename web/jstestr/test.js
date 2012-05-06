@@ -8,6 +8,7 @@ define([
     var TestFramework = function (args) {
         args = args || {};
         this.suites = {};
+        this.specialFunctions = {};
         this.document = args.document || document;
         this.global = args.global || global;
     };
@@ -27,19 +28,24 @@ define([
             testsOrConfig = {};
         }
         for (var name in tests) {
-            this.defineTest(suiteName, name, tests[name]);
+            if (this._isSpecialFunction(name)) {
+                if (!this.specialFunctions[suiteName]) {
+                    this.specialFunctions[suiteName] = {};
+                }
+                this.specialFunctions[suiteName][name] = tests[name];        
+            } else {
+                this.defineTest(suiteName, name, tests[name]);
+            }
         }
     };
     
     TestFramework.prototype.defineTest = function defineTest(suiteName, name, test) {
-        var suite = this.suites[suiteName];
-        if (!suite) {
-            suite = {};
-            this.suites[suiteName] = suite;
+        if (!this.suites[suiteName]) {
+            this.suites[suiteName] = {};
             this.onSuiteDefined(suiteName);
         }
         test = this._normalizeTest(test);
-        suite[name] = test;
+        this.suites[suiteName][name] = test;
         this.onTestDefined(suiteName, name, test);
     };
     
@@ -47,29 +53,27 @@ define([
         this.testQueue = new queue();
         
         var self = this;
-        this.testQueue.then(function startSuiteTask() {
+        this.testQueue.then(function startTask() {
             self.onStart(suiteName);
             self.testQueue.next();
         });
         
         for (var suiteName in this.suites) {
-            var suite = this.suites[suiteName];
+            this._startSuite(suiteName);
             
-            this.startSuite(suiteName);
-            
-            for (var testName in suite) {
+            for (var testName in this.suites[suiteName]) {
                 this._runTest(suiteName, testName);
             }
             
-            this.endSuite(suiteName);
+            this._endSuite(suiteName);
         }
         
-        this.testQueue.then(function startSuiteTask() {
+        this.testQueue.then(function endTask() {
             self.onEnd(suiteName);
             self.testQueue.next();
         });
         
-        return this.testQueue.start(suite.timeout);
+        return this.testQueue.start(this.suites[suiteName].timeout);
     };
     
     TestFramework.prototype.setTestNodeParent = function setTestNodeParent(parentNode) {
@@ -103,6 +107,8 @@ define([
             var testExecutor = function testExecutor() {
                 var start = new Date();
                 var test = self.suites[suiteName][testName];
+                
+                var specialFunction = self.specialFunctions[suiteName];
                 
                 self.currentSuiteName = suiteName;
                 self.currentTestName = testName;
@@ -140,13 +146,34 @@ define([
                 }
                 
                 var success = function success() {
-                    done(true);
-                    self.onSuccess(suiteName, testName);
-                    self.onTestEnd(suiteName, testName);
-                    self.testQueue.next();
+                    try {
+                        if (specialFunction && specialFunction.afterEach) {
+                            specialFunction.afterEach.apply(test);
+                        }
+
+                        done(true);
+                        self.onSuccess(suiteName, testName);
+                        self.onTestEnd(suiteName, testName);
+                        self.testQueue.next();
+                        
+                    } catch (e) {
+                        failure(e);
+                    }
                 }
                 
                 var failure = function failure(error) {
+                    try {
+                        if (specialFunction && specialFunction.afterEach) {
+                            specialFunction.afterEach.apply(test);
+                        }
+                    } catch (e) {
+                        self.onError("Error while executing afterEach method: " + e.message);
+                    }
+                    
+                    if (!error.message) {
+                        error = {message: error};
+                    }
+                    
                     done(false);
                     test.error = error;
                     self.onFailure(suiteName, testName, error);
@@ -155,6 +182,11 @@ define([
                 }
                 
                 try {
+                    
+                    if (specialFunction && specialFunction.beforeEach) {
+                        specialFunction.beforeEach.apply(test);
+                    }
+                    
                     var runner;
                     if (test.test.name) {
                         runner = test.test;
@@ -205,18 +237,36 @@ define([
         });
     };
     
+    TestFramework.prototype._isSpecialFunction = function _isSpecialFunction(name) {
+        return name === "beforeEach" || name === "afterEach" ||
+            name === "beforeSuite" || name === "afterSuite";
+    };
     
-    TestFramework.prototype.startSuite = function startSuite(suiteName) {
+    TestFramework.prototype._startSuite = function _startSuite(suiteName) {
         var self = this;
         this.testQueue.then(function startSuiteTask() {
             self.onSuiteStart(suiteName);
+            
+            var specialFunction = self.specialFunctions[suiteName];
+            if (specialFunction && specialFunction.beforeSuite) {
+                specialFunction.context = {};
+                specialFunction.beforeSuite.apply(specialFunction.context);
+            }
+            
             self.testQueue.next();
         });
     };
     
-    TestFramework.prototype.endSuite = function endSuite(suiteName) {
+    TestFramework.prototype._endSuite = function _endSuite(suiteName) {
         var self = this;
         this.testQueue.then(function endSuiteTask() {
+            
+            var specialFunction = self.specialFunctions[suiteName];
+            if (specialFunction && specialFunction.afterSuite) {
+                specialFunction.context = specialFunction.context || {};
+                specialFunction.afterSuite.apply(specialFunction.context);
+            }
+            
             self.onSuiteEnd(suiteName);
             self.testQueue.next();
         });

@@ -15,8 +15,6 @@ define([], function () {
         onAfterTask: function () {}
     };
     
-    queue.prototype.browser = {};
-    
     /**
      * Add a function to be called at the end of the queue.
      * @param func The function to be called. This function must call <code>next</code> when it is
@@ -159,7 +157,7 @@ define([], function () {
     
     queue.prototype._waitFor = function _waitFor(condition, handler, options) {
         var pollingDelay = options.pollingDelay || 50;
-        var timeout = options.timeout || 10000;
+        var timeout = options.timeout || 500;
         
         var start = (new Date()).getTime();
         
@@ -179,7 +177,7 @@ define([], function () {
                     checkCondition();
                 }, pollingDelay);
             } else {
-                self.done(false, error.message);
+                self.done(false, error);
             }
         };
         checkCondition();
@@ -193,7 +191,7 @@ define([], function () {
                 handler && handler.apply(self, arguments);
                 self.next();
             } catch (e) {
-                self.done(false, e.message);
+                self.done(false, e);
             }
         };
     };

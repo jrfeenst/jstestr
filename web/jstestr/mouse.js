@@ -4,7 +4,7 @@ define([
     "./event"
 ], function (queue) {
     
-    var global = window;
+    var global = this;
     
 	
     queue.prototype.click = function click(element, handler, options) {
@@ -258,6 +258,8 @@ define([
     
     
     (function () {
+        queue.prototype.browser = queue.prototype.browser || {};
+        
         /*
             clickChanges : false,
             clickSubmits : false,

@@ -121,6 +121,10 @@ define([], function () {
             }
         };
         
+        mock.reset = function () {
+            actualArgs = [];
+        };
+        
         return mock;
     }
     
@@ -137,7 +141,9 @@ define([], function () {
             });
         } else if (typeof methodsOrObj === "object") {
             for (var method in methodsOrObj) {
-                mock[method] = createMockFunction();
+                if (typeof methodsOrObj[method] === "function") {
+                    mock[method] = createMockFunction();
+                }
             }
         }
         
@@ -145,6 +151,14 @@ define([], function () {
             for (var method in mock) {
                 if (mock.hasOwnProperty(method) && typeof method === "function" && mock[method].verify) {
                     mock[method].verify(help);
+                }
+            }
+        };
+        
+        mock.reset = function () {
+            for (var method in mock) {
+                if (mock.hasOwnProperty(method) && typeof method === "function" && mock[method].reset) {
+                    mock[method].reset();
                 }
             }
         };

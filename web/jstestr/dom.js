@@ -20,7 +20,6 @@ define([
     };
     
     queue.prototype.queryAll = function queryAll(selector, expectedCount, handler, options) {
-        
         var self = this;
         this.then(function () {
             options = options || {};
@@ -127,7 +126,7 @@ define([
                     throw new Error(errorMessage);
                 }
                 comparison = tokens[i + 2];
-                if (comparison !== undefined && (comparison !== "&" || comparison !== "|")) {
+                if (comparison !== undefined && comparison !== "&" && comparison !== "|") {
                     throw new Error(errorMessage);
                 }
             }

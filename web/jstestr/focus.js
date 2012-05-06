@@ -86,6 +86,8 @@ define([
     
     // feature test
     (function () {
+        queue.prototype.browser = queue.prototype.browser || {};
+        
         queue.prototype.browser.needsSyntheticFocus = true;
         queue.prototype.browser.supportsFocusin = true;
         queue.prototype.browser.supportsFocusout = true;
