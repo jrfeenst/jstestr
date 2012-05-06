@@ -139,6 +139,13 @@ define([
             assert.assertThrows(Error, mock.verify, "Verify mock with bad args");
         },
         
+        "Mock Function Throws": function () {
+            var mock = assert.createMockFunction();
+            mock.error(new Error("Fake error"));
+            assert.assertThrows(Error, mock, "Should throw");
+            mock.verify("Should be called");
+        },
+        
         "Mock Object Methods": function () {
             // mock from an array of method names
             var mock = assert.createMockObject(["method1", "method2"]);

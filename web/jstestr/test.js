@@ -5,6 +5,12 @@ define([
     
     var global = this;
     
+    /**
+     * Test framework which can define and run suites of tests. Tests can be synchronous or
+     * asynchronous using either futures or a callback. Test and suite before/after functions can
+     * also be defined. The test framework defines a set of events which can be used to monitor the
+     * tests.
+     */
     var TestFramework = function (args) {
         args = args || {};
         this.suites = {};
@@ -14,19 +20,20 @@ define([
     };
     
     
-    TestFramework.prototype._normalizeTest = function _normalizeTest(test) {
-        if (typeof test === "function") {
-            return {test: test};
-        } else {
-            return test;
-        }
-    };
-    
-    TestFramework.prototype.defineSuite = function defineSuite(suiteName, testsOrConfig, tests) {
-        if (!tests) {
-            tests = testsOrConfig;
-            testsOrConfig = {};
-        }
+    /**
+     * Define a suite of tests. There are 4 special keys in the tests objects which are reserved for
+     * usage as before/after functions:
+     *   "beforeSuite" executes once before all the tests of the suite.
+     *   "afterSuite" executes after all the tests in a suite have executed.
+     *   "beforeEach" executes before each test and shares the same context as the test itself.
+     *   "afterEach" executes after each test with the same context as the test itself.
+     * @param suiteName The name of the test suite. Can be any string.
+     * @param tests An object of key/value pairs which define each test as well as the before/after
+     * functions. The key can be any alpha numeric string and can include spaces. The value can
+     * either be a function or an object. If it is an object it must contain a key named "test"
+     * with a value of the test function.
+     */
+    TestFramework.prototype.defineSuite = function defineSuite(suiteName, tests) {
         for (var name in tests) {
             if (this._isSpecialFunction(name)) {
                 if (!this.specialFunctions[suiteName]) {
@@ -39,6 +46,14 @@ define([
         }
     };
     
+    
+    /**
+     * Define a single test in the specified suite with the specified name.
+     * @param suiteName The name of either an existing suite or a new one.
+     * @param name The name to give the test. Can be any alpha numeric string including spaces.
+     * @param test The test function or object. If it is an object it must contain a key named
+     * "test" with a value of the test function.
+     */
     TestFramework.prototype.defineTest = function defineTest(suiteName, name, test) {
         if (!this.suites[suiteName]) {
             this.suites[suiteName] = {};
@@ -49,6 +64,11 @@ define([
         this.onTestDefined(suiteName, name, test);
     };
     
+    
+    /**
+     * Run all the defined suites and their tests. The tests will execute in setTimeout calls.
+     * @return Future An object which can be used to be notified of the end of the test execution.
+     */
     TestFramework.prototype.runAll = function runAll() {
         this.testQueue = new queue();
         
@@ -76,10 +96,23 @@ define([
         return this.testQueue.start(this.suites[suiteName].timeout);
     };
     
+    
+    /**
+     * Set the parent node for any tests which need DOM nodes.
+     */
     TestFramework.prototype.setTestNodeParent = function setTestNodeParent(parentNode) {
         this.testNodeParent = parentNode;
     };
     
+    
+    /**
+     * Get a new DOM node to use in a test. This will be automatically cleaned up when the test
+     * ends.
+     * @param cleanup Optional argument to force early cleanup of previous test nodes. This is
+     * useful for tests which need multiple test nodes and wants to clean up previously used nodes.
+     * @return Node The new DOM node. It is a child of the node set with setTestNodeParent or the
+     * body of the document.
+     */
     TestFramework.prototype.getNewTestNode = function getNewTestNode(cleanup) {
         if (!this.testNodeParent) {
             this.testNodeParent = this.document.createElement("div");
@@ -93,14 +126,42 @@ define([
         return node;
     };
     
-    TestFramework.prototype._cleanupTestNodes = function _cleanupTestNodes() {
-        if (this.testNodeParent) {
-            this.testNodeParent.innerHTML = "";
-        }
-    };
     
-    TestFramework.prototype.ASYNC_TEST_PATTERN = /^function\s*( [\w\-$]+)?\s*\(done\)/;
+    /**
+     * Start and end events for all the suites and tests.
+     */
+    TestFramework.prototype.onStart = function onStart() {};
+    TestFramework.prototype.onEnd = function onEnd() {};
     
+    /**
+     * Success and failure for indivitual tests.
+     */
+    TestFramework.prototype.onSuccess = function onSuccess(suiteName, testName) {};
+    TestFramework.prototype.onFailure = function onFailure(suiteName, testName, error) {};
+    
+    /**
+     * Suite start and end events.
+     */
+    TestFramework.prototype.onSuiteStart = function onSuiteStart(suiteName) {};
+    TestFramework.prototype.onSuiteEnd = function onSuiteEnd(suiteName) {};
+    
+    /**
+     * Test start and end events.
+     */
+    TestFramework.prototype.onTestStart = function onTestStart(suiteName, testName) {};
+    TestFramework.prototype.onTestEnd = function onTestEnd(suiteName, testName) {};
+    
+    /**
+     * Suite and test defined events. These are fired when a new test or suite is created.
+     */
+    TestFramework.prototype.onSuiteDefined = function onSuiteDefined(suiteName) {};
+    TestFramework.prototype.onTestDefined = function onTestDefined(suiteName, testName, test) {};
+    
+    
+    /**
+     * Main runTest helper function. It queues up a test for execution. It also handles alot of
+     * error cases and asynchronous tests.
+     */
     TestFramework.prototype._runTest = function _runTest(suiteName, testName) {
         var self = this;
         this.testQueue.then(function _runTestTask() {
@@ -237,6 +298,23 @@ define([
         });
     };
     
+    
+    TestFramework.prototype._normalizeTest = function _normalizeTest(test) {
+        if (typeof test === "function") {
+            return {test: test};
+        } else {
+            return test;
+        }
+    };
+    
+    TestFramework.prototype._cleanupTestNodes = function _cleanupTestNodes() {
+        if (this.testNodeParent) {
+            this.testNodeParent.innerHTML = "";
+        }
+    };
+    
+    TestFramework.prototype.ASYNC_TEST_PATTERN = /^function\s*( [\w\-$]+)?\s*\(done\)/;
+    
     TestFramework.prototype._isSpecialFunction = function _isSpecialFunction(name) {
         return name === "beforeEach" || name === "afterEach" ||
             name === "beforeSuite" || name === "afterSuite";
@@ -271,22 +349,6 @@ define([
             self.testQueue.next();
         });
     };
-    
-    
-    TestFramework.prototype.onStart = function onStart() {};
-    TestFramework.prototype.onEnd = function onEnd() {};
-    
-    TestFramework.prototype.onSuccess = function onSuccess(suiteName, testName) {};
-    TestFramework.prototype.onFailure = function onFailure(suiteName, testName, error) {};
-    
-    TestFramework.prototype.onSuiteStart = function onSuiteStart(suiteName) {};
-    TestFramework.prototype.onSuiteEnd = function onSuiteEnd(suiteName) {};
-    
-    TestFramework.prototype.onTestStart = function onTestStart(suiteName, testName) {};
-    TestFramework.prototype.onTestEnd = function onTestEnd(suiteName, testName) {};
-    
-    TestFramework.prototype.onSuiteDefined = function onSuiteDefined(suiteName) {};
-    TestFramework.prototype.onTestDefined = function onTestDefined(suiteName, testName, test) {};
     
     
     // normalize the indentation of the function to strip out extra indentation in the source code

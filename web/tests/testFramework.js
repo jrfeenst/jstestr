@@ -53,6 +53,35 @@ define([
                 framework.suites["fake suite"]["fake test 2c"].success, "Second test should fail");
         },
         
+        "Before and After Functions": function () {
+            var ran = false;
+            var framework = new test.Framework();
+            
+            var mock = assert.createMockObject([
+                "beforeSuite",
+                "afterSuite",
+                "beforeEach",
+                "afterEach",
+                "test 1",
+                "test 2"
+            ]);
+            
+            // delete the special methods because they would be treated as test methods otherwise
+            var verify = mock.verify;
+            delete mock.verify;
+            delete mock.reset;
+            
+            mock.beforeEach.times(2);
+            mock.afterEach.times(2);
+            
+            framework.defineSuite("fake suite", mock);
+            
+            framework.runSync = true; // useful for testing the tests
+            framework.runAll();
+            
+            verify("Test methods should be called properly");
+        },
+        
         "Async Test": function () {
             var framework = new test.Framework();
             framework.defineSuite("fake suite", {

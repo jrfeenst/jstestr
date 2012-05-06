@@ -120,10 +120,11 @@
     left: -10000px;
     top: -10000px;
     padding: .25em;
+    min-width: 100%;
 }
 
 .graphicalLogger .tabContent.selected {
-    position: inherit;
+    position: absolute;
     left: 0;
     top: 0;
 }

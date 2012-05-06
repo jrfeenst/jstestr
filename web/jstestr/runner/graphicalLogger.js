@@ -121,6 +121,9 @@ define([
             
             
             var logContent = doc.getElementById("logContent");
+            function scrollToBottom() {
+                tabContents.scrollTop = tabContents.scrollHeight;
+            }
             
             on(test, "onStart", function () {
                 logContent.innerHTML = "";
@@ -160,6 +163,8 @@ define([
                 endNode.innerHTML += passingTests + "/" + totalTests + " passed!";
                 
                 logContent.appendChild(endNode);
+                
+                scrollToBottom();
             });
             
             on(test, "onSuiteStart", function (suiteName) {
@@ -175,6 +180,8 @@ define([
                 logContent.appendChild(suiteNode);
                 
                 testList.querySelector(suiteSelector(suiteName)).className += " running";
+                
+                scrollToBottom();
             });
             
             on(test, "onSuiteEnd", function (suiteName) {
@@ -185,6 +192,8 @@ define([
                 
                 testList.querySelector(suiteSelector(suiteName)).className = "suite " +
                     (success ? "success" : "failure");
+                
+                scrollToBottom();
             });
             
             on(test, "onTestStart", function (suiteName, testName) {
@@ -203,7 +212,11 @@ define([
                 
                 logContent.querySelector(suiteSelector(suiteName)).appendChild(testNode);
                 
-                testList.querySelector(testSelector(suiteName, testName)).className += " running";
+                var testListNode = testList.querySelector(testSelector(suiteName, testName));
+                testListNode.className += " running";
+                testListNode.scrollIntoView();
+                
+                scrollToBottom();
             });
             
             on(test, "onSuccess", function (suiteName, testName) {
@@ -215,6 +228,8 @@ define([
                 logContent.querySelector(testSelector(suiteName, testName)).appendChild(testNode);
                 
                 testList.querySelector(testSelector(suiteName, testName)).className = "test success";
+                
+                scrollToBottom();
             });
             
             on(test, "onFailure", function (suiteName, testName, error) {
@@ -252,6 +267,8 @@ define([
                 
                 logContent.querySelector(testSelector(suiteName, testName)).appendChild(testNode);
                 testList.querySelector(testSelector(suiteName, testName)).className = "test failure";
+                
+                scrollToBottom();
             });
             
             on(test, "onLog", function () {
@@ -261,6 +278,8 @@ define([
                     logNode.innerHTML = Array.prototype.join.call(arguments, " ");
                     logContent.querySelector(testSelector(this.currentSuiteName, this.currentTestName) +
                         " .testLog").appendChild(logNode);
+                    
+                    scrollToBottom();
                 }
             });
             
@@ -271,6 +290,8 @@ define([
                     logNode.innerHTML = Array.prototype.join.call(arguments, " ");
                     logContent.querySelector(testSelector(this.currentSuiteName, this.currentTestName) +
                         " .testLog").appendChild(logNode);
+                    
+                    scrollToBottom();
                 }
             });
             
@@ -281,10 +302,11 @@ define([
                     logNode.innerHTML = Array.prototype.join.call(arguments, " ");
                     logContent.querySelector(testSelector(this.currentSuiteName, this.currentTestName) +
                         " .testLog").appendChild(logNode);
+                    
+                    scrollToBottom();
                 }
             });
         }
     };
     
-
 });

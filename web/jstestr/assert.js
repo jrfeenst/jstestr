@@ -93,27 +93,35 @@ define([], function () {
         var expectedArgs;
         var actualArgs = [];
         var expectedCalls = 1;
+        var error;
         var result;
         var mock = function () {
             actualArgs.push(Array.prototype.slice.call(arguments));
+            if (error !== undefined) {
+                throw error;
+            }
             return result;
         };
-        mock.expect = function () {
+        mock.expect = function mockExpect() {
             expectedArgs = arguments;
             return mock;
         };
-        mock.result = function (obj) {
+        mock.error = function mockError(err) {
+            error = err;
+            return mock;
+        };
+        mock.result = function mockResult(obj) {
             result = obj;
             return mock;
         };
-        mock.times = function (num) {
+        mock.times = function mockTimes(num) {
             expectedCalls = num;
             return mock;
         };
         
-        mock.verify = function (help) {
+        mock.verify = function mockVerify(help) {
+            help = help || "";
             assertEquals(expectedCalls, actualArgs.length, "Number of calls. " + help);
-            
             if (expectedArgs) {
                 for (var i in actualArgs) {
                     assertEquals(expectedArgs, actualArgs[i], "Argument missmatch. " + help);
@@ -135,30 +143,33 @@ define([], function () {
         }
         
         var mock = {};
+        var mockFunctions = {};
         if (methodsOrObj instanceof Array) {
             methodsOrObj.forEach(function (method) {
                 mock[method] = createMockFunction();
+                mockFunctions[method] = mock[method];
             });
         } else if (typeof methodsOrObj === "object") {
             for (var method in methodsOrObj) {
                 if (typeof methodsOrObj[method] === "function") {
                     mock[method] = createMockFunction();
+                    mockFunctions[method] = mock[method];
                 }
             }
         }
         
-        mock.verify = function (help) {
-            for (var method in mock) {
-                if (mock.hasOwnProperty(method) && typeof method === "function" && mock[method].verify) {
-                    mock[method].verify(help);
+        mock.verify = function mockObjVerify(help) {
+            for (var method in mockFunctions) {
+                if (mockFunctions.hasOwnProperty(method)) {
+                    mockFunctions[method].verify("Method '" + method + "'. " + help);
                 }
             }
         };
         
-        mock.reset = function () {
-            for (var method in mock) {
-                if (mock.hasOwnProperty(method) && typeof method === "function" && mock[method].reset) {
-                    mock[method].reset();
+        mock.reset = function mockObjReset() {
+            for (var method in mockFunctions) {
+                if (mockFunctions.hasOwnProperty(method)) {
+                    mockFunctions[method].reset();
                 }
             }
         };
