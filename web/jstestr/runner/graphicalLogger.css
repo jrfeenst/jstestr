@@ -16,6 +16,16 @@
     padding: 2px;
 }
 
+.graphicalLogger #testProgressBar {
+    display: inline-block;
+    width: 50%;
+}
+
+.graphicalLogger #runAll {
+    vertical-align: top;
+    margin: 1px;
+}
+
 .graphicalLogger .progressBar {
     border: 1px solid;
     height: 1.25em;
@@ -84,6 +94,14 @@
 .graphicalLogger #testList .suite.running, .graphicalLogger #testList .test.running {
     background-color: lightblue;
     color: black;
+}
+
+.graphicalLogger #testList .controlsVisible .controls {
+    display: inherit;
+}
+
+.graphicalLogger #testList .controls {
+    display: none;
 }
 
 .graphicalLogger #tabContainer {

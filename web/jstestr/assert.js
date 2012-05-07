@@ -2,6 +2,21 @@
 define([], function () {
     var function_pattern = /function\s*( [\w\-$]+)?\s*\(/i;
     
+    function toString(obj) {
+        if (obj instanceof Node) {
+            var pieces = ["<" + obj.type];
+            if (obj.id) {
+                pieces.push('id="' + obj.id + '"');
+            } else if (obj.className) {
+                pieces.push('class="' + obj.className + '"');
+            }
+            pieces.push("/>");
+            return pieces.join(" ");
+        } else {
+            return obj.toString();
+        }
+    }
+    
     function createError(message, help) {
         help = help || "";
         var error = new Error(message + " " + help);
@@ -73,7 +88,8 @@ define([], function () {
     
     function assertEquals(expected, actual, help) {
         if (!_isEqual(expected, actual)) {
-            throw createError("Expected '" + expected + "', but found: '" + actual + "'.", help);
+            throw createError("Expected '" + toString(expected) + "', but found: '" +
+                toString(actual) + "'.", help);
         }
     }
     

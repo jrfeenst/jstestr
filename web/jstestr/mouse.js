@@ -1,8 +1,9 @@
 
 define([
+    "./dom",
     "./queue",
     "./event"
-], function (queue) {
+], function (dom, queue) {
     
     var global = this;
     

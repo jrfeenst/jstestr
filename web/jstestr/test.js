@@ -72,28 +72,45 @@ define([
     TestFramework.prototype.runAll = function runAll() {
         this.testQueue = new queue();
         
-        var self = this;
-        this.testQueue.then(function startTask() {
-            self.onStart(suiteName);
-            self.testQueue.next();
-        });
+        this._start();
         
         for (var suiteName in this.suites) {
-            this._startSuite(suiteName);
-            
-            for (var testName in this.suites[suiteName]) {
-                this._runTest(suiteName, testName);
-            }
-            
-            this._endSuite(suiteName);
+            this._runSuite(suiteName);
         }
         
-        this.testQueue.then(function endTask() {
-            self.onEnd(suiteName);
-            self.testQueue.next();
-        });
+        this._end();
+        
+        return this.testQueue.start(this.timeout);
+    };
+    
+    /**
+     * Run all the selected suite of tests. The tests will execute in setTimeout calls.
+     * @return Future An object which can be used to be notified of the end of the test execution.
+     */
+    TestFramework.prototype.runSuite = function runSuite(suiteName) {
+        this.testQueue = new queue();
+        
+        this._start();
+        this._runSuite(suiteName);
+        this._end();
         
         return this.testQueue.start(this.suites[suiteName].timeout);
+    };
+    
+    /**
+     * Run all the selected suite of tests. The tests will execute in setTimeout calls.
+     * @return Future An object which can be used to be notified of the end of the test execution.
+     */
+    TestFramework.prototype.runTest = function runTest(suiteName, testName) {
+        this.testQueue = new queue();
+        
+        this._start();
+        this._startSuite(suiteName);
+        this._runTest(suiteName, testName);
+        this._endSuite(suiteName);
+        this._end();
+        
+        return this.testQueue.start(this.suites[suiteName][testName].timeout);
     };
     
     
@@ -123,6 +140,7 @@ define([
         }
         var node = this.document.createElement("div");
         this.testNodeParent.appendChild(node);
+        this.onNewTestNode(node);
         return node;
     };
     
@@ -152,10 +170,53 @@ define([
     TestFramework.prototype.onTestEnd = function onTestEnd(suiteName, testName) {};
     
     /**
+     * Event fired when a new test node is created.
+     */
+    TestFramework.prototype.onNewTestNode = function onNewTestNode(node) {};
+    
+    /**
      * Suite and test defined events. These are fired when a new test or suite is created.
      */
     TestFramework.prototype.onSuiteDefined = function onSuiteDefined(suiteName) {};
     TestFramework.prototype.onTestDefined = function onTestDefined(suiteName, testName, test) {};
+    
+    
+    
+    /**
+     * Start of all test execution.
+     */
+    TestFramework.prototype._start = function _start() {
+        var self = this;
+        this.testQueue.then(function startTask() {
+            self.onStart();
+            self.testQueue.next();
+        });
+    };
+    
+    /**
+     * End of all test execution.
+     */
+    TestFramework.prototype._end = function _end() {
+        var self = this;
+        this.testQueue.then(function endTask() {
+            self.onEnd();
+            self.testQueue.next();
+        });
+    };
+    
+    
+    /**
+     * Run suite helper function. It queues up tasks for execution of all tests in the specified suite.
+     */
+    TestFramework.prototype._runSuite = function _runSuite(suiteName) {
+        this._startSuite(suiteName);
+
+        for (var testName in this.suites[suiteName]) {
+            this._runTest(suiteName, testName);
+        }
+
+        this._endSuite(suiteName);
+    };
     
     
     /**

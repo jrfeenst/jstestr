@@ -6,6 +6,7 @@ define([
     var template =
         '<div class="graphicalLogger">' +
             '<div id="top">' +
+                '<button id="runAll">Run All</button>' +
                 '<div id="testProgressBar" class="progressBar"></div>' +
             '</div>' +
             '<div id="mainWrapper">' +
@@ -40,6 +41,46 @@ define([
     }
     
     
+    function addClass(element, className) {
+        element.className += " " + className;
+    }
+    
+    function removeClass(element, className) {
+        var classes = element.className.split(" ");
+        var i = classes.indexOf(className);
+        if (i >= 0) {
+            classes.splice(i, 1);
+            element.className = classes.join(" ");
+        }
+    }
+    
+    function toggleClass(element, className) {
+        if (element.className.indexOf(className) >= 0) {
+            removeClass(element, className);
+        } else {
+            addClass(element, className);
+        }
+    }
+    
+            
+    function suiteSelector(suiteName) {
+        return '[data-suiteName="' + suiteName + '"]';
+    }
+
+    function testSelector(suiteName, testName) {
+        return suiteSelector(suiteName) + ' [data-testName="' + testName + '"]';
+    }
+    
+    
+    var escape = function escape(str) {
+      var self = arguments.callee;
+      self.text.data = str;
+      return self.div.innerHTML;
+    };
+    escape.div = document.createElement("div");
+    escape.text = document.createTextNode("");
+    escape.div.appendChild(escape.text);
+    
     return {
         listen: function(test, containerDiv) {
             var doc = containerDiv.ownerDocument;
@@ -58,29 +99,81 @@ define([
             // update the tabs
             var tabs = doc.getElementById("tabs");
             var tabContents = doc.getElementById("tabContents");
-            tabs.addEventListener("click", function (event) {
-                var i, id = event.target.id;
-                for (i in tabs.children) {
-                    tabs.children[i].className = "tab";
+            var logContent = doc.getElementById("logContent");
+            var testList = doc.getElementById("testList");
+            var runAll = doc.getElementById("runAll");
+            
+            function switchTab(node) {
+                var i, id = node.id;
+                for (i = 0; i < tabs.children.length; i++) {
+                    removeClass(tabs.children[i], "selected");
                 }
-                for (i in tabContents.children) {
-                    tabContents.children[i].className = "tabContent";
+                for (i = 0; i < tabContents.children.length; i++) {
+                    removeClass(tabContents.children[i], "selected");
                 }
-                event.target.className = "tab selected";
+                addClass(node, "selected");
                 var selectedTab = doc.getElementById(id.substring(0, id.length - 3) + "Content");
-                selectedTab.className = "tabContent selected";
+                addClass(selectedTab, "selected");
+            }
+            
+            tabs.addEventListener("click", function (event) {
+                switchTab(event.target);
             }, false);
             
-            
-            var testList = doc.getElementById("testList");
-            
-            function suiteSelector(suiteName) {
-                return '[data-suiteName="' + suiteName + '"]';
+            function showTestPageTab() {
+                switchTab(doc.getElementById("testPageTab"));
             }
             
-            function testSelector(suiteName, testName) {
-                return suiteSelector(suiteName) + ' [data-testName="' + testName + '"]';
+            function showLogTab() {
+                switchTab(doc.getElementById("logTab"));
             }
+            
+            
+            event.on("click", runAll, function () {
+                test.runAll();
+            });
+            
+            
+            function toggleControls(node) {
+                for (var suite in test.suites) {
+                    var suiteNode = testList.querySelector(suiteSelector(suite) + " .suiteName");
+                    if (suiteNode !== node) {
+                        removeClass(suiteNode, "controlsVisible");
+                    }
+                    for (var name in test.suites[suite]) {
+                        var testNode = testList.querySelector(testSelector(suite, name));
+                        if (testNode !== node) {
+                            removeClass(testNode, "controlsVisible");
+                        }
+                    }
+                }
+                
+                toggleClass(node, "controlsVisible");
+            }
+            
+            
+            function renderControls(suiteName, testName) {
+                var controlsNode = doc.createElement("div");
+                controlsNode.className = "controls";
+                
+                var runNode = doc.createElement("button");
+                runNode.className = "run";
+                runNode.innerHTML = "Run";
+                controlsNode.appendChild(runNode);
+                
+                event.on("click", runNode, function (ev) {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    if (testName) {
+                        test.runTest(suiteName, testName);
+                    } else {
+                        test.runSuite(suiteName);
+                    }
+                });
+                
+                return controlsNode;
+            }
+            
             
             function renderSuite(suiteName) {
                 var suiteNode = doc.createElement("div");
@@ -92,8 +185,14 @@ define([
                 suiteNameNode.innerHTML = suiteName;
                 
                 suiteNode.appendChild(suiteNameNode);
-                
                 testList.appendChild(suiteNode);
+                
+                suiteNameNode.appendChild(renderControls(suiteName));
+                
+                event.on("click", suiteNameNode, function () {
+                    toggleControls(suiteNameNode);
+                });
+                
                 return suiteNode;
             }
             
@@ -105,6 +204,16 @@ define([
                 
                 var suiteNode = testList.querySelector(suiteSelector(suiteName));
                 suiteNode.appendChild(testNode);
+                
+                testNode.appendChild(renderControls(suiteName, testName));
+                
+                event.on("click", testNode, function () {
+                    var output = logContent.querySelector(testSelector(suiteName, testName));
+                    if (output) {
+                        output.scrollIntoView();
+                    }
+                    toggleControls(testNode);
+                });
             }
             
             for (var suiteName in test.suites) {
@@ -119,29 +228,17 @@ define([
             on(test, "onSuiteDefined", renderSuite);
             on(test, "onTestDefined", renderTest);
             
-            
-            var logContent = doc.getElementById("logContent");
             function scrollToBottom() {
                 tabContents.scrollTop = tabContents.scrollHeight;
             }
             
             on(test, "onStart", function () {
                 logContent.innerHTML = "";
-                
-                testList.innerHTML = "";
-                for (var suiteName in test.suites) {
-                    renderSuite(suiteName);
-
-                    var suite = test.suites[suiteName];
-                    for (var testName in suite) {
-                        renderTest(suiteName, testName);
-                    }
-                }
             });
             
             on(test, "onEnd", function () {
                 var endNode = doc.createElement("div");
-                endNode.className = "results ";
+                endNode.className = "results";
                 
                 var totalTests = 0;
                 var passingTests = 0;
@@ -153,12 +250,13 @@ define([
                         }
                     }
                 }
+                
                 if (passingTests < totalTests) {
                     endNode.innerHTML = "[TESTS FAILED] ";
-                    endNode.className += "failure";
+                    addClass(endNode, "failure");
                 } else {
                     endNode.innerHTML = "[TESTS PASSED] ";
-                    endNode.className += "success";
+                    addClass(endNode, "success");
                 }
                 endNode.innerHTML += passingTests + "/" + totalTests + " passed!";
                 
@@ -179,7 +277,12 @@ define([
                 
                 logContent.appendChild(suiteNode);
                 
-                testList.querySelector(suiteSelector(suiteName)).className += " running";
+                var suiteListNode = testList.querySelector(suiteSelector(suiteName));
+                removeClass(suiteListNode, "success");
+                removeClass(suiteListNode, "failure");
+                addClass(suiteListNode, "running");
+                
+                
                 
                 scrollToBottom();
             });
@@ -190,8 +293,9 @@ define([
                     success = success && test.suites[suiteName][testName].success;
                 }
                 
-                testList.querySelector(suiteSelector(suiteName)).className = "suite " +
-                    (success ? "success" : "failure");
+                var suite = testList.querySelector(suiteSelector(suiteName));
+                addClass(suite, success ? "success" : "failure");
+                removeClass(suite, "running");
                 
                 scrollToBottom();
             });
@@ -213,9 +317,16 @@ define([
                 logContent.querySelector(suiteSelector(suiteName)).appendChild(testNode);
                 
                 var testListNode = testList.querySelector(testSelector(suiteName, testName));
-                testListNode.className += " running";
-                testListNode.scrollIntoView();
+                removeClass(testListNode, "success");
+                removeClass(testListNode, "failure");
+                addClass(testListNode, "running");
                 
+                scrollToBottom();
+            });
+            
+            on(test, "onTestEnd", function (suiteName, testName) {
+                removeClass(testList.querySelector(testSelector(suiteName, testName)), "running");
+                showLogTab();
                 scrollToBottom();
             });
             
@@ -227,9 +338,7 @@ define([
                 
                 logContent.querySelector(testSelector(suiteName, testName)).appendChild(testNode);
                 
-                testList.querySelector(testSelector(suiteName, testName)).className = "test success";
-                
-                scrollToBottom();
+                addClass(testList.querySelector(testSelector(suiteName, testName)), "success");
             });
             
             on(test, "onFailure", function (suiteName, testName, error) {
@@ -240,7 +349,7 @@ define([
                 
                 var errorNode = doc.createElement("div");
                 errorNode.className = "error";
-                errorNode.innerHTML = "Error: " + error.message;
+                errorNode.innerHTML = "Error: " + escape(error.message);
                 testNode.appendChild(errorNode);
                 
                 var functionHeaderNode = doc.createElement("div");
@@ -250,7 +359,7 @@ define([
                 
                 var functionNode = doc.createElement("div");
                 functionNode.className = "function";
-                functionNode.innerHTML = this._formatFunction(this.suites[suiteName][testName].test);
+                functionNode.innerHTML = escape(this._formatFunction(this.suites[suiteName][testName].test));
                 functionHeaderNode.appendChild(functionNode);
                 
                 if (error && (error.stack || error.stacktrace)) {
@@ -261,21 +370,19 @@ define([
 
                     var stackNode = doc.createElement("div");
                     stackNode.className = "stack";
-                    stackNode.innerHTML = error.stack || error.stacktrace;
+                    stackNode.innerHTML = escape(error.stack || error.stacktrace);
                     stackHeaderNode.appendChild(stackNode);
                 }
                 
                 logContent.querySelector(testSelector(suiteName, testName)).appendChild(testNode);
-                testList.querySelector(testSelector(suiteName, testName)).className = "test failure";
-                
-                scrollToBottom();
+                addClass(testList.querySelector(testSelector(suiteName, testName)), "failure");
             });
             
             on(test, "onLog", function () {
                 if (this.currentSuiteName && this.currentTestName) {
                     var logNode = doc.createElement("div");
                     logNode.className = "log";
-                    logNode.innerHTML = Array.prototype.join.call(arguments, " ");
+                    logNode.innerHTML = escape(Array.prototype.join.call(arguments, " "));
                     logContent.querySelector(testSelector(this.currentSuiteName, this.currentTestName) +
                         " .testLog").appendChild(logNode);
                     
@@ -287,7 +394,7 @@ define([
                 if (this.currentSuiteName && this.currentTestName) {
                     var logNode = doc.createElement("div");
                     logNode.className = "info";
-                    logNode.innerHTML = Array.prototype.join.call(arguments, " ");
+                    logNode.innerHTML = escape(Array.prototype.join.call(arguments, " "));
                     logContent.querySelector(testSelector(this.currentSuiteName, this.currentTestName) +
                         " .testLog").appendChild(logNode);
                     
@@ -299,13 +406,18 @@ define([
                 if (this.currentSuiteName && this.currentTestName) {
                     var logNode = doc.createElement("div");
                     logNode.className = "error";
-                    logNode.innerHTML = Array.prototype.join.call(arguments, " ");
+                    logNode.innerHTML = escape(Array.prototype.join.call(arguments, " "));
                     logContent.querySelector(testSelector(this.currentSuiteName, this.currentTestName) +
                         " .testLog").appendChild(logNode);
                     
                     scrollToBottom();
                 }
             });
+            
+            
+            on(test, "onNewTestNode", function () {
+                showTestPageTab();
+            })
         }
     };
     
