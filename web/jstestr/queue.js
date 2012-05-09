@@ -98,7 +98,9 @@ define([], function () {
                 return future;
             },
             cancel: function () {
-                self.done(false, "Queue execution was cancelled.");
+                if (self.running) {
+                    self.done(false, "Queue execution was cancelled.");
+                }
             }
         };
         
@@ -171,7 +173,7 @@ define([], function () {
             }
             
             if (!error) {
-                handler.call(this, output);
+                handler.call(self, output);
             } else if ((new Date()).getTime() - start < timeout) {
                 setTimeout(function () {
                     checkCondition();
@@ -186,7 +188,7 @@ define([], function () {
 
     queue.prototype._wrapHandler = function _wrapHandle(handler) {
         var self = this;
-        return function () {
+        return function _wrappedHandler() {
             try {
                 handler && handler.apply(self, arguments);
                 self.next();

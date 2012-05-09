@@ -3,7 +3,7 @@ define([
     "./queue"
 ], function (queue) {
     
-    queue.prototype.browsers = {};
+    queue.prototype.browser = {};
     
     var tests = [];
     

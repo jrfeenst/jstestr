@@ -21,26 +21,26 @@ define([
     };
     
     queue.prototype.move = function move(from, to, handler, options) {
-        this.then(function _moveTask(testr) {
+        this.then(function _moveTask() {
             options = options || {};
             
             var moveDelay = options.moveDelay || 5;
             
-            var start = testr._normalizeElementPoint(from);
-            var end = testr._normalizeElementPoint(to);
+            var start = this._normalizeElementPoint(from);
+            var end = this._normalizeElementPoint(to);
             if (!end.element) {
                 end.element = start.element;
             }
             
-            testr._normalizeElement(start.element, function (elementFrom) {
-                testr._normalizeElement(end.element, function (elementTo) {
+            this._normalizeElement(start.element, function (elementFrom) {
+                this._normalizeElement(end.element, function (elementTo) {
 
                     var moveHandler = function (x, y) {
                         return function _moveHandler() {
-                            var moveOptions = testr._shallowClone(options);
+                            var moveOptions = this._shallowClone(options);
                             moveOptions.clientX = x;
                             moveOptions.clientY = y;
-                            testr._mouseMove(testr.document.elementFromPoint(x, y), moveOptions);
+                            this._mouseMove(this.document.elementFromPoint(x, y), moveOptions);
                         };
                     };
                     
@@ -61,14 +61,14 @@ define([
                         var x = start.x + i / distance * distX;
                         var y = start.y + i / distance * distY;
                         
-                        testr.delay(moveDelay, moveHandler(x, y));
+                        this.delay(moveDelay, moveHandler.call(this, x, y));
                     }
                     
-                    testr.delay(moveDelay, moveHandler(end.x, end.y));
+                    this.delay(moveDelay, moveHandler(end.x, end.y));
                     
-                    testr.then(testr._wrapHandler(handler));
-                    testr.start();
-
+                    this.then(this._wrapHandler(handler));
+                    this.next();
+                    
                 }, options);
             }, options);
         });
@@ -76,47 +76,47 @@ define([
 
 	
     queue.prototype.drag = function drag(from, to, handler, options) {
-        this.then(function _dragTask(testr) {
+        this.then(function _dragTask() {
             options = options || {};
             
             var moveDelay = options.moveDelay || 5;
             
-            var start = testr._normalizeElementPoint(from);
-            var end = testr._normalizeElementPoint(to);
+            var start = this._normalizeElementPoint(from);
+            var end = this._normalizeElementPoint(to);
             if (!end.element) {
                 end.element = start.element;
             }
             
-            testr._normalizeElement(start.element, function (elementFrom) {
-                testr._normalizeElement(end.element, function (elementTo) {
+            this._normalizeElement(start.element, function (elementFrom) {
+                this._normalizeElement(end.element, function (elementTo) {
                     
                     start.x = elementFrom.getBoundingClientRect().left + (start.x || 0);
                     start.y = elementFrom.getBoundingClientRect().top + (start.y || 0);
                     start.element = elementFrom;
 
-                    var downOptions = testr._shallowClone(options);
+                    var downOptions = this._shallowClone(options);
                     downOptions.clientX = start.x;
                     downOptions.clientY = start.y;
-                    testr._mouseDown(elementFrom, downOptions);
+                    this._mouseDown(elementFrom, downOptions);
 
                     start.x -= elementFrom.getBoundingClientRect().left;
                     start.y -= elementFrom.getBoundingClientRect().top;
-                    testr.move(start, end, undefined, options);
+                    this.move(start, end, undefined, options);
                     
-                    testr.delay(moveDelay, function () {
+                    this.delay(moveDelay, function moveTask() {
 
                         end.x = elementTo.getBoundingClientRect().left + (end.x || 0);
                         end.y = elementTo.getBoundingClientRect().top + (end.y || 0);
                         end.element = elementTo;
 
-                        var upOptions = testr._shallowClone(options);
+                        var upOptions = this._shallowClone(options);
                         upOptions.clientX = end.x;
                         upOptions.clientY = end.y;
-                        testr._mouseUp(elementTo, upOptions);
+                        this._mouseUp(elementTo, upOptions);
                     });
 
-                    testr.then(testr._wrapHandler(handler));
-                    testr.start();
+                    this.then(this._wrapHandler(handler));
+                    this.next();
 
                 }, options);
             }, options);

@@ -99,11 +99,11 @@ define([
         queue.prototype.supportsFocusin = false;
         queue.prototype.supportsFocusout = false;
         var focusListener = event.on("focus", textArea1, function () {
-            queue.prototype.needsSyntheticFocus = false;
+            queue.prototype.browser.needsSyntheticFocus = false;
         });
         var focusinListener = event.on("focusin", textArea1, function () {
-            queue.prototype.supportsFocusin = true;
-            queue.prototype.supportsFocusout = true;
+            queue.prototype.browser.supportsFocusin = true;
+            queue.prototype.browser.supportsFocusout = true;
         });
         textArea1.focus();
         

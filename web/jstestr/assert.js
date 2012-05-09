@@ -13,7 +13,13 @@ define([], function () {
             pieces.push("/>");
             return pieces.join(" ");
         } else {
-            return obj.toString();
+            var str = obj.toString();
+            if (str.length > 50) {
+                str = "\n    '" + str + "'\n";
+            } else {
+                str = "'" + str + "'";
+            }
+            return str;
         }
     }
     
@@ -36,13 +42,13 @@ define([], function () {
         
     function assertTrue(expression, help) {
         if (!expression) {
-            throw createError("Expression is not true: '" + expression + "'.", help);
+            throw createError("Expression is not true: " + toString(expression) + ".", help);
         }
     }
     
     function assertFalse(expression, help) {
         if (expression) {
-            throw createError("Expression is not false: '" + expression + "'.", help);
+            throw createError("Expression is not false: " + toString(expression) + ".", help);
         }
     }
     
@@ -88,19 +94,19 @@ define([], function () {
     
     function assertEquals(expected, actual, help) {
         if (!_isEqual(expected, actual)) {
-            throw createError("Expected '" + toString(expected) + "', but found: '" +
-                toString(actual) + "'.", help);
+            throw createError("Expected " + toString(expected) + " but found: " +
+                toString(actual) + ".", help);
         }
     }
     
     function assertThrows(expected, func, help) {
         try {
             func();
-            throw createError("Did not receive any exception. Expected: '" + expected + "'.", help);
+            throw createError("Did not receive any exception. Expected: " + toString(expected) + ".", help);
         } catch (actual) {
             if (!(actual instanceof expected)) {
-                throw createError("Expected exception: '" + expected +
-                    "', but received: '" + actual + "'.", help);
+                throw createError("Expected exception: " + toString(expected) +
+                    ", but received: " + toString(actual) + ".", help);
             }
         }
     }

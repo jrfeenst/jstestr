@@ -154,6 +154,12 @@
                     e.target.id && log.push("target:" + e.target.id);
                     
                     eventLog.innerHTML += (new Date()).getTime() + ": " + log.join(", ") + "\n";
+                    
+                    if ((e.type === "keypress" || e.type === "textInput"  || e.type === "input") &&
+                        e.target.value !== undefined) {
+                        eventLog.innerHTML += "value: " + e.target.value + "\n";
+                    }
+                    
                     eventLog.scrollTop = eventLog.scrollHeight;
                 };
                 
@@ -162,6 +168,7 @@
                 document.body.addEventListener("keydown", eventListener, true);
                 document.body.addEventListener("keypress", eventListener, true);
                 document.body.addEventListener("keyup", eventListener, true);
+                document.body.addEventListener("textinput", eventListener, true);
                 document.body.addEventListener("textInput", eventListener, true);
                 document.body.addEventListener("mousedown", eventListener, true);
                 document.body.addEventListener("mouseup", eventListener, true);
@@ -176,6 +183,7 @@
                 document.body.addEventListener("blur", eventListener, true);
                 document.body.addEventListener("focus", eventListener, true);
                 document.body.addEventListener("change", eventListener, true);
+                document.body.addEventListener("input", eventListener, true);
                 document.body.addEventListener("contextmenu", eventListener, true);
                 document.body.addEventListener("copy", eventListener, true);
                 document.body.addEventListener("cut", eventListener, true);

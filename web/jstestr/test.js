@@ -243,6 +243,15 @@ define([
                 test.error = undefined;
                 
                 
+                var timeout = setTimeout(function () {
+                    if (test.future && test.future.cancel) {
+                        test.future.cancel();
+                    } else {
+                        failure("Test timeout");
+                    }
+                }, test.timeout || 2000);
+                
+                
                 var errorHandler = registerErrorHandler(self.global, function (ev) {
                     var message = ev.message + ", " + ev.filename + "@" + ev.lineno;
                     if (test.future) {
@@ -255,7 +264,9 @@ define([
                 });
                 
                 
-                var done = function done(success) {
+                function done(success) {
+                    clearTimeout(timeout);
+                    
                     var end = new Date();
                     test.elapsedTime = end.getTime() - start.getTime();
                     test.success = success;
@@ -267,7 +278,7 @@ define([
                     errorHandler.remove();
                 }
                 
-                var success = function success() {
+                function success() {
                     try {
                         if (specialFunction && specialFunction.afterEach) {
                             specialFunction.afterEach.apply(test);
@@ -283,7 +294,7 @@ define([
                     }
                 }
                 
-                var failure = function failure(error) {
+                function failure(error) {
                     try {
                         if (specialFunction && specialFunction.afterEach) {
                             specialFunction.afterEach.apply(test);

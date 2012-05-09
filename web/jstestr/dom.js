@@ -146,7 +146,7 @@ define([
         if (typeof element === "string") {
             this._query(element, handler, options);
         } else {
-            handler(element);
+            handler.call(this, element);
         }
     };    
     
