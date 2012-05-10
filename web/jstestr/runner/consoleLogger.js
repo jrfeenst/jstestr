@@ -33,23 +33,13 @@ define([], function () {
             });
             
             on(test, "onEnd", function onEnd() {
-                var totalTests = 0;
-                var passingTests = 0;
-                for (var suiteName in this.suites) {
-                    for (var testName in this.suites[suiteName]) {
-                        totalTests++;
-                        if (this.suites[suiteName][testName].success) {
-                            passingTests++;
-                        }
-                    }
-                }
                 var message;
-                if (passingTests < totalTests) {
+                if (this.successfulTests < this.totalTests) {
                     message = "[TESTS FAILED] ";
                 } else {
                     message = "[TESTS PASSED] ";
                 }
-                this.doLog(message + passingTests + "/" + totalTests + " passed!");
+                this.doLog(message + this.successfulTests + "/" + this.totalTests + " passed!");
                 
                 global.console.groupEnd();
             });

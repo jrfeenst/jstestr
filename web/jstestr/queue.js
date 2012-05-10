@@ -40,6 +40,7 @@ define([], function () {
                     this.hooks.onBeforeTask();
                     var taskToExecute = this._currentTask;
                     this._currentTask++;
+                    this._insertionPoint = this._currentTask;
                     this._queue[taskToExecute].call(this);
                     this.hooks.onAfterTask();
                 } catch (e) {

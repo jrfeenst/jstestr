@@ -36,6 +36,8 @@
                 var args = query.split("&");
 
                 var modules = [];
+                var suite;
+                var suiteTest;
                 var config = {};
                 var run = true;
 
@@ -46,6 +48,12 @@
                     switch (key.toLowerCase()) {
                         case "module":
                             modules.push(value);
+                            break;
+                        case "suite":
+                            suite = unescape(value);
+                            break;
+                        case "test":
+                            suiteTest = unescape(value);
                             break;
                         case "config":
                             config = JSON.parse(value);
@@ -62,7 +70,14 @@
 
                 require(modules, function () {
                     if (run) {
-                        test.runAll();
+                        if (suite) {
+                            test.runSuite(suite);
+                        } else if (suiteTest) {
+                            var parts = suiteTest.split(":");
+                            test.runTest(parts[0], parts[1]);
+                        } else {
+                            test.runAll();
+                        }
                     } 
                 });
             });

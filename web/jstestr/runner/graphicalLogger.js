@@ -161,6 +161,11 @@ define([
                 runNode.innerHTML = "Run";
                 controlsNode.appendChild(runNode);
                 
+                var runReloadNode = doc.createElement("button");
+                runReloadNode.className = "run";
+                runReloadNode.innerHTML = "Reload and Run";
+                controlsNode.appendChild(runReloadNode);
+                
                 event.on("click", runNode, function (ev) {
                     ev.preventDefault();
                     ev.stopPropagation();
@@ -169,6 +174,22 @@ define([
                     } else {
                         test.runSuite(suiteName);
                     }
+                });
+                
+                event.on("click", runReloadNode, function (ev) {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    
+                    var url = location.href;
+                    url = url.replace(/(&|\?)suite=[^&]+|(&|\?)test=[^&]+/, "");
+                    var sep = url.indexOf("?") < 0 ? "?" : "&";
+                    var newQuery;
+                    if (testName) {
+                        newQuery = "test=" + escape(suiteName) + ":" + escape(testName);
+                    } else {
+                        newQuery = "suite=" + escape(suiteName);
+                    }
+                    location.href = url + sep + newQuery;
                 });
                 
                 return controlsNode;
@@ -240,25 +261,14 @@ define([
                 var endNode = doc.createElement("div");
                 endNode.className = "results";
                 
-                var totalTests = 0;
-                var passingTests = 0;
-                for (var suiteName in this.suites) {
-                    for (var testName in this.suites[suiteName]) {
-                        totalTests++;
-                        if (this.suites[suiteName][testName].success) {
-                            passingTests++;
-                        }
-                    }
-                }
-                
-                if (passingTests < totalTests) {
+                if (test.successfulTests < test.totalTests) {
                     endNode.innerHTML = "[TESTS FAILED] ";
                     addClass(endNode, "failure");
                 } else {
                     endNode.innerHTML = "[TESTS PASSED] ";
                     addClass(endNode, "success");
                 }
-                endNode.innerHTML += passingTests + "/" + totalTests + " passed!";
+                endNode.innerHTML += test.successfulTests + "/" + test.totalTests + " passed!";
                 
                 logContent.appendChild(endNode);
                 
@@ -290,7 +300,7 @@ define([
             on(test, "onSuiteEnd", function (suiteName) {
                 var success = true;
                 for (var testName in test.suites[suiteName]) {
-                    success = success && test.suites[suiteName][testName].success;
+                    success = success && test.suites[suiteName][testName].success !== false;
                 }
                 
                 var suite = testList.querySelector(suiteSelector(suiteName));

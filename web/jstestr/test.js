@@ -186,6 +186,10 @@ define([
      * Start of all test execution.
      */
     TestFramework.prototype._start = function _start() {
+        this.totalTests = 0;
+        this.executedTests = 0;
+        this.successfulTests = 0;
+        
         var self = this;
         this.testQueue.then(function startTask() {
             self.onStart();
@@ -224,6 +228,8 @@ define([
      * error cases and asynchronous tests.
      */
     TestFramework.prototype._runTest = function _runTest(suiteName, testName) {
+        this.totalTests++;
+        
         var self = this;
         this.testQueue.then(function _runTestTask() {
             var testExecutor = function testExecutor() {
@@ -231,6 +237,8 @@ define([
                 var test = self.suites[suiteName][testName];
                 
                 var specialFunction = self.specialFunctions[suiteName];
+                
+                self.executedTests++;
                 
                 self.currentSuiteName = suiteName;
                 self.currentTestName = testName;
@@ -285,6 +293,7 @@ define([
                         }
 
                         done(true);
+                        self.successfulTests++;
                         self.onSuccess(suiteName, testName);
                         self.onTestEnd(suiteName, testName);
                         self.testQueue.next();
