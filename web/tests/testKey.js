@@ -9,37 +9,21 @@ define([
     
     function assertType(k, str, expectedStr, expectedEvents, node) {
         var actualEvents = [];
-        var downListener = event.on("keydown", node, function (ev) {
-            actualEvents.push(ev.type);
-        });
-        var pressListener = event.on("keypress", node, function (ev) {
-            actualEvents.push(ev.type);
-        });
-        var textInputListener = event.on("textInput", node, function (ev) {
+        function eventHandler(ev) {
             actualEvents.push(ev.type.toLowerCase());
-        });
-        var textinputListener = event.on("textinput", node, function (ev) {
-            actualEvents.push(ev.type);
-        });
-        var inputListener = event.on("input", node, function (ev) {
-            actualEvents.push(ev.type);
-        });
-        var upListener = event.on("keyup", node, function (ev) {
-            actualEvents.push(ev.type);
-        });
-
+        }
+        event.on("keydown", node, eventHandler);
+        event.on("keypress", node, eventHandler);
+        event.on("textInput", node, eventHandler);
+        event.on("textinput", node, eventHandler);
+        event.on("input", node, eventHandler);
+        event.on("keyup", node, eventHandler);
+        
         k.type(str, node, function () {
             if (node.value !== undefined) {
                 assert.assertEquals(expectedStr, node.value, "Node value: " + node.id);
             }
             assert.assertEquals(expectedEvents, actualEvents, "Key events: " + node.id);
-            
-            downListener.remove();
-            pressListener.remove();
-            textInputListener.remove();
-            textinputListener.remove();
-            inputListener.remove();
-            upListener.remove();
         });
     }
     

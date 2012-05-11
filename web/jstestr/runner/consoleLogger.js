@@ -65,7 +65,7 @@ define([], function () {
             });
             
             on(test, "onFailure", function onFailure(suiteName, testName, error) {
-                this.doError("[Failure]: " + suiteName + ", " + testName + ". " + error.mesage);
+                this.doError("[Failure]: " + suiteName + ", " + testName + ". " + error.message);
                 global.console.group("Failed function:");
                 this.doInfo(this._formatFunction(this.suites[suiteName][testName].test));
                 global.console.groupEnd();

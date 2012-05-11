@@ -26,6 +26,27 @@ define([], function () {
     };
     
     /**
+     * Delay the execution by a specified amount of time.
+     * @param timeout Timeout in milliseconds.
+     * @param handler Function to be called after the timeout.
+     */
+    queue.prototype.delay = function delay(timeout, handler) {
+        var self = this;
+        this.then(function delayAction() {
+            setTimeout(self._wrapHandler(handler), timeout);
+        });
+    };
+    
+    
+    queue.prototype.waitFor = function waitFor(condition, handler, options) {
+        var self = this;
+        this.then(function () {
+            options = options || {};
+            self._waitFor(condition, self._wrapHandler(handler), options);
+        });
+    };
+    
+    /**
      * Call the next function in the queue.
      * @param func Optional function to call next. This will be prepended to the queue.
      */
@@ -137,27 +158,6 @@ define([], function () {
         }
     };
     
-    /**
-     * Delay the execution by a specified amount of time.
-     * @param timeout Timeout in milliseconds.
-     * @param handler Function to be called after the timeout.
-     */
-    queue.prototype.delay = function delay(timeout, handler) {
-        var self = this;
-        this.then(function delayAction() {
-            setTimeout(self._wrapHandler(handler), timeout);
-        });
-    };
-    
-    
-    queue.prototype.waitFor = function waitFor(condition, handler, options) {
-        var self = this;
-        this.then(function () {
-            options = options || {};
-            self._waitFor(condition, self._wrapHandler(handler), options);
-        });
-    };
-    
     queue.prototype._waitFor = function _waitFor(condition, handler, options) {
         var pollingDelay = options.pollingDelay || 50;
         var timeout = options.timeout || 500;
@@ -191,7 +191,9 @@ define([], function () {
         var self = this;
         return function _wrappedHandler() {
             try {
-                handler && handler.apply(self, arguments);
+                if (handler) {
+                    handler && handler.apply(self, arguments);
+                }
                 self.next();
             } catch (e) {
                 self.done(false, e);

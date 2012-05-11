@@ -97,11 +97,22 @@
 }
 
 .graphicalLogger #testList .controlsVisible .controls {
-    display: inherit;
+    height: 1.5em;
+    -moz-transition: height .3s; 
+    -webkit-transition: height .3s;  
+    -ms-transition: height .3s;  
+    -o-transition: height .3s;  
+    transition: height .3s; 
 }
 
 .graphicalLogger #testList .controls {
-    display: none;
+    overflow: hidden;
+    height: 0;
+    -moz-transition: height .3s; 
+    -webkit-transition: height .3s;  
+    -ms-transition: height .3s;  
+    -o-transition: height .3s;  
+    transition: height .3s;
 }
 
 .graphicalLogger #tabContainer {

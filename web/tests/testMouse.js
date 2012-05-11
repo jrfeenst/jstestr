@@ -9,40 +9,158 @@ define([
         "beforeEach": function () {
             this.m = new mouse();
             this.node = test.getNewTestNode();
-            
-            this.button = document.createElement("button");
-            this.node.appendChild(this.button);
-            
-            this.div = document.createElement("button");
-            this.node.appendChild(this.button);
         },
         
         "Click Button": function () {
-            var mockHandler = assert.createMockFunction();
-            var clickListener = event.on("click", this.button, mockHandler);
-            this.m.click(this.button, function () {
-                mockHandler.verify("Handler should be called once");
-                clickListener.remove();
+            var button = document.createElement("button");
+            this.node.appendChild(button);
+            
+            var downHandler = assert.createMockFunction();
+            event.on("mousedown", button, downHandler);
+            var upHandler = assert.createMockFunction();
+            event.on("mouseup", button, upHandler);
+            var clickHandler = assert.createMockFunction();
+            event.on("click", button, clickHandler);
+            this.m.click(button, function () {
+                downHandler.verify("Down handler should be called once");
+                upHandler.verify("Up handler should be called once");
+                clickHandler.verify("Click handler should be called once");
             });
-            this.m.start();
+            return this.m.start();
         },
         
         "Click DIV": function () {
+            var div = document.createElement("div");
+            this.node.appendChild(div);
+            
             var mockHandler = assert.createMockFunction();
-            var clickListener = event.on("click", this.div, mockHandler);
-            this.m.click(this.div, function () {
+            event.on("click", div, mockHandler);
+            this.m.click(div, function () {
                 mockHandler.verify("Handler should be called once");
-                clickListener.remove();
             });
-            this.m.start();
+            return this.m.start();
         },
         
-        "Drag": function () {
-            this.m.start();
+        "Click Link": function () {
+            var a = document.createElement("a");
+            this.node.appendChild(a);
+            
+            var mockHandler = assert.createMockFunction();
+            event.on("click", a, mockHandler);
+            this.m.click(a, function () {
+                mockHandler.verify("Handler should be called once");
+            });
+            
+            return this.m.start();
+        },
+        
+        "Double Click": function () {
+            var div = document.createElement("div");
+            this.node.appendChild(div);
+            
+            var clickHandler = assert.createMockFunction();
+            clickHandler.times(2);
+            event.on("click", div, clickHandler);
+            var doubleClickHandler = assert.createMockFunction();
+            event.on("dblclick", div, doubleClickHandler);
+            this.m.doubleClick(div, function () {
+                clickHandler.verify("Handler should be called twice");
+                doubleClickHandler.verify("Double click should be called");
+            });
+            return this.m.start();
         },
         
         "Hover": function () {
-            this.m.start();
+            var div = document.createElement("div");
+            this.node.appendChild(div);
+            var hovered = false;
+            var timeout;
+            event.on("mousemove", div, function () {
+                clearTimeout(timeout);
+                timeout = setTimeout(function () {
+                    hovered = true;
+                }, 25);
+            });
+            this.m.hover(div, function () {
+                assert.assertTrue(hovered, "The hover timeout should fire");
+            }, {timeout: 50});
+            return this.m.start();
+        },
+        
+        "Drag": function () {
+            this.node.style.position = "relative";
+            this.node.id = "testNode";
+            this.node.style.width = "200px";
+            this.node.style.height = "100px";
+            this.node.style.backgroundColor = "lightgray";
+            
+            var pos = this.node.getBoundingClientRect();
+            
+            var divA = document.createElement("div");
+            divA.id = "testDivA";
+            divA.style.position = "absolute";
+            divA.style.left = "10px";
+            divA.style.top = "10px";
+            divA.style.width = "20px";
+            divA.style.height = "20px";
+            divA.style.backgroundColor = "gray";
+            this.node.appendChild(divA);
+            
+            var divB = document.createElement("div");
+            divB.id = "testDivB";
+            divB.style.position = "absolute";
+            divB.style.left = "100px";
+            divB.style.top = "20px";
+            divB.style.width = "20px";
+            divB.style.height = "20px";
+            divB.style.backgroundColor = "gray";
+            this.node.appendChild(divB);
+            
+            var events = [];
+            function eventHandler(ev) {
+                events.push({type: ev.type, x: ev.clientX - pos.left, y: ev.clientY - pos.top, id: ev.target.id});
+            }
+            event.on("mousedown", this.node, eventHandler);
+            event.on("mousemove", this.node, eventHandler);
+            event.on("mouseover", this.node, eventHandler);
+            event.on("mouseout", this.node, eventHandler);
+            event.on("mouseup", this.node, eventHandler);
+            
+            var expected = [
+                {type: "mouseover", x: 20, y: 20, id: "testDivA"},
+                {type: "mousedown", x: 20, y: 20, id: "testDivA"},
+                {type: "mousemove", x: 20, y: 20, id: "testDivA"},
+                {type: "mousemove", x: 24, y: 20, id: "testDivA"},
+                {type: "mousemove", x: 29, y: 21, id: "testDivA"},
+                {type: "mouseout", x: 34, y: 21, id: "testDivA"},
+                {type: "mouseover", x: 34, y: 21, id: "testNode"},
+                {type: "mousemove", x: 34, y: 21, id: "testNode"},
+                {type: "mousemove", x: 39, y: 22, id: "testNode"},
+                {type: "mousemove", x: 44, y: 22, id: "testNode"},
+                {type: "mousemove", x: 49, y: 23, id: "testNode"},
+                {type: "mousemove", x: 54, y: 23, id: "testNode"},
+                {type: "mousemove", x: 59, y: 24, id: "testNode"},
+                {type: "mousemove", x: 64, y: 24, id: "testNode"},
+                {type: "mousemove", x: 69, y: 25, id: "testNode"},
+                {type: "mousemove", x: 74, y: 26, id: "testNode"},
+                {type: "mousemove", x: 79, y: 26, id: "testNode"},
+                {type: "mousemove", x: 84, y: 27, id: "testNode"},
+                {type: "mousemove", x: 89, y: 27, id: "testNode"},
+                {type: "mousemove", x: 94, y: 28, id: "testNode"},
+                {type: "mousemove", x: 99, y: 28, id: "testNode"},
+                {type: "mouseout", x: 104, y: 29, id: "testNode"},
+                {type: "mouseover", x: 104, y: 29, id: "testDivB"},
+                {type: "mousemove", x: 104, y: 29, id: "testDivB"},
+                {type: "mousemove", x: 109, y: 29, id: "testDivB"},
+                {type: "mousemove", x: 110, y: 30, id: "testDivB"},
+                {type: "mouseup", x: 110, y: 30, id: "testDivB"}
+            ];
+            
+            this.m.drag(divA, divB, function () {
+                assert.assertEquals(expected, events, "Move, over, out events should be right");
+            });
+            
+            return this.m.start();
         }
     });
 });

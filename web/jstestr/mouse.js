@@ -19,6 +19,32 @@ define([
             }, options);
         });
     };
+	
+    queue.prototype.doubleClick = function doubleClick(element, handler, options) {
+        var self = this;
+        this.then(function _doubleClickTask() {
+            options = options || {};
+            
+            self._normalizeElement(element, function (element) {
+                self._click(element, options);
+                self._click(element, options);
+                self._mouseDoubleClick(element, options);
+                self._wrapHandler(handler)();
+            }, options);
+        });
+    };
+    
+    queue.prototype.hover = function hover(element, handler, options) {
+        var self = this;
+        this.then(function _hoverTask() {
+            options = options || {};
+            self._normalizeElement(element, function (element) {
+                self._mouseMove(element, options);
+                self.delay(options.timeout || 500, self._wrapHandler(handler));
+                self.next();
+            });
+        });
+    };
     
     queue.prototype.move = function move(from, to, handler, options) {
         this.then(function _moveTask() {
@@ -44,23 +70,23 @@ define([
                         };
                     };
                     
-                    start.x = elementFrom.getBoundingClientRect().left + (start.x || 0);
-                    start.y = elementFrom.getBoundingClientRect().top + (start.y || 0);
+                    var fromRect = elementFrom.getBoundingClientRect();
+                    start.x = fromRect.left + (start.x !== undefined ? start.x : fromRect.width / 2);
+                    start.y = fromRect.top + (start.y !== undefined ? start.y : fromRect.height / 2);
                     start.element = elementFrom;
                     
-                    end.x = elementTo.getBoundingClientRect().left + (end.x || 0);
-                    end.y = elementTo.getBoundingClientRect().top + (end.y || 0);
+                    var toRect = elementTo.getBoundingClientRect();
+                    end.x = toRect.left + (end.x !== undefined ? end.x : toRect.width / 2);
+                    end.y = toRect.top + (end.y !== undefined ? end.y : toRect.height / 2);
                     end.element = elementTo;
                     
                     var distX = end.x - start.x;
                     var distY = end.y - start.y;
                     var distance = Math.sqrt(Math.pow(distX, 2) + Math.pow(distY, 2));
                     
-                    for (var i = 0; i < distance; i += 3) {
-                        
+                    for (var i = 0; i < distance; i += 5) {
                         var x = start.x + i / distance * distX;
                         var y = start.y + i / distance * distY;
-                        
                         this.delay(moveDelay, moveHandler.call(this, x, y));
                     }
                     
@@ -90,34 +116,36 @@ define([
             this._normalizeElement(start.element, function (elementFrom) {
                 this._normalizeElement(end.element, function (elementTo) {
                     
-                    start.x = elementFrom.getBoundingClientRect().left + (start.x || 0);
-                    start.y = elementFrom.getBoundingClientRect().top + (start.y || 0);
+                    var fromRect = elementFrom.getBoundingClientRect();
+                    start.x = fromRect.left + (start.x !== undefined ? start.x : fromRect.width / 2);
+                    start.y = fromRect.top + (start.y !== undefined ? start.y : fromRect.height / 2);
                     start.element = elementFrom;
-
+                    
                     var downOptions = this._shallowClone(options);
                     downOptions.clientX = start.x;
                     downOptions.clientY = start.y;
                     this._mouseDown(elementFrom, downOptions);
-
-                    start.x -= elementFrom.getBoundingClientRect().left;
-                    start.y -= elementFrom.getBoundingClientRect().top;
+                    
+                    start.x -= fromRect.left;
+                    start.y -= fromRect.top;
                     this.move(start, end, undefined, options);
                     
                     this.delay(moveDelay, function moveTask() {
-
-                        end.x = elementTo.getBoundingClientRect().left + (end.x || 0);
-                        end.y = elementTo.getBoundingClientRect().top + (end.y || 0);
+                        
+                        var toRect = elementTo.getBoundingClientRect();
+                        end.x = toRect.left + (end.x !== undefined ? end.x : toRect.width / 2);
+                        end.y = toRect.top + (end.y !== undefined ? end.y : toRect.height / 2);
                         end.element = elementTo;
-
+                        
                         var upOptions = this._shallowClone(options);
                         upOptions.clientX = end.x;
                         upOptions.clientY = end.y;
                         this._mouseUp(elementTo, upOptions);
                     });
-
+                    
                     this.then(this._wrapHandler(handler));
                     this.next();
-
+                    
                 }, options);
             }, options);
         });
@@ -186,6 +214,12 @@ define([
         this._dispatchEvent(event, element, options);
     };
     
+    queue.prototype.defaultActions.dblclick = function mouseDblClickDefaultAction() {};
+    queue.prototype._mouseDoubleClick = function _mouseDoubleClick(element, options) {
+        var event = this._createMouseEvent("dblclick", element, options);
+        this._dispatchEvent(event, element, options);
+    };
+    
     queue.prototype.defaultActions.mousemove = function mouseMoveDefaultAction() {};
     queue.prototype._mouseMove = function _mouseMove(element, options) {
         this._updateMouseOver(element, options);
@@ -249,18 +283,14 @@ define([
     
     queue.prototype._shallowClone = function _shallowClone(obj) {
         var newObj = new obj.constructor();
-        
         for (var i in obj) {
             newObj[i] = obj[i];
         }
-        
         return newObj;
     };
     
     
     (function () {
-        queue.prototype.browser = queue.prototype.browser || {};
-        
         /*
             clickChanges : false,
             clickSubmits : false,
