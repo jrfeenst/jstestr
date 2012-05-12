@@ -71,11 +71,13 @@ define([
                     };
                     
                     var fromRect = elementFrom.getBoundingClientRect();
+                    fromRect = this._normalizeRect(fromRect);
                     start.x = fromRect.left + (start.x !== undefined ? start.x : fromRect.width / 2);
                     start.y = fromRect.top + (start.y !== undefined ? start.y : fromRect.height / 2);
                     start.element = elementFrom;
                     
                     var toRect = elementTo.getBoundingClientRect();
+                    toRect = this._normalizeRect(toRect);
                     end.x = toRect.left + (end.x !== undefined ? end.x : toRect.width / 2);
                     end.y = toRect.top + (end.y !== undefined ? end.y : toRect.height / 2);
                     end.element = elementTo;
@@ -117,6 +119,7 @@ define([
                 this._normalizeElement(end.element, function (elementTo) {
                     
                     var fromRect = elementFrom.getBoundingClientRect();
+                    fromRect = this._normalizeRect(fromRect);
                     start.x = fromRect.left + (start.x !== undefined ? start.x : fromRect.width / 2);
                     start.y = fromRect.top + (start.y !== undefined ? start.y : fromRect.height / 2);
                     start.element = elementFrom;
@@ -133,6 +136,7 @@ define([
                     this.delay(moveDelay, function moveTask() {
                         
                         var toRect = elementTo.getBoundingClientRect();
+                        toRect = this._normalizeRect(toRect);
                         end.x = toRect.left + (end.x !== undefined ? end.x : toRect.width / 2);
                         end.y = toRect.top + (end.y !== undefined ? end.y : toRect.height / 2);
                         end.element = elementTo;
@@ -151,6 +155,15 @@ define([
         });
     };
     
+    
+    queue.prototype._normalizeRect = function _normalizeRect(rect) {
+        return {
+            left: Math.round(rect.left),
+            top: Math.round(rect.top),
+            width: Math.round(rect.width),
+            height: Math.round(rect.height)
+        }
+    };
     
     queue.prototype._normalizeElementPoint = function _normalizeElementPoint(elementPoint) {
         var x, y, element;
@@ -256,8 +269,9 @@ define([
     
     queue.prototype._createMouseEvent = function _createMouseEvent(type, element, options) {
         var defaults = this.eventDefaults[type] || this.eventDefaults.mouse;
-        var x = element.getBoundingClientRect().left;
-        var y = element.getBoundingClientRect().top;
+        var rect = element.getBoundingClientRect();
+        var x = rect.left + rect.width / 2;
+        var y = rect.top + rect.height / 2;
         
         var event = element.ownerDocument.createEvent("MouseEvent");
         event.initMouseEvent(

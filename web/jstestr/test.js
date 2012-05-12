@@ -234,22 +234,18 @@ define([
         var self = this;
         this.testQueue.then(function _runTestTask() {
             var testExecutor = function testExecutor() {
-                var start = new Date();
-                var test = self.suites[suiteName][testName];
-                
-                var specialFunction = self.specialFunctions[suiteName];
-                
-                self.executedTests++;
                 
                 self.currentSuiteName = suiteName;
                 self.currentTestName = testName;
                 
                 self.onTestStart(suiteName, testName);
                 
-                test.startTime = start;
+                var test = self.suites[suiteName][testName];
+                test.startTime = new Date();
                 test.elapsedTime = undefined;
                 test.success = undefined;
                 test.error = undefined;
+                
                 
                 if (self.pageUnderTestNode) {
                     test.document = self.pageUnderTestNode.contentDocument;
@@ -260,15 +256,7 @@ define([
                 }
                 self._cleanupTestNodes();
                 
-                var timeout = setTimeout(function () {
-                    if (test.future && test.future.cancel) {
-                        test.future.cancel();
-                    } else {
-                        failure("Test timeout");
-                    }
-                }, test.timeout || (specialFunction && specialFunction.timeout) || 2000);
-                
-                
+                // setup an error handler on the global for this test.
                 var errorHandler = registerErrorHandler(self.global, function (ev) {
                     var message = ev.message + ", " + ev.filename + "@" + ev.lineno;
                     if (test.future) {
@@ -280,18 +268,22 @@ define([
                     }
                 });
                 
+                var timeout;
                 
-                function done(success) {
+                // suite level options and callbacks (beforeEach, timeout, etc)
+                var specialFunction = self.specialFunctions[suiteName];
+                
+                // executed when the test is done, either succesfully or in failure
+                function done() {
                     clearTimeout(timeout);
+                    errorHandler.remove();
                     
-                    var end = new Date();
-                    test.elapsedTime = end.getTime() - start.getTime();
-                    test.success = success;
+                    test.end = new Date();
+                    test.elapsedTime = test.end.getTime() - test.start.getTime();
                     
                     self.currentSuiteName = undefined;
                     self.currentTestName = undefined;
-                    
-                    errorHandler.remove();
+                    self.executedTests++;
                 }
                 
                 function success() {
@@ -300,7 +292,9 @@ define([
                             specialFunction.afterEach.apply(test);
                         }
 
-                        done(true);
+                        done();
+                        test.success = true;
+                        
                         self.successfulTests++;
                         self.onSuccess(suiteName, testName);
                         self.onTestEnd(suiteName, testName);
@@ -317,6 +311,7 @@ define([
                             specialFunction.afterEach.apply(test);
                         }
                     } catch (e) {
+                        // catch, but keep going because this test is already in error
                         self.onError("Error while executing afterEach method: " + e.message);
                     }
                     
@@ -324,8 +319,10 @@ define([
                         error = {message: error};
                     }
                     
-                    done(false);
+                    done();
+                    test.success = false;
                     test.error = error;
+                    
                     self.onFailure(suiteName, testName, error);
                     self.onTestEnd(suiteName, testName);
                     self.testQueue.next();
@@ -367,6 +364,16 @@ define([
                     
                     test.future = runner(doneCallback);
                     
+                    // create a timeout that cancels the test after the specified time
+                    timeout = setTimeout(function () {
+                        if (test.future && test.future.cancel) {
+                            test.future.cancel();
+                        } else {
+                            failure("Test timeout");
+                        }
+                    }, test.timeout || (specialFunction && specialFunction.timeout) || 2000);
+                    
+                    // handle sync errors, async tests, and sync success
                     if (test.error) {
                         failure(test.error);
                     } else if (test.future && test.future.then) {

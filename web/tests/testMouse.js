@@ -99,10 +99,10 @@ define([
             var divA = document.createElement("div");
             divA.id = "testDivA";
             divA.style.position = "absolute";
-            divA.style.left = "10px";
-            divA.style.top = "10px";
-            divA.style.width = "20px";
-            divA.style.height = "20px";
+            divA.style.left = "9px";
+            divA.style.top = "9px";
+            divA.style.width = "22px";
+            divA.style.height = "22px";
             divA.style.backgroundColor = "gray";
             this.node.appendChild(divA);
             
@@ -118,7 +118,12 @@ define([
             
             var events = [];
             function eventHandler(ev) {
-                events.push({type: ev.type, x: ev.clientX - pos.left, y: ev.clientY - pos.top, id: ev.target.id});
+                events.push({
+                    type: ev.type,
+                    x: ev.clientX - Math.round(pos.left),
+                    y: ev.clientY - Math.round(pos.top),
+                    id: ev.target.id
+                });
             }
             event.on("mousedown", this.node, eventHandler);
             event.on("mousemove", this.node, eventHandler);

@@ -15,7 +15,12 @@ define([], function () {
         } else if (obj === undefined || obj === null) {
             return String(obj);
         } else {
-            var str = obj.toString();
+            var str;
+            try {
+                str = JSON.stringify(obj);
+            } catch (e) {
+                str = obj.toString();
+            }
             if (str.length > 50) {
                 str = "\n    '" + str + "'\n";
             } else {

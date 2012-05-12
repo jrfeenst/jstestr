@@ -272,6 +272,7 @@ define([
                 
                 logContent.appendChild(endNode);
                 
+                showLogTab();
                 scrollToBottom();
             });
             
