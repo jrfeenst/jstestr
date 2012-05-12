@@ -24,12 +24,12 @@ define([
         "Query All": function () {
             var self = this;
             this.dom.queryAll(".testNode", 2, function (nodes) {
-                assert.assertEquals(self.testNode1, nodes[0], "Node 1 should be found");
-                assert.assertEquals(self.testNode2, nodes[1], "Node 2 should be found");
+                assert.isEqual(self.testNode1, nodes[0], "Node 1 should be found");
+                assert.isEqual(self.testNode2, nodes[1], "Node 2 should be found");
             });
             
             this.dom.queryAll(".nonexistant", 0, function (nodes) {
-                assert.assertEquals(0, nodes.length, "No nodes should be found");
+                assert.isEqual(0, nodes.length, "No nodes should be found");
             });
             return this.dom.start();
         },
@@ -47,8 +47,8 @@ define([
             var self = this;
             function assertQuery(count) {
                 self.dom.queryAll(".testNode", count, function (nodes) {
-                    assert.assertEquals(self.testNode1, nodes[0], "Node 1 should be found: " + count);
-                    assert.assertEquals(self.testNode2, nodes[1], "Node 2 should be found: " + count);
+                    assert.isEqual(self.testNode1, nodes[0], "Node 1 should be found: " + count);
+                    assert.isEqual(self.testNode2, nodes[1], "Node 2 should be found: " + count);
                 });
             }
             
@@ -74,9 +74,9 @@ define([
             
             var self = this;
             this.dom.queryAll(".testNode", 3, function (nodes) {
-                assert.assertEquals(self.testNode1, nodes[0], "Node 1 should be found");
-                assert.assertEquals(self.testNode2, nodes[1], "Node 2 should be found");
-                assert.assertEquals(testNode3, nodes[2], "Node 3 should be found");
+                assert.isEqual(self.testNode1, nodes[0], "Node 1 should be found");
+                assert.isEqual(self.testNode2, nodes[1], "Node 2 should be found");
+                assert.isEqual(testNode3, nodes[2], "Node 3 should be found");
             });
             return this.dom.start();
         },
@@ -84,10 +84,10 @@ define([
         "Query": function () {
             var self = this;
             this.dom.query(".testNode", function (node) {
-                assert.assertEquals(self.testNode1, node, "Node 1 should be found");
+                assert.isEqual(self.testNode1, node, "Node 1 should be found");
             });
             this.dom.query(".testNode2", function (node) {
-                assert.assertEquals(self.testNode2, node, "Node 2 should be found");
+                assert.isEqual(self.testNode2, node, "Node 2 should be found");
             });
             return this.dom.start();
         },
@@ -95,10 +95,10 @@ define([
         "By ID": function () {
             var self = this;
             this.dom.byId("testNode1", function (node) {
-                assert.assertEquals(self.testNode1, node, "Node 1 should be found");
+                assert.isEqual(self.testNode1, node, "Node 1 should be found");
             });
             this.dom.byId("testNode2", function (node) {
-                assert.assertEquals(self.testNode2, node, "Node 2 should be found");
+                assert.isEqual(self.testNode2, node, "Node 2 should be found");
             });
             return this.dom.start();
         },
@@ -113,15 +113,15 @@ define([
             this.testNode1.appendChild(childNode2);
             
             this.dom.query(".childNode1", function (node) {
-                assert.assertEquals(childNode1, node, "Child 1 should be found");
+                assert.isEqual(childNode1, node, "Child 1 should be found");
             }, {scopeElement: this.testNode1});
             
             this.dom.query(".childNode2", function (node) {
-                assert.assertEquals(childNode2, node, "Child 2 should be found");
+                assert.isEqual(childNode2, node, "Child 2 should be found");
             }, {scopeElement: this.testNode1});
             
             this.dom.queryAll(".childNode", 0, function (nodes) {
-                assert.assertEquals(0, nodes.length, "No nodes should be found");
+                assert.isEqual(0, nodes.length, "No nodes should be found");
             }, {scopeElement: this.testNode2});
             
             return this.dom.start();

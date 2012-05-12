@@ -82,7 +82,7 @@ define([
                 }, 25);
             });
             this.m.hover(div, function () {
-                assert.assertTrue(hovered, "The hover timeout should fire");
+                assert.isTrue(hovered, "The hover timeout should fire");
             }, {timeout: 50});
             return this.m.start();
         },
@@ -157,7 +157,7 @@ define([
             ];
             
             this.m.drag(divA, divB, function () {
-                assert.assertEquals(expected, events, "Move, over, out events should be right");
+                assert.isEqual(expected, events, "Move, over, out events should be right");
             });
             
             return this.m.start();

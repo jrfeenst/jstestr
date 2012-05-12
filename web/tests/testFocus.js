@@ -30,21 +30,21 @@ define([
             
             expectedOrder.push("blur");
             m.on("blur", this.textArea1, function (ev) {
-                assert.assertEquals(self.textArea1, ev.target, "Text area 1 should blur");
+                assert.isEqual(self.textArea1, ev.target, "Text area 1 should blur");
                 order.push(ev.type);
             });
             
             if (m.browser.supportsFocusout) {
                 expectedOrder.push("focusout");
                 m.on("focusout", this.textArea1, function (ev) {
-                    assert.assertEquals(self.textArea1, ev.target, "Text area 1 should focusout");
+                    assert.isEqual(self.textArea1, ev.target, "Text area 1 should focusout");
                     order.push(ev.type);
                 });
             }
             
             expectedOrder.push("focus");
             m.on("focus", this.textArea2, function (ev) {
-                assert.assertEquals(self.textArea2, ev.target, "Text area 2 should focus");
+                assert.isEqual(self.textArea2, ev.target, "Text area 2 should focus");
                 order.push(ev.type);
             });
             
@@ -52,14 +52,14 @@ define([
             if (m.browser.supportsFocusin) {
                 expectedOrder.push("focusin");
                 m.on("focusin", this.textArea2, function (ev) {
-                    assert.assertEquals(self.textArea2, ev.target, "Text area 2 should focusout");
+                    assert.isEqual(self.textArea2, ev.target, "Text area 2 should focusout");
                     order.push(ev.type);
                 });
             }
             
             m.click(this.textArea2, function () {
-                assert.assertEquals(self.textArea2, document.activeElement, "Should be focused");
-                assert.assertEquals(expectedOrder, order, "Expected event order");
+                assert.isEqual(self.textArea2, document.activeElement, "Should be focused");
+                assert.isEqual(expectedOrder, order, "Expected event order");
             });
             
             return m.start();

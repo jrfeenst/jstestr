@@ -9,8 +9,8 @@ define([
     test.defineSuite("Event", {
         "Defaults": function () {
             var e = new event();
-            assert.assertTrue(e.defaultActions, "Has default actions");
-            assert.assertTrue(e.eventDefaults, "Has event defaults");
+            assert.isTrue(e.defaultActions, "Has default actions");
+            assert.isTrue(e.eventDefaults, "Has event defaults");
         },
         
         "Create And Dispatch Event": function () {
@@ -25,7 +25,7 @@ define([
             
             e._dispatchEvent(customEvent, testNode);
             
-            assert.assertTrue(called, "Event listener should be called");
+            assert.isTrue(called, "Event listener should be called");
         },
         
         "Event With Default Action": function () {
@@ -39,7 +39,7 @@ define([
             };
             e._dispatchEvent(customEvent, testNode);
             
-            assert.assertTrue(called, "Event listener should be called");
+            assert.isTrue(called, "Event listener should be called");
         },
         
         "Prevent Default Action": function () {
@@ -57,7 +57,7 @@ define([
             };
             e._dispatchEvent(customEvent, testNode);
             
-            assert.assertFalse(called, "Event listener should not be called");
+            assert.isFalse(called, "Event listener should not be called");
         }
     });
 });

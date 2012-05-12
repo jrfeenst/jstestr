@@ -17,6 +17,7 @@ define([
         this.specialFunctions = {};
         this.document = args.document || document;
         this.global = args.global || global;
+        this.testNodes = [];
     };
     
     
@@ -119,6 +120,7 @@ define([
      */
     TestFramework.prototype.setTestNodeParent = function setTestNodeParent(parentNode) {
         this.testNodeParent = parentNode;
+        this.testNodeParent.innerHTML = "";
     };
     
     
@@ -131,15 +133,13 @@ define([
      * body of the document.
      */
     TestFramework.prototype.getNewTestNode = function getNewTestNode(cleanup) {
-        if (!this.testNodeParent) {
-            this.testNodeParent = this.document.createElement("div");
-            this.document.body.appendChild(this.testNodeParent);
-        }
+        this._ensureTestNodeParentExists();
         if (cleanup) {
             this._cleanupTestNodes();
         }
         var node = this.document.createElement("div");
         this.testNodeParent.appendChild(node);
+        this.testNodes.push(node);
         this.onNewTestNode(node);
         return node;
     };
@@ -173,6 +173,7 @@ define([
      * Event fired when a new test node is created.
      */
     TestFramework.prototype.onNewTestNode = function onNewTestNode(node) {};
+    TestFramework.prototype.onCleanTestNodes = function onCleanTestNodes(node) {};
     
     /**
      * Suite and test defined events. These are fired when a new test or suite is created.
@@ -250,6 +251,14 @@ define([
                 test.success = undefined;
                 test.error = undefined;
                 
+                if (self.pageUnderTestNode) {
+                    test.document = self.pageUnderTestNode.contentDocument;
+                    test.global = self.pageUnderTestNode.contentWindow;
+                } else {
+                    test.document = self.document;
+                    test.global = self.global;
+                }
+                self._cleanupTestNodes();
                 
                 var timeout = setTimeout(function () {
                     if (test.future && test.future.cancel) {
@@ -257,7 +266,7 @@ define([
                     } else {
                         failure("Test timeout");
                     }
-                }, test.timeout || 2000);
+                }, test.timeout || (specialFunction && specialFunction.timeout) || 2000);
                 
                 
                 var errorHandler = registerErrorHandler(self.global, function (ev) {
@@ -282,7 +291,6 @@ define([
                     self.currentSuiteName = undefined;
                     self.currentTestName = undefined;
                     
-                    self._cleanupTestNodes();
                     errorHandler.remove();
                 }
                 
@@ -388,9 +396,21 @@ define([
         }
     };
     
+    TestFramework.prototype._ensureTestNodeParentExists = function _ensureTestNodeParentExists() {
+        if (!this.testNodeParent) {
+            this.testNodeParent = this.document.createElement("div");
+            this.document.body.appendChild(this.testNodeParent);
+        }
+    };
+    
     TestFramework.prototype._cleanupTestNodes = function _cleanupTestNodes() {
-        if (this.testNodeParent) {
-            this.testNodeParent.innerHTML = "";
+        var parent = this.testNodeParent;
+        this.testNodes.forEach(function (node) {
+            parent.removeChild(node);
+        });
+        if (this.testNodes.length > 0) {
+            this.onCleanTestNodes();
+            this.testNodes = [];
         }
     };
     
@@ -398,7 +418,8 @@ define([
     
     TestFramework.prototype._isSpecialFunction = function _isSpecialFunction(name) {
         return name === "beforeEach" || name === "afterEach" ||
-            name === "beforeSuite" || name === "afterSuite";
+            name === "beforeSuite" || name === "afterSuite" ||
+            name === "pageUnderTest" || name === "timeout";
     };
     
     TestFramework.prototype._startSuite = function _startSuite(suiteName) {
@@ -406,7 +427,35 @@ define([
         this.testQueue.then(function startSuiteTask() {
             self.onSuiteStart(suiteName);
             
+            if (self.pageUnderTestNode) {
+                self.testNodeParent.removeChild(self.pageUnderTestNode);
+                self.pageUnderTestNode = undefined;
+                self.onCleanTestNodes();
+            }
+            
             var specialFunction = self.specialFunctions[suiteName];
+            if (specialFunction && specialFunction.pageUnderTest) {
+                self.testQueue.then(function _loadPageUnderTestTask() {
+                    
+                    var timeout = setTimeout(function _loadError() {
+                        self.testQueue.next();
+                    }, 20000);
+                    
+                    self._ensureTestNodeParentExists();
+                    self._cleanupTestNodes();
+                    
+                    self.pageUnderTestNode = self.document.createElement("iframe");
+                    self.pageUnderTestNode.src = specialFunction.pageUnderTest;
+                    self.pageUnderTestNode.onload = function _onLoad() {
+                        clearTimeout(timeout);
+                        self.testQueue.next();
+                    };
+                    self.pageUnderTestNode.className = "pageUnderTest";
+                    self.testNodeParent.appendChild(self.pageUnderTestNode);
+                    self.onNewTestNode();
+                });
+            }
+            
             if (specialFunction && specialFunction.beforeSuite) {
                 specialFunction.context = {};
                 specialFunction.beforeSuite.apply(specialFunction.context);

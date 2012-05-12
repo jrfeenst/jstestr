@@ -12,6 +12,8 @@ define([], function () {
             }
             pieces.push("/>");
             return pieces.join(" ");
+        } else if (obj === undefined || obj === null) {
+            return String(obj);
         } else {
             var str = obj.toString();
             if (str.length > 50) {
@@ -40,18 +42,20 @@ define([], function () {
         return error;
     }
         
-    function assertTrue(expression, help) {
+    function isTrue(expression, help) {
         if (!expression) {
             throw createError("Expression is not true: " + toString(expression) + ".", help);
         }
     }
     
-    function assertFalse(expression, help) {
+    function isFalse(expression, help) {
         if (expression) {
             throw createError("Expression is not false: " + toString(expression) + ".", help);
         }
     }
     
+    
+    // todo: handle cycles in the objects
     // recursive deep equality test
     function _isEqual(expected, actual) {
         if (expected === actual) {
@@ -92,14 +96,21 @@ define([], function () {
         return expected == actual;
     }
     
-    function assertEquals(expected, actual, help) {
+    function isEqual(expected, actual, help) {
         if (!_isEqual(expected, actual)) {
             throw createError("Expected " + toString(expected) + " but found: " +
                 toString(actual) + ".", help);
         }
     }
     
-    function assertThrows(expected, func, help) {
+    function isNotEqual(expected, actual, help) {
+        if (_isEqual(expected, actual)) {
+            throw createError("Expected " + toString(expected) + " to be different from: " +
+                toString(actual) + ".", help);
+        }
+    }
+    
+    function doesThrow(expected, func, help) {
         try {
             func();
             throw createError("Did not receive any exception. Expected: " + toString(expected) + ".", help);
@@ -143,10 +154,10 @@ define([], function () {
         
         mock.verify = function mockVerify(help) {
             help = help || "";
-            assertEquals(expectedCalls, actualArgs.length, "Number of calls. " + help);
+            isEqual(expectedCalls, actualArgs.length, "Number of calls. " + help);
             if (expectedArgs) {
                 for (var i in actualArgs) {
-                    assertEquals(expectedArgs, actualArgs[i], "Argument missmatch. " + help);
+                    isEqual(expectedArgs, actualArgs[i], "Argument missmatch. " + help);
                 }
             }
         };
@@ -201,10 +212,12 @@ define([], function () {
     
     
     return {
-        assertTrue: assertTrue,
-        assertFalse: assertFalse,
-        assertEquals: assertEquals,
-        assertThrows: assertThrows,
+        isTrue: isTrue,
+        isFalse: isFalse,
+        isEqual: isEqual,
+        isNotEqual: isNotEqual,
+        doesThrow: doesThrow,
+        
         createMockFunction: createMockFunction,
         createMockObject: createMockObject
     };

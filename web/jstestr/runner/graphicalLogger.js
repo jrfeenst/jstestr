@@ -336,7 +336,6 @@ define([
             
             on(test, "onTestEnd", function (suiteName, testName) {
                 removeClass(testList.querySelector(testSelector(suiteName, testName)), "running");
-                showLogTab();
                 scrollToBottom();
             });
             
@@ -427,7 +426,11 @@ define([
             
             on(test, "onNewTestNode", function () {
                 showTestPageTab();
-            })
+            });
+            
+            on(test, "onCleanTestNodes", function () {
+                showLogTab();
+            });
         }
     };
     

@@ -8,17 +8,17 @@ define([
     test.defineSuite("Queue", {
         "Default Args": function () {
             var q = new queue();
-            assert.assertTrue(q.timeout > 0, "Default timeout");
-            assert.assertTrue(q.document === document, "Default document");
-            assert.assertEquals(0, q._currentTask, "Current task should be 0");
-            assert.assertEquals(0, q._insertionPoint, "Insertion point should be 0");
+            assert.isTrue(q.timeout > 0, "Default timeout");
+            assert.isTrue(q.document === document, "Default document");
+            assert.isEqual(0, q._currentTask, "Current task should be 0");
+            assert.isEqual(0, q._insertionPoint, "Insertion point should be 0");
         },
         
         "Constructor Args": function () {
             var fakeDoc = {};
             var q = new queue({timeout: 100, document: fakeDoc});
-            assert.assertEquals(100, q.timeout, "Custom timeout");
-            assert.assertEquals(fakeDoc, q.document, "Custom document");
+            assert.isEqual(100, q.timeout, "Custom timeout");
+            assert.isEqual(fakeDoc, q.document, "Custom document");
         },
         
         "Basic Queue Functionality": function () {
@@ -37,17 +37,17 @@ define([
                 q.next();
             });
             
-            assert.assertEquals(2, q._queue.length, "Queue length");
-            assert.assertEquals(0, q._currentTask, "Current task should be 0");
-            assert.assertEquals(2, q._insertionPoint, "Insertion point should be 2");
+            assert.isEqual(2, q._queue.length, "Queue length");
+            assert.isEqual(0, q._currentTask, "Current task should be 0");
+            assert.isEqual(2, q._insertionPoint, "Insertion point should be 2");
             
             var future = q.start();
             
-            assert.assertTrue(ran1, "First function should run");
-            assert.assertTrue(ran2, "Second function should run");
-            assert.assertEquals(2, order, "Last function is the second");
-            assert.assertEquals(2, q._currentTask, "Current task should be 2");
-            assert.assertEquals(2, q._insertionPoint, "Insertion point should still be 2");
+            assert.isTrue(ran1, "First function should run");
+            assert.isTrue(ran2, "Second function should run");
+            assert.isEqual(2, order, "Last function is the second");
+            assert.isEqual(2, q._currentTask, "Current task should be 2");
+            assert.isEqual(2, q._insertionPoint, "Insertion point should still be 2");
             
             var success = false, failure = false, error;
             future.then(function () {
@@ -56,9 +56,9 @@ define([
                 failure = true;
                 error = e;
             });
-            assert.assertTrue(success, "Queue should finish successfully");
-            assert.assertFalse(failure, "Queue should not fail");
-            assert.assertFalse(error, "Error should not be received");
+            assert.isTrue(success, "Queue should finish successfully");
+            assert.isFalse(failure, "Queue should not fail");
+            assert.isFalse(error, "Error should not be received");
         },
         
         "Error Handling": function () {
@@ -72,7 +72,7 @@ define([
             
             var future = q.start();
             
-            assert.assertTrue(ran, "Function should run");
+            assert.isTrue(ran, "Function should run");
             
             var success = false, failure = false, error;
             future.then(function () {
@@ -81,9 +81,9 @@ define([
                 failure = true;
                 error = e;
             });
-            assert.assertFalse(success, "Queue should not finish successfully");
-            assert.assertTrue(failure, "Queue should fail");
-            assert.assertTrue(error, "Error should be received");
+            assert.isFalse(success, "Queue should not finish successfully");
+            assert.isTrue(failure, "Queue should fail");
+            assert.isTrue(error, "Error should be received");
         }
     });
 });

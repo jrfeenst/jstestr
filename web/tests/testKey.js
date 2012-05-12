@@ -21,9 +21,9 @@ define([
         
         k.type(str, node, function () {
             if (node.value !== undefined) {
-                assert.assertEquals(expectedStr, node.value, "Node value: " + node.id);
+                assert.isEqual(expectedStr, node.value, "Node value: " + node.id);
             }
-            assert.assertEquals(expectedEvents, actualEvents, "Key events: " + node.id);
+            assert.isEqual(expectedEvents, actualEvents, "Key events: " + node.id);
         });
     }
     
