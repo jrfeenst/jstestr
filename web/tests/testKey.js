@@ -19,7 +19,8 @@ define([
         event.on("input", node, eventHandler);
         event.on("keyup", node, eventHandler);
         
-        k.type(str, node, function () {
+        k.type(str, node, function (input) {
+            assert.isEqual(node, input, "Argument is the node");
             if (node.value !== undefined) {
                 assert.isEqual(expectedStr, node.value, "Node value: " + node.id);
             }

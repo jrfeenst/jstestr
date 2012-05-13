@@ -185,14 +185,15 @@ define([], function () {
         };
         checkCondition();
     };
-
-
+    
+    
     queue.prototype._wrapHandler = function _wrapHandle(handler) {
         var self = this;
+        var args = Array.prototype.slice.call(arguments, 1, arguments.length);
         return function _wrappedHandler() {
             try {
                 if (handler) {
-                    handler && handler.apply(self, arguments);
+                    handler && handler.apply(self, args.concat(Array.prototype.slice.call(arguments)));
                 }
                 self.next();
             } catch (e) {

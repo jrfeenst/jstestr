@@ -15,7 +15,7 @@ define([
             
             self._normalizeElement(element, function (element) {
                 self._click(element, options);
-                self._wrapHandler(handler)();
+                self._wrapHandler(handler, element)();
             }, options);
         });
     };
@@ -29,7 +29,7 @@ define([
                 self._click(element, options);
                 self._click(element, options);
                 self._mouseDoubleClick(element, options);
-                self._wrapHandler(handler)();
+                self._wrapHandler(handler, element)();
             }, options);
         });
     };
@@ -40,7 +40,7 @@ define([
             options = options || {};
             self._normalizeElement(element, function (element) {
                 self._mouseMove(element, options);
-                self.delay(options.timeout || 500, self._wrapHandler(handler));
+                self.delay(options.timeout || 500, self._wrapHandler(handler, element));
                 self.next();
             });
         });
@@ -94,7 +94,7 @@ define([
                     
                     this.delay(moveDelay, moveHandler(end.x, end.y));
                     
-                    this.then(this._wrapHandler(handler));
+                    this.then(this._wrapHandler(handler, elementFrom, elementTo));
                     this.next();
                     
                 }, options);
@@ -147,7 +147,7 @@ define([
                         this._mouseUp(elementTo, upOptions);
                     });
                     
-                    this.then(this._wrapHandler(handler));
+                    this.then(this._wrapHandler(handler, elementFrom, elementTo));
                     this.next();
                     
                 }, options);

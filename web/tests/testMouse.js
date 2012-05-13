@@ -21,7 +21,8 @@ define([
             event.on("mouseup", button, upHandler);
             var clickHandler = assert.createMockFunction();
             event.on("click", button, clickHandler);
-            this.m.click(button, function () {
+            this.m.click(button, function (btn) {
+                assert.isEqual(button, btn, "Node should be passed into the handler");
                 downHandler.verify("Down handler should be called once");
                 upHandler.verify("Up handler should be called once");
                 clickHandler.verify("Click handler should be called once");
@@ -134,7 +135,8 @@ define([
                     hovered = true;
                 }, 25);
             });
-            this.m.hover(div, function () {
+            this.m.hover(div, function (node) {
+                assert.isEqual(div, node, "Argument is the node");
                 assert.isTrue(hovered, "The hover timeout should fire");
             }, {timeout: 50});
             return this.m.start();
@@ -214,7 +216,9 @@ define([
                 {type: "mouseup", x: 110, y: 30, id: "testDivB"}
             ];
             
-            this.m.drag(divA, divB, function () {
+            this.m.drag(divA, divB, function (nodeA, nodeB) {
+                assert.isEqual(divA, nodeA, "Argument 0 is the node");
+                assert.isEqual(divB, nodeB, "Argument 1 is the node");
                 assert.isEqual(expected, events, "Move, over, out events should be right");
             });
             

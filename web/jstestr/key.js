@@ -47,7 +47,7 @@ define([
                     
                 }
                 
-                this.then(this._wrapHandler(handler));
+                this.then(this._wrapHandler(handler, element));
                 this.next();
                 
             }, options);
