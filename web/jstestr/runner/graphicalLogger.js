@@ -7,6 +7,7 @@ define([
         '<div class="graphicalLogger">' +
             '<div id="top">' +
                 '<button id="runAll">Run All</button>' +
+                '<button id="reloadRunAll">Reload All</button>' +
                 '<div id="testProgressBar" class="progressBar"></div>' +
             '</div>' +
             '<div id="mainWrapper">' +
@@ -102,6 +103,7 @@ define([
             var logContent = doc.getElementById("logContent");
             var testList = doc.getElementById("testList");
             var runAll = doc.getElementById("runAll");
+            var reloadRunAll = doc.getElementById("reloadRunAll");
             
             function switchTab(node) {
                 var i, id = node.id;
@@ -131,6 +133,10 @@ define([
             
             event.on("click", runAll, function () {
                 test.runAll();
+            });
+            
+            event.on("click", reloadRunAll, function () {
+                location.href = location.href.replace(/(&|\?)suite=[^&]+|(&|\?)test=[^&]+/, "");
             });
             
             

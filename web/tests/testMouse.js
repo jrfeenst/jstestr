@@ -54,6 +54,59 @@ define([
             return this.m.start();
         },
         
+        "Click Checkbox": function () {
+            var input = document.createElement("input");
+            input.setAttribute("type", "checkbox");
+            this.node.appendChild(input);
+            
+            var mockHandler = assert.createMockFunction();
+            event.on("click", input, mockHandler);
+            
+            this.m.click(input, function () {
+                mockHandler.verify("Handler should be called once");
+                assert.isTrue(input.checked, "Checkbox should be checked");
+                mockHandler.reset();
+            });
+            
+            this.m.click(input, function () {
+                mockHandler.verify("Handler should be called once");
+                assert.isFalse(input.checked, "Checkbox should be unchecked");
+            });
+            
+            return this.m.start();
+        },
+        
+        "Click Radio": function () {
+            var inputA = document.createElement("input");
+            inputA.setAttribute("type", "radio");
+            inputA.setAttribute("name", "radio");
+            this.node.appendChild(inputA);
+            
+            var inputB = document.createElement("input");
+            inputB.setAttribute("type", "radio");
+            inputB.setAttribute("name", "radio");
+            this.node.appendChild(inputB);
+            
+            var mockHandlerA = assert.createMockFunction();
+            event.on("click", inputA, mockHandlerA);
+            var mockHandlerB = assert.createMockFunction();
+            event.on("click", inputB, mockHandlerB);
+            
+            this.m.click(inputA, function () {
+                mockHandlerA.verify("Handler A should be called once");
+                assert.isTrue(inputA.checked, "Radio A should be checked");
+                assert.isFalse(inputB.checked, "Radio B should be unchecked");
+            });
+            
+            this.m.click(inputB, function () {
+                mockHandlerB.verify("Handler B should be called once");
+                assert.isFalse(inputA.checked, "Radio A should be checked");
+                assert.isTrue(inputB.checked, "Radio B should be unchecked");
+            });
+            
+            return this.m.start();
+        },
+        
         "Double Click": function () {
             var div = document.createElement("div");
             this.node.appendChild(div);

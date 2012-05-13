@@ -8,6 +8,7 @@ define([
     "./testKey",
     "./testFramework",
     "./testMouse",
+    "./testOption",
     "./testQueue"
 ], function () {
 });

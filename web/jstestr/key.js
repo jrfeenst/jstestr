@@ -27,12 +27,12 @@ define([
                         this._typeChar(character, element, options);
                     };
                 };
-
+                
                 var strings = string.split(this._controlRegExp);
                 var controls = string.match(this._controlRegExp);
-
+                
                 var numControls = controls ? controls.length : 0;
-
+                
                 for (var i = 0; i < strings.length; i++) {
                     var subString = strings[i];
                     var stringLen = subString.length;
@@ -40,11 +40,11 @@ define([
                     for (var j = 0; j < stringLen; j++) {
                         this.delay(keyDelay, keyPressHandler.call(this, subString.charAt(j)));
                     }
-
+                    
                     if (i < numControls) {
                         this.delay(keyDelay, keyPressHandler.call(this, controls[i]));
                     }
-
+                    
                 }
                 
                 this.then(this._wrapHandler(handler));
@@ -138,68 +138,62 @@ define([
     queue.prototype._createKeyEvent = function _createKeyEvent(type, character, element, options) {
         var defaults = this.eventDefaults[type] || this.eventDefaults.key;
         
-        var keyCode = this._lookupKeyCode(type, character);
-        var charCode = this._lookupCharCode(type, character);
-        var keyIdentifier = this._lookupKeyIdentifier(type, character);
-        var keyLocation = this._lookupKeyLocation(type, character);
+        var canBubble = "canBubble" in options ? options.canBubble : defaults.canBubble;
+        var cancellable = "cancelable" in options ? options.cancelable : defaults.cancelable;
+        
+        var keyCode = "keyCode" in options ? options.keyCode : this._lookupKeyCode(type, character);
+        var charCode = "charCode" in options ? options.charCode : this._lookupCharCode(type, character);
+        var keyIdentifier = "keyIdentifier" in options ? options.keyIdentifier : this._lookupKeyIdentifier(type, character);
+        var keyLocation = "keyLocation" in options ? options.keyLocation : this._lookupKeyLocation(type, character);
+        var view = "view" in options ? options.view : defaults.view;
+        
+        var ctrlKey = "ctrlKey" in options ? options.ctrlKey : defaults.ctrlKey;
+        var altKey = "altKey" in options ? options.altKey : defaults.altKey;
+        var shiftKey = "shiftKey" in options ? options.shiftKey : defaults.shiftKey;
+        var metaKey = "metaKey" in options ? options.metaKey : defaults.metaKey;
+        
+        var modifiers = [];
+        if (ctrlKey) {
+            modifiers.push("Control");
+        }
+        if (altKey) {
+            modifiers.push("Alt");
+        }
+        if (shiftKey) {
+            modifiers.push("Shift");
+        }
+        if (metaKey) {
+            modifiers.push("Meta");
+        }
+        if (ctrlKey && altKey) {
+            modifiers.push("AltGraph");
+        }
         
         var event;
         if (this.browser.supportsKeyEvents) {
             event = element.ownerDocument.createEvent("KeyEvent");
-            event.initKeyEvent(
-                type,
-                "canBubble" in options ? options.canBubble : defaults.canBubble,
-                "cancelable" in options ? options.cancelable : defaults.cancelable,
-                "view" in options ? options.view : defaults.view,
-                "ctrlKey" in options ? options.ctrlKey : defaults.ctrlKey,
-                "altKey" in options ? options.altKey : defaults.altKey,
-                "shiftKey" in options ? options.shiftKey : defaults.shiftKey,
-                "metaKey" in options ? options.metaKey : defaults.metaKey,
-                "keyCode" in options ? options.keyCode : keyCode,
-                "charCode" in options ? options.charCode : charCode
-                );
+            event.initKeyEvent(type, canBubble, cancellable, view, ctrlKey, altKey, shiftKey,
+                metaKey, keyCode, charCode);
                 
         } else if (this.browser.supportsKeyboardEvents) {
-            var modifiers = [];
-            if (options.ctrlKey) {
-                modifiers.push("Control");
-            }
-            if (options.altKey) {
-                modifiers.push("Alt");
-            }
-            if (options.shiftKey) {
-                modifiers.push("Shift");
-            }
-            if (options.metaKey) {
-                modifiers.push("Meta");
-            }
-            if (options.ctrlKey && options.altKey) {
-                modifiers.push("AltGraph");
-            }
-            
             event = element.ownerDocument.createEvent("KeyboardEvent");
-            event.initKeyboardEvent(
-                type,
-                "canBubble" in options ? options.canBubble : defaults.canBubble,
-                "cancelable" in options ? options.cancelable : defaults.cancelable,
-                "view" in options ? options.view : defaults.view,
-                "keyCode" in options ? options.keyCode : keyCode,
-                "keyLocation" in options ? options.keyLocation : keyLocation,
-                modifiers.join(" "),
-                1,
-                ""
-                );
+            event.initKeyboardEvent(type, canBubble, cancellable, view, keyCode, keyLocation,
+                modifiers.join(" "), 1, "");
                 
         } else {
             event = this._createEvent(type, element, options, defaults);
-            
-            event.view = "view" in options ? options.view : defaults.view;
-            event.keyCode = "keyCode" in options ? options.keyCode : keyCode;
-            event.charCode = "charCode" in options ? options.charCode : charCode;
+            event.view = view;
+            event.modifiers = modifiers.join(" ");
+            event.ctrlKey = ctrlKey;
+            event.altKey = altKey;
+            event.shiftKey = shiftKey;
+            event.metaKey = metaKey;
         }
         
-        event.keyIdentifier = "keyIdentifier" in options ? options.keyIdentifier : keyIdentifier;
-        event.keyLocation = "keyLocation" in options ? options.keyLocation : keyLocation;
+        event.keyCode = keyCode;
+        event.charCode = charCode;
+        event.keyIdentifier = keyIdentifier;
+        event.keyLocation = keyLocation;
         
         return event;
     };
@@ -320,7 +314,10 @@ define([
             if (global.KeyboardEvent !== undefined) {
                 ev = document.createEvent("KeyboardEvent");
                 if ("initKeyboardEvent" in ev) {
-                    queue.prototype.browser.supportsKeyboardEvents = true;
+                    // try to init the event, if the keyCode is not set properly, then this
+                    // is considered a broken feature and we will use the fallback
+                    ev.initKeyboardEvent("keydown", true, true, 0, 40, 0, "", 1, "");
+                    queue.prototype.browser.supportsKeyboardEvents = ev.keyCode === 40;
                 }
             }
         } catch (e) {

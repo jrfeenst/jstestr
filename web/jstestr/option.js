@@ -24,8 +24,8 @@ define([
     };
     
     
-    var previousMouseDownDefaultAction = queue.prototype.defaultActions.mouseDown;
-    queue.prototype.defaultActions.mouseDown = function mouseDownDefaultAction(event) {
+    var previousMouseDownDefaultAction = queue.prototype.defaultActions.mousedown;
+    queue.prototype.defaultActions.mousedown = function mouseDownDefaultAction(event) {
         var element = event.target;
         if (this._isOptionElement(element)) {
             var select = this._findParentByType(element, "select");
@@ -33,21 +33,18 @@ define([
             var i, opt;
             
             if (event.ctrlKey) {
-                element.selected = true;
+                element.selected = !element.selected;
             } else if (event.shiftKey) {
                 var started = false;
+                var ended = false;
                 for (i = 0; i < optionElements.length; i++) {
                     opt = optionElements[i];
                     if (opt.selected || started) {
                         started = true;
                     }
-                    if (started) {
-                        opt.selected = true;
-                    } else {
-                        opt.selected = false;
-                    }
+                    opt.selected = started && !ended;
                     if (opt === element) {
-                        started = false;
+                        ended = true;
                     }
                 }
             } else {
@@ -65,24 +62,40 @@ define([
     queue.prototype.defaultActions.keydown = function keyDownDefaultAction(event) {
         var select = event.target;
         
-        if (select && (event.charCode === this._lookupCharCode(event.type, "[up]") ||
-                event.charCode === this._lookupCharCode(event.type, "[down]"))) {
+        if (select && (event.keyCode === this._lookupKeyCode(event.type, "[up]") ||
+                event.keyCode === this._lookupKeyCode(event.type, "[down]"))) {
             
             var optionElements = select.querySelectorAll("option");
             
-            var element;
-            if (event.charCode === this._lookupCharCode(event.type, "[up]")) {
-                element = optionElements[select.selectedIndex - 1];
+            var i, firstSelected, lastSelected;
+            for (i = 0; i < optionElements.length; i++) {
+                if (firstSelected === undefined && optionElements[i].selected) {
+                    firstSelected = i;
+                }
+                if (optionElements[i].selected) {
+                    lastSelected = i;
+                }
+            }
+            
+            var activeSelected = select.selectedIndex === firstSelected ? lastSelected : firstSelected;
+            
+            var element, lastElement;
+            if (event.keyCode === this._lookupKeyCode(event.type, "[up]")) {
+                element = optionElements[activeSelected - 1];
             } else {
-                element = optionElements[select.selectedIndex + 1];
+                element = optionElements[activeSelected + 1];
             }
             
             if (element) {
                 if (event.shiftKey) {
-                    element.selected = element.selected ? false : true;
+                    optionElements[activeSelected].selected = !element.selected;
+                    element.selected = true;
                 } else {
-                    for (var i = 0; i < optionElements.length; i++) {
-                        optionElements[i].selected = optionElements[i] === element;
+                    for (i = 0; i < optionElements.length; i++) {
+                        if (optionElements[i] === element) {
+                            select.selectedIndex = i;
+                        }
+                        //optionElements[i].selected = optionElements[i] === element;
                     }
                 }
                 var change = this._createEvent("change", select);

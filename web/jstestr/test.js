@@ -278,8 +278,8 @@ define([
                     clearTimeout(timeout);
                     errorHandler.remove();
                     
-                    test.end = new Date();
-                    test.elapsedTime = test.end.getTime() - test.start.getTime();
+                    test.endTime = new Date();
+                    test.elapsedTime = test.endTime.getTime() - test.startTime.getTime();
                     
                     self.currentSuiteName = undefined;
                     self.currentTestName = undefined;

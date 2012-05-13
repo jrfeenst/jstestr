@@ -21,7 +21,7 @@
     width: 50%;
 }
 
-.graphicalLogger #runAll {
+.graphicalLogger button {
     vertical-align: top;
     margin: 1px;
 }
