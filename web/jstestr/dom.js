@@ -5,7 +5,7 @@ define([
     
     queue.prototype.byId = function byId(id, handler, options) {
         var self = this;
-        this.then(function () {
+        this.then(function byIdTask() {
             options = options || {};
             self._query("#" + id, self._wrapHandler(handler), options);
         });
@@ -13,7 +13,7 @@ define([
     
     queue.prototype.query = function query(selector, handler, options) {
         var self = this;
-        this.then(function () {
+        this.then(function queryTask() {
             options = options || {};
             self._query(selector, self._wrapHandler(handler), options);
         });
@@ -21,17 +21,21 @@ define([
     
     queue.prototype.queryAll = function queryAll(selector, expectedCount, handler, options) {
         var self = this;
-        this.then(function () {
+        this.then(function queryAllTask() {
             options = options || {};
             self._queryAll(selector, expectedCount, self._wrapHandler(handler), options);
         });
     };
     
     queue.prototype._query = function _query(selector, handler, options) {
-        return this._queryAll(selector, ">0", this._wrapWithUnpackArray(handler), options);
+        this._queryAll(selector, ">0", this._wrapWithUnpackArray(handler), options);
     };
     
     queue.prototype._queryAll = function _queryAll(selector, expected, handler, options) {
+        this._waitFor(this._createQueryFunction(selector, expected, options), handler, options);
+    };
+    
+    queue.prototype._createQueryFunction = function _createQueryFunction(selector, expected, options) {
         var expectedFunc;
         
         if (typeof expected === "string") {
@@ -43,9 +47,9 @@ define([
         } else {
             expectedFunc = expected;
         }
-
+        
         var self = this;
-        this._waitFor(function queryAllCondition() {
+        return function queryFunction() {
             options = options || {};
             
             // 3 possible types of queries, default document, element, or custom document
@@ -69,8 +73,8 @@ define([
                     msg += " on element: '" + options.scopeElement + "'";
                 }
                 throw new Error(msg);
-            }
-        }, handler, options);
+            }  
+        };
     };
     
     queue.prototype._stringElementCountComparitor = function _stringElementCountComparitor(expected) {
