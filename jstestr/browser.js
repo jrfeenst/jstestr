@@ -3,7 +3,15 @@ define([
     "./queue"
 ], function (queue) {
     
-    queue.prototype.browser = {};
+    queue.prototype.browser = {
+		msie: !!(window.attachEvent && !window.opera),
+		opera: !!window.opera,
+		webkit: navigator.userAgent.indexOf('AppleWebKit/') >= 0,
+		safari: navigator.userAgent.indexOf('AppleWebKit/') >= 0 && navigator.userAgent.indexOf('Chrome/') === -1,
+		gecko: navigator.userAgent.indexOf('Gecko') >= 0,
+		mobileSafari: !! navigator.userAgent.match(/Apple.*Mobile.*Safari/),
+		rhino: navigator.userAgent.match(/Rhino/) && true
+	};
     
     var tests = [];
     

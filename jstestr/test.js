@@ -514,6 +514,8 @@ define([
         if (errorHandlers.length > 0) {
             errorHandlers[errorHandlers.length - 1](error);
         }
+        error.returnValue = true;
+        return true;
     };
     
     function registerErrorHandler(global, handler) {
@@ -531,16 +533,49 @@ define([
     testModule.Framework = TestFramework;
     
     if (!global.console) {
-        global.console = {
-            log: function () {},
-            info: function () {},
-            error: function () {}
-        };
-    }
+        global.console = {};
+	}
+	if (!global.console.log) {
+		global.console.log = function () {};
+	}
+	if (!global.console.info) {
+		global.console.info = function () {};
+	}
+	if (!global.console.error) {
+		global.console.error = function () {};
+	}
+	if (!global.console.group) {
+		global.console.group = function () {};
+	}
+	if (!global.console.groupEnd) {
+		global.console.groupEnd = function () {};
+	}
     
-    var oldLog = global.console.log;
-    var oldInfo = global.console.info;
-    var oldError = global.console.error;
+	if (!Function.prototype.bind) {
+		Function.prototype.bind = function (that) {
+			if (typeof this !== "function") {
+				// closest thing possible to the ECMAScript 5 internal IsCallable function
+				throw new TypeError("Function.prototype.bind - what is trying to be bound is not callable");
+			}
+
+			var args = Array.prototype.slice.call(arguments, 1);
+			var functionToBind = this; 
+			var nop = function () {};
+			var bound = function () {
+				return functionToBind.apply(this instanceof nop ? this : that || global,
+					args.concat(Array.prototype.slice.call(arguments)));
+			};
+
+			nop.prototype = this.prototype;
+			bound.prototype = new nop();
+
+			return bound;
+		};
+	}  
+	
+    var oldLog = Function.prototype.bind.call(global.console.log, global.console);
+    var oldInfo = Function.prototype.bind.call(global.console.info, global.console);
+    var oldError = Function.prototype.bind.call(global.console.error, global.console);
     
     TestFramework.prototype.doLog = function () {
         oldLog.apply(global.console, arguments);

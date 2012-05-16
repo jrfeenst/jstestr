@@ -58,13 +58,16 @@ define([
     queue.prototype._typeChar = function _typeChar(character, element, options) {
         this._keyDown(character, element, options);
         if (this._isPrintingCharacter(character)) {
-            if (this.browser.needsSyntheticTextInput) {
+            if (this.browser.needsSyntheticKeypress) {
                 this._keyPress(character, element, options);
             }
-            if (this._isTextInputElement(element)) {
-                if (this.browser.needsSyntheticTextInput) {
-                    this._textInput(character, element, options);
-                }
+            
+            // todo: find better way to detect the first keypress in an input element not working on ie
+            if ((this.browser.needsSyntheticTextInput ||
+                    (this.browser.msie && element.type !== "textarea" && element.value === "")) &&
+                    this._isTextInputElement(element)) {
+                    
+                this._textInput(character, element, options);
             }
         }
         
@@ -72,8 +75,8 @@ define([
             if (this.browser.needsSyntheticTextValueChange && this._isPrintingCharacter(character)) {
                 element.value += character;
             }
-            if (this.browser.needsSyntheticBackspace && !this._isPrintingCharacter(character)) {
-                if (character === "[backspace]") {
+            if (!this._isPrintingCharacter(character)) {
+                if (this.browser.needsSyntheticBackspace && character === "[backspace]") {
                     element.value = element.value.substring(0, element.value.length - 1);
                     this._input(element, options);
                 } else {
@@ -104,7 +107,7 @@ define([
     queue.prototype.defaultActions.textInput = function textInputDefaultActions() {};
     queue.prototype.defaultActions.textinput = function textinputDefaultActions() {}; // ie uses all lowercase event name
     queue.prototype._textInput = function _textInput(character, element, options) {
-        var event = this._createTextEvent("textInput", character, element, options);
+        var event = this._createTextEvent(this._textInputEventType, character, element, options);
         this._dispatchEvent(event, element, options);
     };
     
@@ -337,26 +340,47 @@ define([
         
         // use a textarea to test what events are automatically fired and what needs to be
         // synthetically dispatched
-        var textarea = document.createElement("textarea");
+        var textarea = document.createElement("input");
+        textarea.setAttribute("type", "text");
         node.appendChild(textarea);
         textarea.value = ""; // just in case form completion kicks in
         textarea.focus();
         
         var q = new queue();
         
-        queue.prototype.browser.needsSyntheticTextInput = true;
+        queue.prototype._textInputEventType = queue.prototype.browser.msie ? "textinput" : "textInput";
+		
+        queue.prototype.browser.needsSyntheticKeypress = true;
         var pressListener = event.on("keypress", textarea, function () {
+            queue.prototype.browser.needsSyntheticKeypress = false;
+        });
+		
+        queue.prototype.browser.needsSyntheticTextInput = true;
+        var textInputListener = event.on(queue.prototype._textInputEventType, textarea, function () {
             queue.prototype.browser.needsSyntheticTextInput = false;
         });
         
         var pressEvent, textInputEvent;
         var downEvent = q._createKeyEvent("keydown", "a", textarea, {});
-        var upEvent = q._createKeyEvent("keyup", "a", textarea, {});
         textarea.dispatchEvent(downEvent);
+        var upEvent = q._createKeyEvent("keyup", "a", textarea, {});
         textarea.dispatchEvent(upEvent);
-        
+                
         pressListener.remove();
         
+        textarea.value = "a";
+        textarea.value = "b";
+        
+        downEvent = q._createKeyEvent("keydown", "b", textarea, {});
+        textarea.dispatchEvent(downEvent);
+        if (q.browser.needsSyntheticKeypress) {
+            pressEvent = q._createKeyEvent("keypress", "b", textarea, {});
+            textarea.dispatchEvent(pressEvent);
+        }
+        upEvent = q._createKeyEvent("keyup", "b", textarea, {});
+        textarea.dispatchEvent(upEvent);
+                
+        textInputListener.remove();
         
         textarea.value = "";
         
@@ -365,13 +389,14 @@ define([
             queue.prototype.browser.needsSyntheticInputEvent = false;
         });
         
-        
         downEvent = q._createKeyEvent("keydown", "b", textarea, {});
         textarea.dispatchEvent(downEvent);
-        if (q.browser.needsSyntheticTextInput) {
+        if (q.browser.needsSyntheticKeypress) {
             pressEvent = q._createKeyEvent("keypress", "b", textarea, {});
             textarea.dispatchEvent(pressEvent);
-            textInputEvent = q._createTextEvent("textInput", "b", textarea, {});
+        }
+        if (q.browser.needsSyntheticTextInput) {
+            textInputEvent = q._createTextEvent(queue.prototype._textInputEventType, "b", textarea, {});
             textarea.dispatchEvent(textInputEvent);
         }
         upEvent = q._createKeyEvent("keyup", "b", textarea, {});
@@ -390,10 +415,12 @@ define([
         
         downEvent = q._createKeyEvent("keydown", "[backspace]", textarea, {});
         textarea.dispatchEvent(downEvent);
-        if (q.browser.needsSyntheticTextInput) {
-            pressEvent = q._createKeyEvent("keypress", "b", textarea, {});
+        if (q.browser.needsSyntheticKeypress) {
+            pressEvent = q._createKeyEvent("keypress", "[backspace]", textarea, {});
             textarea.dispatchEvent(pressEvent);
-            textInputEvent = q._createTextEvent("textInput", "b", textarea, {});
+        }
+        if (q.browser.needsSyntheticTextInput) {
+            textInputEvent = q._createTextEvent(queue.prototype._textInputEventType, "[backspace]", textarea, {});
             textarea.dispatchEvent(textInputEvent);
         }
         upEvent = q._createKeyEvent("keyup", "[backspace]", textarea, {});

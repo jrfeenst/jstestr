@@ -71,8 +71,15 @@ define([
         "Backspace": function () {
             var expected = ["keydown", "keypress", "textinput", "input", "keyup", "keydown",
                 "input", "keyup", "keydown", "keypress", "textinput", "input", "keyup"];
+                
             assertType(this.k, "a[backspace]b", "b", expected, this.textareaNode);
             
+            if (this.k.browser.msie) {
+                expected = ["keydown", "keypress", "textinput", "input", "keyup", "keydown",
+                    "textinput", "input", "keyup", "keydown", "keypress", "textinput", "input", "keyup"];
+            }
+            assertType(this.k, "a[backspace]b", "b", expected, this.inputNode);
+                        
             return this.k.start();
         },
         

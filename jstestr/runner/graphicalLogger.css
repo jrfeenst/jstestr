@@ -23,7 +23,10 @@
 
 .graphicalLogger button {
     vertical-align: top;
-    margin: 1px;
+    margin-left: 1px;
+    margin-right: 1px;
+    margin-top: 0;
+    margin-bottom: 0;
 }
 
 .graphicalLogger .progressBar {

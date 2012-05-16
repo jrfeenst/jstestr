@@ -56,21 +56,13 @@ define([
         options = options || {};
         if (this.browser.needsSyntheticFocus) {
             var currentlyFocused = this.document.activeElement;
-            var event = this._createEvent("blur", currentlyFocused, options);
-            this._dispatchEvent(event, currentlyFocused, options);
-            
-            if (this.browser.supportsFocusout) {
-                event = this._createEvent("focusout", element, options);
-                this._dispatchEvent(event, currentlyFocused, options);
-            }
+			if (currentlyFocused) {
+				var event = this._createEvent("blur", currentlyFocused, options);
+				this._dispatchEvent(event, currentlyFocused, options);
+			}
             
             event = this._createEvent("focus", element, options);
             this._dispatchEvent(event, element, options);
-            
-            if (this.browser.supportsFocusin) {
-                event = this._createEvent("focusin", element, options);
-                this._dispatchEvent(event, element, options);
-            }
         } else {
             element.focus();
         }
@@ -93,22 +85,15 @@ define([
         var textArea2 = node.ownerDocument.createElement("textarea");
         node.appendChild(textArea1);
         node.appendChild(textArea2);
-        textArea2.focus();
-        
-        queue.prototype.needsSyntheticFocus = true;
-        queue.prototype.supportsFocusin = false;
-        queue.prototype.supportsFocusout = false;
-        var focusListener = event.on("focus", textArea1, function () {
-            queue.prototype.browser.needsSyntheticFocus = false;
-        });
-        var focusinListener = event.on("focusin", textArea1, function () {
-            queue.prototype.browser.supportsFocusin = true;
-            queue.prototype.browser.supportsFocusout = true;
-        });
         textArea1.focus();
         
+        queue.prototype.browser.needsSyntheticFocus = true;
+        var focusListener = event.on("focus", textArea2, function () {
+			queue.prototype.browser.needsSyntheticFocus = false;
+        });
+        textArea2.focus();
+        
         focusListener.remove();
-        focusinListener.remove();
     });
     
     /*
