@@ -1,15 +1,15 @@
 
 define([
-    "./queue"
-], function (queue) {
+    "./Queue"
+], function (Queue) {
     
-    queue.prototype.eventDefaults = {};
-    queue.prototype.eventDefaults.generic = {
+    Queue.prototype.eventDefaults = {};
+    Queue.prototype.eventDefaults.generic = {
         canBubble: true,
         cancelable: true
     };
     
-    queue.prototype._createEvent = function _createEvent(type, element, options, defaults) {
+    Queue.prototype._createEvent = function _createEvent(type, element, options, defaults) {
         options = options || {};
         defaults = defaults || this.eventDefaults.type || this.eventDefaults.generic;
         var event = element.ownerDocument.createEvent("Event");
@@ -21,8 +21,8 @@ define([
         return event;
     };
     
-    queue.prototype.defaultActions = {};
-    queue.prototype._dispatchEvent = function _dispatchEvent(event, element, options, defaultAction) {
+    Queue.prototype.defaultActions = {};
+    Queue.prototype._dispatchEvent = function _dispatchEvent(event, element, options, defaultAction) {
         if (!element) {
             this.done(false, "No element available to dispatch event to");
         } else if (!event) {
@@ -40,7 +40,7 @@ define([
         }
     };
     
-    queue._callHandler = function _callHandler(handler, scope, args) {
+    Queue._callHandler = function _callHandler(handler, scope, args) {
         if (typeof handler === "string") {
             return scope[handler].apply(scope, args);
         } else {
@@ -48,9 +48,9 @@ define([
         }
     };
     
-    queue.on = function on(type, element, handler, scope) {
+    Queue.on = function on(type, element, handler, scope) {
         var listener = function queueOnHandler() {
-            return queue._callHandler(handler, scope, arguments);
+            return Queue._callHandler(handler, scope, arguments);
         };
         
         element.addEventListener(type, listener, false);
@@ -62,16 +62,16 @@ define([
         };
     };
     
-    queue.prototype.on = function on(type, element, handler, scope) {
+    Queue.prototype.on = function on(type, element, handler, scope) {
         var self = this;
-        return queue.on(type, element, function onHandler() {
+        return Queue.on(type, element, function onHandler() {
             try {
-                return queue._callHandler(handler, scope, arguments);
+                return Queue._callHandler(handler, scope, arguments);
             } catch (e) {
                 self.done(false, e);
             }
         });
     };
     
-    return queue;
+    return Queue;
 });

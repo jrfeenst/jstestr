@@ -1,11 +1,11 @@
 
 define([
     "jstestr/assert",
-    "jstestr/key",
-    "jstestr/mouse",
-    "jstestr/option",
+    "jstestr/Key",
+    "jstestr/Mouse",
+    "jstestr/Option",
     "jstestr/test"
-], function (assert, key, mouse, option, test) {
+], function (assert, Key, Mouse, Option, test) {
     
     test.defineSuite("Option", {
         "beforeEach": function () {
@@ -25,7 +25,7 @@ define([
         },
         
         "Click To Change": function () {
-            var m = new mouse();
+            var m = new Mouse();
             var self = this;
             
             m.click(this.option1, function () {
@@ -50,7 +50,7 @@ define([
         },
         
         "Shift Click To Change": function () {
-            var m = new mouse();
+            var m = new Mouse();
             var self = this;
             
             m.click(this.option1, function () {
@@ -75,7 +75,7 @@ define([
         },
         
         "Ctrl Click To Change": function () {
-            var m = new mouse();
+            var m = new Mouse();
             var self = this;
             
             m.click(this.option1, function () {
@@ -106,7 +106,7 @@ define([
         },
         
         "Arrow Keys To Change": function () {
-            var m = new mouse();
+            var m = new Mouse();
             var self = this;
             
             m.click(this.option1, function () {
@@ -131,7 +131,7 @@ define([
         },
         
         "Shift Arrow Keys To Change": function () {
-            var m = new mouse();
+            var m = new Mouse();
             var self = this;
             
             m.click(this.option1, function () {

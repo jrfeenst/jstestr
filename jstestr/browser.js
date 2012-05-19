@@ -1,13 +1,16 @@
 
 define([
-    "./queue"
-], function (queue) {
+    "./Queue"
+], function (Queue) {
     
-    queue.prototype.browser = {
-		msie: !!(window.attachEvent && !window.opera),
-		opera: !!window.opera,
+    var global = this;
+    
+    Queue.prototype.browser = {
+		msie: !!(global.attachEvent && !global.opera),
+		opera: !!global.opera,
 		webkit: navigator.userAgent.indexOf('AppleWebKit/') >= 0,
-		safari: navigator.userAgent.indexOf('AppleWebKit/') >= 0 && navigator.userAgent.indexOf('Chrome/') === -1,
+		safari: navigator.userAgent.indexOf('AppleWebKit/') >= 0 &&
+                navigator.userAgent.indexOf('Chrome/') === -1,
 		gecko: navigator.userAgent.indexOf('Gecko') >= 0,
 		mobileSafari: !! navigator.userAgent.match(/Apple.*Mobile.*Safari/),
 		rhino: navigator.userAgent.match(/Rhino/) && true
@@ -17,8 +20,8 @@ define([
     
     function executeTests() {
         if (document && document.body) {
-            var node;
-            for (var i = 0; i < tests.length; i++) {
+            var node, i;
+            for (i = 0; i < tests.length; i++) {
                 node = document.createElement("div");
                 node.style.position = "absolute";
                 node.style.left = "-10000px";

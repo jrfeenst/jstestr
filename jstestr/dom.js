@@ -1,9 +1,9 @@
 
 define([
-    "./queue"
-], function (queue) {
+    "./Queue"
+], function (Queue) {
     
-    queue.prototype.byId = function byId(id, handler, options) {
+    Queue.prototype.byId = function byId(id, handler, options) {
         var self = this;
         this.then(function () {
             options = options || {};
@@ -11,7 +11,7 @@ define([
         });
     };
     
-    queue.prototype.query = function query(selector, handler, options) {
+    Queue.prototype.query = function query(selector, handler, options) {
         var self = this;
         this.then(function () {
             options = options || {};
@@ -19,7 +19,7 @@ define([
         });
     };
     
-    queue.prototype.queryAll = function queryAll(selector, expectedCount, handler, options) {
+    Queue.prototype.queryAll = function queryAll(selector, expectedCount, handler, options) {
         var self = this;
         this.then(function () {
             options = options || {};
@@ -27,11 +27,11 @@ define([
         });
     };
     
-    queue.prototype._query = function _query(selector, handler, options) {
+    Queue.prototype._query = function _query(selector, handler, options) {
         return this._queryAll(selector, ">0", this._wrapWithUnpackArray(handler), options);
     };
     
-    queue.prototype._queryAll = function _queryAll(selector, expected, handler, options) {
+    Queue.prototype._queryAll = function _queryAll(selector, expected, handler, options) {
         var expectedFunc;
         
         if (typeof expected === "string") {
@@ -73,7 +73,7 @@ define([
         }, handler, options);
     };
     
-    queue.prototype._stringElementCountComparitor = function _stringElementCountComparitor(expected) {
+    Queue.prototype._stringElementCountComparitor = function _stringElementCountComparitor(expected) {
         var i, token;
         // first we have to add spaces around all the symbols so that we can split on spaces
         var tempExpected = expected.replace(/([<>=&|])/g, " $1 ");
@@ -134,7 +134,7 @@ define([
         };
     };
     
-    queue.prototype._wrapWithUnpackArray = function _wrapWithUnpackArray(handler) {
+    Queue.prototype._wrapWithUnpackArray = function _wrapWithUnpackArray(handler) {
         return function _unpackArrayHelper() {
             // unpack the first argument out of it's array'
             arguments[0] = arguments[0][0];
@@ -142,7 +142,7 @@ define([
         };
     };
     
-    queue.prototype._normalizeElement = function _normalizeElement(element, handler, options) {
+    Queue.prototype._normalizeElement = function _normalizeElement(element, handler, options) {
         if (typeof element === "string") {
             this._query(element, handler, options);
         } else {
@@ -150,7 +150,7 @@ define([
         }
     };    
     
-    queue.prototype._findParentByType = function _findParentByType(element, type) {
+    Queue.prototype._findParentByType = function _findParentByType(element, type) {
         while (element.parentNode && 
                 element.parentNode.tagName &&
                 element.parentNode.tagName.toLowerCase() !== type) {
@@ -160,5 +160,5 @@ define([
         return element.parentNode;
     };
     
-    return queue;
+    return Queue;
 });

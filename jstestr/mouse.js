@@ -1,14 +1,14 @@
 
 define([
-    "./dom",
-    "./queue",
-    "./event"
-], function (dom, queue) {
+    "./Dom",
+    "./Queue",
+    "./Event"
+], function (Dom, Queue) {
     
     var global = this;
     
 	
-    queue.prototype.click = function click(element, handler, options) {
+    Queue.prototype.click = function click(element, handler, options) {
         var self = this;
         this.then(function _clickTask() {
             options = options || {};
@@ -20,7 +20,7 @@ define([
         });
     };
 	
-    queue.prototype.doubleClick = function doubleClick(element, handler, options) {
+    Queue.prototype.doubleClick = function doubleClick(element, handler, options) {
         var self = this;
         this.then(function _doubleClickTask() {
             options = options || {};
@@ -34,7 +34,7 @@ define([
         });
     };
     
-    queue.prototype.hover = function hover(element, handler, options) {
+    Queue.prototype.hover = function hover(element, handler, options) {
         var self = this;
         this.then(function _hoverTask() {
             options = options || {};
@@ -46,7 +46,7 @@ define([
         });
     };
     
-    queue.prototype.move = function move(from, to, handler, options) {
+    Queue.prototype.move = function move(from, to, handler, options) {
         this.then(function _moveTask() {
             options = options || {};
             
@@ -103,7 +103,7 @@ define([
     };
 
 	
-    queue.prototype.drag = function drag(from, to, handler, options) {
+    Queue.prototype.drag = function drag(from, to, handler, options) {
         this.then(function _dragTask() {
             options = options || {};
             
@@ -156,7 +156,7 @@ define([
     };
     
     
-    queue.prototype._normalizeRect = function _normalizeRect(rect) {
+    Queue.prototype._normalizeRect = function _normalizeRect(rect) {
         return {
             left: Math.round(rect.left),
             top: Math.round(rect.top),
@@ -165,7 +165,7 @@ define([
         }
     };
     
-    queue.prototype._normalizeElementPoint = function _normalizeElementPoint(elementPoint) {
+    Queue.prototype._normalizeElementPoint = function _normalizeElementPoint(elementPoint) {
         var x, y, element;
         if (typeof elementPoint === "string" || elementPoint instanceof Node) {
             element = elementPoint;
@@ -178,26 +178,26 @@ define([
     };
     
 
-    queue.prototype._click = function _click(element, options) {
+    Queue.prototype._click = function _click(element, options) {
         this._mouseDown(element, options);
         this._mouseUp(element, options);
         this._mouseClick(element, options);
     };
     
     
-    queue.MOUSE_BUTTON = {
+    Queue.MOUSE_BUTTON = {
         LEFT: 0,
         MIDDLE: 1,
         RIGHT: 2
     };
     
     // defaults for all mouse events, can be overriden with more specific event type defaults
-    queue.prototype.eventDefaults.mouse = {
+    Queue.prototype.eventDefaults.mouse = {
         canBubble: true,
         cancelable: true,
         view: global,
         count: 1,
-        button: queue.MOUSE_BUTTON.LEFT,
+        button: Queue.MOUSE_BUTTON.LEFT,
         relatedTarget: null,
         ctrlKey: false,
         altKey: false,
@@ -206,54 +206,54 @@ define([
     };
     
     
-    queue.prototype.defaultActions.mousedown = function mouseDownDefaultAction() {};
-    queue.prototype._mouseDown = function _mouseDown(element, options) {
+    Queue.prototype.defaultActions.mousedown = function mouseDownDefaultAction() {};
+    Queue.prototype._mouseDown = function _mouseDown(element, options) {
         this._updateMouseOver(element, options);
         var event = this._createMouseEvent("mousedown", element, options);
         this._dispatchEvent(event, element, options);
     };
     
-    queue.prototype.defaultActions.mouseup = function mouseUpDefaultAction() {};
-    queue.prototype._mouseUp = function _mouseUp(element, options) {
+    Queue.prototype.defaultActions.mouseup = function mouseUpDefaultAction() {};
+    Queue.prototype._mouseUp = function _mouseUp(element, options) {
         this._updateMouseOver(element, options);
         var event = this._createMouseEvent("mouseup", element, options);
         this._dispatchEvent(event, element, options);
     };
     
-    queue.prototype.defaultActions.click = function mouseClickDefaultAction() {};
-    queue.prototype._mouseClick = function _mouseClick(element, options) {
+    Queue.prototype.defaultActions.click = function mouseClickDefaultAction() {};
+    Queue.prototype._mouseClick = function _mouseClick(element, options) {
         this._updateMouseOver(element, options);
         var event = this._createMouseEvent("click", element, options);
         this._dispatchEvent(event, element, options);
     };
     
-    queue.prototype.defaultActions.dblclick = function mouseDblClickDefaultAction() {};
-    queue.prototype._mouseDoubleClick = function _mouseDoubleClick(element, options) {
+    Queue.prototype.defaultActions.dblclick = function mouseDblClickDefaultAction() {};
+    Queue.prototype._mouseDoubleClick = function _mouseDoubleClick(element, options) {
         var event = this._createMouseEvent("dblclick", element, options);
         this._dispatchEvent(event, element, options);
     };
     
-    queue.prototype.defaultActions.mousemove = function mouseMoveDefaultAction() {};
-    queue.prototype._mouseMove = function _mouseMove(element, options) {
+    Queue.prototype.defaultActions.mousemove = function mouseMoveDefaultAction() {};
+    Queue.prototype._mouseMove = function _mouseMove(element, options) {
         this._updateMouseOver(element, options);
         var event = this._createMouseEvent("mousemove", element, options);
         this._dispatchEvent(event, element, options);
     };
     
-    queue.prototype.defaultActions.mouseover = function mouseOverDefaultAction() {};
-    queue.prototype._mouseOver = function _mouseOver(element, options) {
+    Queue.prototype.defaultActions.mouseover = function mouseOverDefaultAction() {};
+    Queue.prototype._mouseOver = function _mouseOver(element, options) {
         var event = this._createMouseEvent("mouseover", element, options);
         this._dispatchEvent(event, element, options);
     };
     
-    queue.prototype.defaultActions.mouseout = function mouseOutDefaultAction() {};
-    queue.prototype._mouseOut = function _mouseOut(element, options) {
+    Queue.prototype.defaultActions.mouseout = function mouseOutDefaultAction() {};
+    Queue.prototype._mouseOut = function _mouseOut(element, options) {
         var event = this._createMouseEvent("mouseout", element, options);
         this._dispatchEvent(event, element, options);
     };
     
     
-    queue.prototype._updateMouseOver = function _updateMouseOver(element, options) {
+    Queue.prototype._updateMouseOver = function _updateMouseOver(element, options) {
         if (this._currentMouseOverElement != element) {
             if (this._currentMouseOverElement) {
                 this._mouseOut(this._currentMouseOverElement, options);
@@ -267,7 +267,7 @@ define([
     };
     
     
-    queue.prototype._createMouseEvent = function _createMouseEvent(type, element, options) {
+    Queue.prototype._createMouseEvent = function _createMouseEvent(type, element, options) {
         var defaults = this.eventDefaults[type] || this.eventDefaults.mouse;
         var rect = element.getBoundingClientRect();
         var x = rect.left + rect.width / 2;
@@ -295,7 +295,7 @@ define([
     };
     
     
-    queue.prototype._shallowClone = function _shallowClone(obj) {
+    Queue.prototype._shallowClone = function _shallowClone(obj) {
         var newObj = new obj.constructor();
         for (var i in obj) {
             newObj[i] = obj[i];
@@ -318,5 +318,5 @@ define([
         */
     }());
 
-    return queue;
+    return Queue;
 });

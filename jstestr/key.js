@@ -1,18 +1,18 @@
 
 define([
     "./browser",
-    "./queue",
-    "./dom",
-    "./event"
-], function (browser, queue, dom, event) {
+    "./Queue",
+    "./Dom",
+    "./Event"
+], function (browser, Queue, Dom, Event) {
     
     var global = window;
     
-    queue.prototype._controlRegExp = /\[[a-zA-Z]+\]/g;
+    Queue.prototype._controlRegExp = /\[[a-zA-Z]+\]/g;
     
-    queue.prototype.hooks.beforeType = function beforeType() {};
+    Queue.prototype.hooks.beforeType = function beforeType() {};
     
-    queue.prototype.type = function type(string, element, handler, options) {
+    Queue.prototype.type = function type(string, element, handler, options) {
         this.then(function _typeTask() {
             options = options || {};
             
@@ -55,7 +55,7 @@ define([
     };
     
     
-    queue.prototype._typeChar = function _typeChar(character, element, options) {
+    Queue.prototype._typeChar = function _typeChar(character, element, options) {
         this._keyDown(character, element, options);
         if (this._isPrintingCharacter(character)) {
             if (this.browser.needsSyntheticKeypress) {
@@ -92,43 +92,43 @@ define([
     };
     
     
-    queue.prototype.defaultActions.keydown = function keyDownDefaultActions() {};
-    queue.prototype._keyDown = function _keyDown(character, element, options) {
+    Queue.prototype.defaultActions.keydown = function keyDownDefaultActions() {};
+    Queue.prototype._keyDown = function _keyDown(character, element, options) {
         var event = this._createKeyEvent("keydown", character, element, options);
         this._dispatchEvent(event, element, options);
     };
     
-    queue.prototype.defaultActions.keypress = function keyPressDefaultAction() {};
-    queue.prototype._keyPress = function _keyPress(character, element, options) {
+    Queue.prototype.defaultActions.keypress = function keyPressDefaultAction() {};
+    Queue.prototype._keyPress = function _keyPress(character, element, options) {
         var event = this._createKeyEvent("keypress", character, element, options);
         this._dispatchEvent(event, element, options);
     };
     
-    queue.prototype.defaultActions.textInput = function textInputDefaultActions() {};
-    queue.prototype.defaultActions.textinput = function textinputDefaultActions() {}; // ie uses all lowercase event name
-    queue.prototype._textInput = function _textInput(character, element, options) {
+    Queue.prototype.defaultActions.textInput = function textInputDefaultActions() {};
+    Queue.prototype.defaultActions.textinput = function textinputDefaultActions() {}; // ie uses all lowercase event name
+    Queue.prototype._textInput = function _textInput(character, element, options) {
         var event = this._createTextEvent(this._textInputEventType, character, element, options);
         this._dispatchEvent(event, element, options);
     };
     
-    queue.prototype.defaultActions.keyup = function keyUpDefaultActions() {};
-    queue.prototype._keyUp = function _keyUp(character, element, options) {
+    Queue.prototype.defaultActions.keyup = function keyUpDefaultActions() {};
+    Queue.prototype._keyUp = function _keyUp(character, element, options) {
         var event = this._createKeyEvent("keyup", character, element, options);
         this._dispatchEvent(event, element, options);
     };
     
     
-    queue.prototype.eventDefaults.input = {
+    Queue.prototype.eventDefaults.input = {
         canBubble: true,
         cancelable: false
     };
-    queue.prototype.defaultActions.input = function inputDefaultActions() {};
-    queue.prototype._input = function _input(element, options) {
+    Queue.prototype.defaultActions.input = function inputDefaultActions() {};
+    Queue.prototype._input = function _input(element, options) {
         var event = this._createEvent("input", element, options);
         this._dispatchEvent(event, element, options);
     };
     
-    queue.prototype.eventDefaults.key = {
+    Queue.prototype.eventDefaults.key = {
         canBubble: true,
         cancelable: true,
         view: global,
@@ -138,7 +138,7 @@ define([
         metaKey: false
     };
     
-    queue.prototype._createKeyEvent = function _createKeyEvent(type, character, element, options) {
+    Queue.prototype._createKeyEvent = function _createKeyEvent(type, character, element, options) {
         var defaults = this.eventDefaults[type] || this.eventDefaults.key;
         
         var canBubble = "canBubble" in options ? options.canBubble : defaults.canBubble;
@@ -202,13 +202,13 @@ define([
     };
     
     
-    queue.prototype._textDefaults = {
+    Queue.prototype._textDefaults = {
         canBubble: true,
         cancelable: true,
         view: global
     };
     
-    queue.prototype._createTextEvent = function _createTextEvent(type, data, element, options) {
+    Queue.prototype._createTextEvent = function _createTextEvent(type, data, element, options) {
         var defaults = this.eventDefaults[type] || this.eventDefaults.key;
         
         var event;
@@ -234,7 +234,7 @@ define([
     };
     
     
-    queue.prototype._keyMap = {
+    Queue.prototype._keyMap = {
         "[backspace]": {keyCode: 8},
         "[escape]": {keyCode: 27},
         "\n": {identifier: "Enter"},
@@ -246,7 +246,7 @@ define([
         "[pagedown]": {identifier: "PageDown", keyCode: 40}
     },
     
-    queue.prototype._lookupKeyIdentifier = function _lookupKeyIdentifier(eventType, character) {
+    Queue.prototype._lookupKeyIdentifier = function _lookupKeyIdentifier(eventType, character) {
         if (character in this._keyMap && "identifier" in this._keyMap[character]) {
             return this._keyMap[character].identifier;
         } else {
@@ -256,11 +256,11 @@ define([
         }
     };
     
-    queue.prototype._lookupKeyLocation = function _lookupKeyLocation(eventType, character) {
+    Queue.prototype._lookupKeyLocation = function _lookupKeyLocation(eventType, character) {
         return 0;
     };
     
-    queue.prototype._lookupKeyCode = function _lookupKeyCode(eventType, character) {
+    Queue.prototype._lookupKeyCode = function _lookupKeyCode(eventType, character) {
         if (character in this._keyMap && "keyCode" in this._keyMap[character]) {
             return this._keyMap[character].keyCode;
         } else {
@@ -271,7 +271,7 @@ define([
         }
     };
     
-    queue.prototype._lookupCharCode = function _lookupCharCode(eventType, character) {
+    Queue.prototype._lookupCharCode = function _lookupCharCode(eventType, character) {
         if (eventType === "keydown") {
             return 0;
         }
@@ -283,11 +283,11 @@ define([
     };
     
     
-    queue.prototype._isPrintingCharacter = function _isPrintingCharacter(character) {
+    Queue.prototype._isPrintingCharacter = function _isPrintingCharacter(character) {
         return character.length === 1;
     };
     
-    queue.prototype._isTextInputElement = function _isTextInputElement(element) {
+    Queue.prototype._isTextInputElement = function _isTextInputElement(element) {
         var tag = element.tagName.toLowerCase();
         var type = element.type;
         if (type && type.toLowerCase) {
@@ -300,39 +300,39 @@ define([
         var ev;
         
         // feature test for key events
-        queue.prototype.browser.supportsKeyEvents = false;
+        Queue.prototype.browser.supportsKeyEvents = false;
         try {
             if (global.KeyEvent !== undefined) {
-                ev = document.createEvent("KeyEvent");
+                ev = global.document.createEvent("KeyEvent");
                 if ("initKeyEvent" in ev) {
-                    queue.prototype.browser.supportsKeyEvents = true;
+                    Queue.prototype.browser.supportsKeyEvents = true;
                 }
             }
         } catch (e) {
         }
         
         // feature test for keyboard events
-        queue.prototype.browser.supportsKeyboardEvents = false;
+        Queue.prototype.browser.supportsKeyboardEvents = false;
         try {
             if (global.KeyboardEvent !== undefined) {
-                ev = document.createEvent("KeyboardEvent");
+                ev = global.document.createEvent("KeyboardEvent");
                 if ("initKeyboardEvent" in ev) {
                     // try to init the event, if the keyCode is not set properly, then this
                     // is considered a broken feature and we will use the fallback
                     ev.initKeyboardEvent("keydown", true, true, 0, 40, 0, "", 1, "");
-                    queue.prototype.browser.supportsKeyboardEvents = ev.keyCode === 40;
+                    Queue.prototype.browser.supportsKeyboardEvents = ev.keyCode === 40;
                 }
             }
         } catch (e) {
         }
         
         // feature test for text events
-        queue.prototype.browser.supportsTextEvents = false;
+        Queue.prototype.browser.supportsTextEvents = false;
         try {
             if (global.TextEvent !== undefined) {
-                ev = document.createEvent("TextEvent");
+                ev = global.document.createEvent("TextEvent");
                 if ("initTextEvent" in ev) {
-                    queue.prototype.browser.supportsTextEvents = true;
+                    Queue.prototype.browser.supportsTextEvents = true;
                 }
             }
         } catch (e) {
@@ -340,24 +340,24 @@ define([
         
         // use a textarea to test what events are automatically fired and what needs to be
         // synthetically dispatched
-        var textarea = document.createElement("input");
+        var textarea = global.document.createElement("input");
         textarea.setAttribute("type", "text");
         node.appendChild(textarea);
         textarea.value = ""; // just in case form completion kicks in
         textarea.focus();
         
-        var q = new queue();
+        var q = new Queue();
         
-        queue.prototype._textInputEventType = queue.prototype.browser.msie ? "textinput" : "textInput";
+        Queue.prototype._textInputEventType = Queue.prototype.browser.msie ? "textinput" : "textInput";
 		
-        queue.prototype.browser.needsSyntheticKeypress = true;
-        var pressListener = event.on("keypress", textarea, function () {
-            queue.prototype.browser.needsSyntheticKeypress = false;
+        Queue.prototype.browser.needsSyntheticKeypress = true;
+        var pressListener = Event.on("keypress", textarea, function () {
+            Queue.prototype.browser.needsSyntheticKeypress = false;
         });
 		
-        queue.prototype.browser.needsSyntheticTextInput = true;
-        var textInputListener = event.on(queue.prototype._textInputEventType, textarea, function () {
-            queue.prototype.browser.needsSyntheticTextInput = false;
+        Queue.prototype.browser.needsSyntheticTextInput = true;
+        var textInputListener = Event.on(Queue.prototype._textInputEventType, textarea, function () {
+            Queue.prototype.browser.needsSyntheticTextInput = false;
         });
         
         var pressEvent, textInputEvent;
@@ -384,9 +384,9 @@ define([
         
         textarea.value = "";
         
-        queue.prototype.browser.needsSyntheticInputEvent = true;
-        var inputListener = event.on("input", textarea, function () {
-            queue.prototype.browser.needsSyntheticInputEvent = false;
+        Queue.prototype.browser.needsSyntheticInputEvent = true;
+        var inputListener = Event.on("input", textarea, function () {
+            Queue.prototype.browser.needsSyntheticInputEvent = false;
         });
         
         downEvent = q._createKeyEvent("keydown", "b", textarea, {});
@@ -396,15 +396,15 @@ define([
             textarea.dispatchEvent(pressEvent);
         }
         if (q.browser.needsSyntheticTextInput) {
-            textInputEvent = q._createTextEvent(queue.prototype._textInputEventType, "b", textarea, {});
+            textInputEvent = q._createTextEvent(Queue.prototype._textInputEventType, "b", textarea, {});
             textarea.dispatchEvent(textInputEvent);
         }
         upEvent = q._createKeyEvent("keyup", "b", textarea, {});
         textarea.dispatchEvent(upEvent);
         
-        queue.prototype.browser.needsSyntheticTextValueChange = textarea.value !== "b";
+        Queue.prototype.browser.needsSyntheticTextValueChange = textarea.value !== "b";
         
-        if (queue.prototype.browser.needsSyntheticTextValueChange) {
+        if (Queue.prototype.browser.needsSyntheticTextValueChange) {
             // force the value to change to try to fire the input listener
             textarea.value = "b";
         }
@@ -420,12 +420,12 @@ define([
             textarea.dispatchEvent(pressEvent);
         }
         if (q.browser.needsSyntheticTextInput) {
-            textInputEvent = q._createTextEvent(queue.prototype._textInputEventType, "[backspace]", textarea, {});
+            textInputEvent = q._createTextEvent(Queue.prototype._textInputEventType, "[backspace]", textarea, {});
             textarea.dispatchEvent(textInputEvent);
         }
         upEvent = q._createKeyEvent("keyup", "[backspace]", textarea, {});
         textarea.dispatchEvent(upEvent);
-        queue.prototype.browser.needsSyntheticBackspace = textarea.value !== "a";
+        Queue.prototype.browser.needsSyntheticBackspace = textarea.value !== "a";
         
         
         /*
@@ -438,5 +438,5 @@ define([
          */
     });
     
-    return queue;
+    return Queue;
 });

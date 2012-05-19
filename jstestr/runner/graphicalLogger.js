@@ -1,7 +1,7 @@
 
 define([
-    "jstestr/event"
-], function (event) {
+    "jstestr/Event"
+], function (Event) {
     
     var template =
         '<div class="graphicalLogger">' +
@@ -131,11 +131,11 @@ define([
             }
             
             
-            event.on("click", runAll, function () {
+            Event.on("click", runAll, function () {
                 test.runAll();
             });
             
-            event.on("click", reloadRunAll, function () {
+            Event.on("click", reloadRunAll, function () {
                 location.href = location.href.replace(/(&|\?)suite=[^&]+|(&|\?)test=[^&]+/, "");
             });
             
@@ -172,7 +172,7 @@ define([
                 runReloadNode.innerHTML = "Reload and Run";
                 controlsNode.appendChild(runReloadNode);
                 
-                event.on("click", runNode, function (ev) {
+                Event.on("click", runNode, function (ev) {
                     ev.preventDefault();
                     ev.stopPropagation();
                     if (testName) {
@@ -182,7 +182,7 @@ define([
                     }
                 });
                 
-                event.on("click", runReloadNode, function (ev) {
+                Event.on("click", runReloadNode, function (ev) {
                     ev.preventDefault();
                     ev.stopPropagation();
                     
@@ -216,7 +216,7 @@ define([
                 
                 suiteNameNode.appendChild(renderControls(suiteName));
                 
-                event.on("click", suiteNameNode, function () {
+                Event.on("click", suiteNameNode, function () {
                     toggleControls(suiteNameNode);
                 });
                 
@@ -234,7 +234,7 @@ define([
                 
                 testNode.appendChild(renderControls(suiteName, testName));
                 
-                event.on("click", testNode, function () {
+                Event.on("click", testNode, function () {
                     var output = logContent.querySelector(testSelector(suiteName, testName));
                     if (output) {
                         output.scrollIntoView();

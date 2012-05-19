@@ -1,7 +1,7 @@
 
 define([], function () {
     
-    var queue = function (args) {
+    var Queue = function JSTestr(args) {
         args = args || {};
         this.document = args.document || document;
         this.timeout = args.timeout || 10000;
@@ -10,7 +10,7 @@ define([], function () {
         this._queue = [];
     };
     
-    queue.prototype.hooks = {
+    Queue.prototype.hooks = {
         onBeforeTask: function () {},
         onAfterTask: function () {}
     };
@@ -20,7 +20,7 @@ define([], function () {
      * @param func The function to be called. This function must call <code>next</code> when it is
      * done.
      */
-    queue.prototype.then = function then(func) {
+    Queue.prototype.then = function then(func) {
         this._queue.splice(this._insertionPoint, 0, func);
         this._insertionPoint++;
     };
@@ -30,7 +30,7 @@ define([], function () {
      * @param timeout Timeout in milliseconds.
      * @param handler Function to be called after the timeout.
      */
-    queue.prototype.delay = function delay(timeout, handler) {
+    Queue.prototype.delay = function delay(timeout, handler) {
         var self = this;
         this.then(function delayAction() {
             setTimeout(self._wrapHandler(handler), timeout);
@@ -38,7 +38,7 @@ define([], function () {
     };
     
     
-    queue.prototype.waitFor = function waitFor(condition, handler, options) {
+    Queue.prototype.waitFor = function waitFor(condition, handler, options) {
         var self = this;
         this.then(function () {
             options = options || {};
@@ -50,7 +50,7 @@ define([], function () {
      * Call the next function in the queue.
      * @param func Optional function to call next. This will be prepended to the queue.
      */
-    queue.prototype.next = function next(func) {
+    Queue.prototype.next = function next(func) {
         if (func) {
             this.then(func);    
         }
@@ -76,7 +76,7 @@ define([], function () {
     /**
      * Start processing the queue of tasks.
      */
-    queue.prototype.start = function start(timeout) {
+    Queue.prototype.start = function start(timeout) {
         this.timeout = timeout === undefined ? this.timeout : timeout;
         
         var self = this;
@@ -93,7 +93,7 @@ define([], function () {
     /**
      * Called when the queue is done being processed.
      */
-    queue.prototype.done = function done(result, message) {
+    Queue.prototype.done = function done(result, message) {
         clearTimeout(this._testTimeout);
         this._queue = []; // reset the queue
         this.running = false;
@@ -105,7 +105,7 @@ define([], function () {
     /**
      * Create a future which can be used to listen for success or failure of the queue's execution
      */
-    queue.prototype._createFuture = function _createFuture() {
+    Queue.prototype._createFuture = function _createFuture() {
         var self = this;
         var future = {
             callbacks: [],
@@ -146,7 +146,7 @@ define([], function () {
         return future;
     };
     
-    queue.prototype._signalDone = function _signalDone() {
+    Queue.prototype._signalDone = function _signalDone() {
         if (this.result) {
             if (this.onSuccess) {
                 this.onSuccess(this.message);
@@ -158,7 +158,7 @@ define([], function () {
         }
     };
     
-    queue.prototype._waitFor = function _waitFor(condition, handler, options) {
+    Queue.prototype._waitFor = function _waitFor(condition, handler, options) {
         var pollingDelay = options.pollingDelay || 50;
         var timeout = options.timeout || 500;
         
@@ -187,7 +187,7 @@ define([], function () {
     };
     
     
-    queue.prototype._wrapHandler = function _wrapHandle(handler) {
+    Queue.prototype._wrapHandler = function _wrapHandle(handler) {
         var self = this;
         var args = Array.prototype.slice.call(arguments, 1, arguments.length);
         return function _wrappedHandler() {
@@ -202,5 +202,5 @@ define([], function () {
         };
     };
     
-    return queue;
+    return Queue;
 });

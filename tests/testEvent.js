@@ -1,14 +1,13 @@
 
 define([
     "jstestr/assert",
-    "jstestr/event",
+    "jstestr/Event",
     "jstestr/test"
-], function (assert, event, test) {
-    var e = new event();
+], function (assert, Event, test) {
+    var e = new Event();
     
     test.defineSuite("Event", {
         "Defaults": function () {
-            var e = new event();
             assert.isTrue(e.defaultActions, "Has default actions");
             assert.isTrue(e.eventDefaults, "Has event defaults");
         },
@@ -18,14 +17,12 @@ define([
             
             var customEvent = e._createEvent("custom", testNode);
             
-            var called = false;
-            e.on("custom", testNode, function (ev) {
-                called = true;
-            });
+            var mock = assert.createMockFunction();
+            e.on("custom", testNode, mock);
             
             e._dispatchEvent(customEvent, testNode);
             
-            assert.isTrue(called, "Event listener should be called");
+            mock.verify("Event listener should be called");
         },
         
         "Event With Default Action": function () {
@@ -33,13 +30,11 @@ define([
             
             var customEvent = e._createEvent("custom", testNode);
             
-            var called = false;
-            e.defaultActions.custom = function (ev) {
-                called = true;
-            };
+            var mock = assert.createMockFunction();
+            e.defaultActions.custom = mock;
             e._dispatchEvent(customEvent, testNode);
             
-            assert.isTrue(called, "Event listener should be called");
+            mock.verify("Event listener should be called");
         },
         
         "Prevent Default Action": function () {
@@ -51,13 +46,12 @@ define([
                 ev.preventDefault();
             });
             
-            var called = false;
-            e.defaultActions.custom = function (ev) {
-                called = true;
-            };
+            var mock = assert.createMockFunction();
+            mock.times(0);
+            e.defaultActions.custom = mock;
             e._dispatchEvent(customEvent, testNode);
             
-            assert.isFalse(called, "Event listener should not be called");
+            mock.verify("Event listener should not be called");
         }
     });
 });

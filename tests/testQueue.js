@@ -1,28 +1,28 @@
 
 define([
     "jstestr/assert",
-    "jstestr/queue",
+    "jstestr/Queue",
     "jstestr/test"
-], function (assert, queue, test) {
+], function (assert, Queue, test) {
     
     test.defineSuite("Queue", {
         "Default Args": function () {
-            var q = new queue();
+            var q = new Queue();
             assert.isTrue(q.timeout > 0, "Default timeout");
-            assert.isTrue(q.document === document, "Default document");
+            assert.isSame(q.document, document, "Default document");
             assert.isEqual(0, q._currentTask, "Current task should be 0");
             assert.isEqual(0, q._insertionPoint, "Insertion point should be 0");
         },
         
         "Constructor Args": function () {
             var fakeDoc = {};
-            var q = new queue({timeout: 100, document: fakeDoc});
+            var q = new Queue({timeout: 100, document: fakeDoc});
             assert.isEqual(100, q.timeout, "Custom timeout");
             assert.isEqual(fakeDoc, q.document, "Custom document");
         },
         
         "Basic Queue Functionality": function () {
-            var q = new queue();
+            var q = new Queue();
             
             var ran1 = false, ran2 = false, order = 0;
             q.then(function () {
@@ -62,7 +62,7 @@ define([
         },
         
         "Error Handling": function () {
-            var q = new queue();
+            var q = new Queue();
             
             var ran = false;
             q.then(function () {

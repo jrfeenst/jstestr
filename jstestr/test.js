@@ -1,7 +1,7 @@
 
 define([
-    "./queue"
-], function (queue) {
+    "./Queue"
+], function (Queue) {
     
     var global = this;
     
@@ -11,7 +11,7 @@ define([
      * also be defined. The test framework defines a set of events which can be used to monitor the
      * tests.
      */
-    var TestFramework = function (args) {
+    var TestFramework = function TestFramework(args) {
         args = args || {};
         this.suites = {};
         this.specialFunctions = {};
@@ -35,7 +35,8 @@ define([
      * with a value of the test function.
      */
     TestFramework.prototype.defineSuite = function defineSuite(suiteName, tests) {
-        for (var name in tests) {
+        var name;
+        for (name in tests) {
             if (this._isSpecialFunction(name)) {
                 if (!this.specialFunctions[suiteName]) {
                     this.specialFunctions[suiteName] = {};
@@ -71,7 +72,7 @@ define([
      * @return Future An object which can be used to be notified of the end of the test execution.
      */
     TestFramework.prototype.runAll = function runAll() {
-        this.testQueue = new queue();
+        this.testQueue = new Queue();
         
         this._start();
         
@@ -89,7 +90,7 @@ define([
      * @return Future An object which can be used to be notified of the end of the test execution.
      */
     TestFramework.prototype.runSuite = function runSuite(suiteName) {
-        this.testQueue = new queue();
+        this.testQueue = new Queue();
         
         this._start();
         this._runSuite(suiteName);
@@ -103,7 +104,7 @@ define([
      * @return Future An object which can be used to be notified of the end of the test execution.
      */
     TestFramework.prototype.runTest = function runTest(suiteName, testName) {
-        this.testQueue = new queue();
+        this.testQueue = new Queue();
         
         this._start();
         this._startSuite(suiteName);

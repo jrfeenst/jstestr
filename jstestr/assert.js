@@ -115,6 +115,52 @@ define([], function () {
         }
     }
     
+    function isSame(expected, actual, help) {
+        if (expected !== actual) {
+            throw createError("Expected " + toString(expected) + " but found: " +
+                toString(actual) + ".", help);
+        }
+    }
+    
+    function isNotSame(expected, actual, help) {
+        if (expected === actual) {
+            throw createError("Expected " + toString(expected) + " to be different from: " +
+                toString(actual) + ".", help);
+        }
+    }
+    
+    
+    function isObject(obj, help) {
+        if (typeof obj !== "object" || obj.constructor === Array) {
+            throw createError("Expected a function, by found: " + toString(obj) + ".", help);
+        }
+    }
+    
+    function isFunction(obj, help) {
+        if (typeof obj !== "function") {
+            throw createError("Expected a function, by found: " + toString(obj) + ".", help);
+        }
+    }
+    
+    function isArray(obj, help) {
+        if (obj.constructor !== Array && !(!obj.constructor && obj.forEach)) {
+            throw createError("Expected an array, by found: '" + toString(obj) + "'.", help);
+        }
+    }
+    
+    function isNumber(obj, help) {
+        if (typeof obj !== "number") {
+            throw createError("Expected a number, by found: '" + toString(obj) + "'.", help);
+        }
+    }
+    
+    function isString(obj, help) {
+        if (typeof obj !== "string") {
+            throw createError("Expected a string, by found: '" + toString(obj) + "'.", help);
+        }
+    }
+    
+    
     function doesThrow(expected, func, help) {
         try {
             func();
@@ -221,6 +267,13 @@ define([], function () {
         isFalse: isFalse,
         isEqual: isEqual,
         isNotEqual: isNotEqual,
+        isSame: isSame,
+        isNotSame: isNotSame,
+        isObject: isObject,
+        isArray: isArray,
+        isFunction: isFunction,
+        isNumber: isNumber,
+        isString: isString,
         doesThrow: doesThrow,
         
         createMockFunction: createMockFunction,

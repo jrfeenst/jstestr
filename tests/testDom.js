@@ -1,9 +1,9 @@
 
 define([
     "jstestr/assert",
-    "jstestr/dom",
+    "jstestr/Dom",
     "jstestr/test"
-], function (assert, dom, test) {
+], function (assert, Dom, test) {
     test.defineSuite("Dom", {
         beforeEach: function () {
             this.node = test.getNewTestNode({timeout: 200});
@@ -18,7 +18,7 @@ define([
             this.testNode2.className = "testNode testNode2";
             this.node.appendChild(this.testNode2);
             
-            this.dom = new dom();
+            this.dom = new Dom();
         },
         
         "Query All": function () {

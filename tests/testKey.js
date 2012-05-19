@@ -1,23 +1,23 @@
 
 define([
     "jstestr/assert",
-    "jstestr/event",
-    "jstestr/focus",
-    "jstestr/key",
+    "jstestr/Event",
+    "jstestr/Focus",
+    "jstestr/Key",
     "jstestr/test"
-], function (assert, event, focus, key, test) {
+], function (assert, Event, Focus, Key, test) {
     
     function assertType(k, str, expectedStr, expectedEvents, node) {
         var actualEvents = [];
         function eventHandler(ev) {
             actualEvents.push(ev.type.toLowerCase());
         }
-        event.on("keydown", node, eventHandler);
-        event.on("keypress", node, eventHandler);
-        event.on("textInput", node, eventHandler);
-        event.on("textinput", node, eventHandler);
-        event.on("input", node, eventHandler);
-        event.on("keyup", node, eventHandler);
+        Event.on("keydown", node, eventHandler);
+        Event.on("keypress", node, eventHandler);
+        Event.on("textInput", node, eventHandler);
+        Event.on("textinput", node, eventHandler);
+        Event.on("input", node, eventHandler);
+        Event.on("keyup", node, eventHandler);
         
         k.type(str, node, function (input) {
             assert.isEqual(node, input, "Argument is the node");
@@ -31,7 +31,7 @@ define([
     
     test.defineSuite("Key", {
         "beforeEach": function () {
-            this.k = new key();
+            this.k = new Key();
             this.node = test.getNewTestNode();
             
             this.inputNode = document.createElement("input");

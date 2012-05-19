@@ -3,14 +3,14 @@ define([
     "require",
     "jstestr/assert",
     "jstestr/test",
-    "jstestr/main"
-], function (require, assert, test, jstestr) {
+    "jstestr/JsTestr"
+], function (require, assert, test, JsTestr) {
     test.defineSuite("Integration Test", {
         "pageUnderTest": require.toUrl("./integrationTestPage.html"),
         "timeout": 20000,
         
         "Click and Type": function () {
-            var testr = new jstestr({document: this.document, global: this.global});
+            var testr = new JsTestr({document: this.document, global: this.global});
             var self = this;
             testr.click("#input1", function () {
             });

@@ -4,6 +4,13 @@ define([
     "jstestr/test"
 ], function (assert, test) {
     
+    var obj = {};
+    var func = function () {};
+    var array = [];
+    var num = 1;
+    var str = "string";
+    
+    
     test.defineSuite("Assert", {
         "Assert True": function () {
             assert.isTrue(true, "Boolean true");
@@ -93,6 +100,186 @@ define([
                 assert.isEqual({prop1: "1"}, {prop2: "1"}, "Different keys");
             } catch (error5) {
                 assert.isTrue(error5, "Error should be truthy: keys");
+            }
+        },
+        
+        "Assert Same": function () {
+            var a = {a: 1};
+            var b = {a: 1};
+            var c = {a: 2};
+            assert.isSame(a, a, "A is the same as itself");
+            assert.isSame(b, b, "B is the same as itself");
+            
+            try {
+                assert.isSame(a, b, "A should not be the same as B");
+            } catch (error1) {
+                assert.isTrue(error1, "Error should be truthy: A B");
+            }
+            
+            try {
+                assert.isSame(a, c, "A should not be the same as C");
+            } catch (error2) {
+                assert.isTrue(error2, "Error should be truthy: A C");
+            }
+        },
+        
+        "Assert Not Same": function () {
+            var a = {a: 1};
+            var b = {a: 1};
+            var c = {a: 2};
+            assert.isNotSame(a, b, "A is not the same as B");
+            assert.isNotSame(a, c, "A is not the same as B");
+            
+            try {
+                assert.isNotSame(a, a, "A should be the same as itself");
+            } catch (error1) {
+                assert.isTrue(error1, "Error should be truthy: A A");
+            }
+            
+            try {
+                assert.isNotSame(c, c, "C should not be the same as C");
+            } catch (error2) {
+                assert.isTrue(error2, "Error should be truthy: C C");
+            }
+        },
+        
+        "Assert Object": function () {
+            assert.isObject(obj, "obj should be an object");
+            
+            try {
+                assert.isObject(func, "func is not an object");
+            } catch (error1) {
+                assert.isTrue(error1, "Error should be truthy: func");
+            }
+            
+            try {
+                assert.isObject(array, "array is not an object");
+            } catch (error2) {
+                assert.isTrue(error2, "Error should be truthy: array");
+            }
+            
+            try {
+                assert.isObject(num, "num is not an object");
+            } catch (error3) {
+                assert.isTrue(error3, "Error should be truthy: num");
+            }
+            
+            try {
+                assert.isObject(str, "str is not an object");
+            } catch (error4) {
+                assert.isTrue(error4, "Error should be truthy: str");
+            }
+        },
+        
+        "Assert Array": function () {
+            assert.isArray(array, "array should be an array");
+            
+            try {
+                assert.isArray(func, "func is not an array");
+            } catch (error1) {
+                assert.isTrue(error1, "Error should be truthy: func");
+            }
+            
+            try {
+                assert.isArray(obj, "obj is not an array");
+            } catch (error2) {
+                assert.isTrue(error2, "Error should be truthy: obj");
+            }
+            
+            try {
+                assert.isArray(num, "num is not an array");
+            } catch (error3) {
+                assert.isTrue(error3, "Error should be truthy: num");
+            }
+            
+            try {
+                assert.isArray(str, "str is not an array");
+            } catch (error4) {
+                assert.isTrue(error4, "Error should be truthy: str");
+            }
+        },
+        
+        "Assert Function": function () {
+            assert.isFunction(func, "func should be a function");
+            
+            try {
+                assert.isFunction(obj, "obj is not a function");
+            } catch (error1) {
+                assert.isTrue(error1, "Error should be truthy: obj");
+            }
+            
+            try {
+                assert.isFunction(array, "array is not a function");
+            } catch (error2) {
+                assert.isTrue(error2, "Error should be truthy: array");
+            }
+            
+            try {
+                assert.isFunction(num, "num is not a function");
+            } catch (error3) {
+                assert.isTrue(error3, "Error should be truthy: num");
+            }
+            
+            try {
+                assert.isFunction(str, "str is not a function");
+            } catch (error4) {
+                assert.isTrue(error4, "Error should be truthy: str");
+            }
+        },
+        
+        "Assert Number": function () {
+            assert.isNumber(num, "num should be a number");
+            
+            try {
+                assert.isNumber(func, "func is not a number");
+            } catch (error1) {
+                assert.isTrue(error1, "Error should be truthy: func");
+            }
+            
+            try {
+                assert.isNumber(array, "array is not a number");
+            } catch (error2) {
+                assert.isTrue(error2, "Error should be truthy: array");
+            }
+            
+            try {
+                assert.isNumber(obj, "obj is not a number");
+            } catch (error3) {
+                assert.isTrue(error3, "Error should be truthy: obj");
+            }
+            
+            try {
+                assert.isNumber(str, "str is not a number");
+            } catch (error4) {
+                assert.isTrue(error4, "Error should be truthy: str");
+            }
+        },
+        
+        "Assert String": function () {
+            assert.isString(str, "str should be a string");
+            
+            try {
+                assert.isString(func, "func is not a string");
+            } catch (error1) {
+                assert.isTrue(error1, "Error should be truthy: func");
+            }
+            
+            try {
+                assert.isString(array, "array is not a string");
+            } catch (error2) {
+                assert.isTrue(error2, "Error should be truthy: array");
+            }
+            
+            try {
+                assert.isString(num, "num is not a string");
+            } catch (error3) {
+                assert.isTrue(error3, "Error should be truthy: num");
+            }
+            
+            try {
+                assert.isString(obj, "obj is not a string");
+            } catch (error4) {
+                assert.isTrue(error4, "Error should be truthy: obj");
             }
         },
         

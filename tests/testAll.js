@@ -4,9 +4,9 @@ define([
     "./testDom",
     "./testEvent",
     "./testFocus",
+    "./testFramework",
     "./testIntegration",
     "./testKey",
-    "./testFramework",
     "./testMouse",
     "./testOption",
     "./testQueue"

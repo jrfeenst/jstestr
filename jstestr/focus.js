@@ -1,14 +1,14 @@
 
 define([
     "./browser",
-    "./queue",
-    "./event",
-    "./mouse",
-    "./key"
-], function (browser, queue, event) {
+    "./Queue",
+    "./Event",
+    "./Mouse",
+    "./Key"
+], function (browser, Queue, Event) {
     
-    var previousMouseDownDefaultAction = queue.prototype.defaultActions.mousedown;
-    queue.prototype.defaultActions.mousedown = function mouseDownDefaultAction(event) {
+    var previousMouseDownDefaultAction = Queue.prototype.defaultActions.mousedown;
+    Queue.prototype.defaultActions.mousedown = function mouseDownDefaultAction(event) {
         if (this._isFocusableElement(event.target)) {
             this._focus(event.target);
         }
@@ -16,14 +16,14 @@ define([
     };
     
     
-    var previousBeforeType = queue.prototype.hooks.beforeType;
-    queue.prototype.hooks.beforeType = function beforeTypeHook(string, element, options) {
+    var previousBeforeType = Queue.prototype.hooks.beforeType;
+    Queue.prototype.hooks.beforeType = function beforeTypeHook(string, element, options) {
         this._focus(element, options);
         previousBeforeType.apply(this, arguments);
     };
     
-    var previousKeyDownDefaultAction = queue.prototype.defaultActions.keydown;
-    queue.prototype.defaultActions.keydown = function keyDownDefaultAction (event) {
+    var previousKeyDownDefaultAction = Queue.prototype.defaultActions.keydown;
+    Queue.prototype.defaultActions.keydown = function keyDownDefaultAction (event) {
         if (event.charCode === this._lookupCharCode(event.type, "[tab]")) {
             // todo: focus on the next element in the tab order
         }
@@ -31,28 +31,28 @@ define([
     };
     
     
-    queue.prototype.eventDefaults.focus = {
+    Queue.prototype.eventDefaults.focus = {
         canBubble: false,
         cancelable: false
     };
-    queue.prototype.eventDefaults.blur = {
+    Queue.prototype.eventDefaults.blur = {
         canBubble: false,
         cancelable: false
     };
-    queue.prototype.eventDefaults.focusin = {
+    Queue.prototype.eventDefaults.focusin = {
         canBubble: true,
         cancelable: false
     };
-    queue.prototype.eventDefaults.focusout = {
+    Queue.prototype.eventDefaults.focusout = {
         canBubble: true,
         cancelable: false
     };
     
-    queue.prototype.defaultActions.focus = function focusDefaultAction(event) {
+    Queue.prototype.defaultActions.focus = function focusDefaultAction(event) {
         event.target.focus();
     };
     
-    queue.prototype._focus = function _focus(element, options) {
+    Queue.prototype._focus = function _focus(element, options) {
         options = options || {};
         if (this.browser.needsSyntheticFocus) {
             var currentlyFocused = this.document.activeElement;
@@ -68,7 +68,7 @@ define([
         }
     };
     
-    queue.prototype._isFocusableElement = function _isFocusableElement(element) {
+    Queue.prototype._isFocusableElement = function _isFocusableElement(element) {
         var type = element.type;
         if (type && type.toLowerCase) {
             type = type.toLowerCase();
@@ -87,9 +87,9 @@ define([
         node.appendChild(textArea2);
         textArea1.focus();
         
-        queue.prototype.browser.needsSyntheticFocus = true;
-        var focusListener = event.on("focus", textArea2, function () {
-			queue.prototype.browser.needsSyntheticFocus = false;
+        Queue.prototype.browser.needsSyntheticFocus = true;
+        var focusListener = Event.on("focus", textArea2, function () {
+			Queue.prototype.browser.needsSyntheticFocus = false;
         });
         textArea2.focus();
         
@@ -103,5 +103,5 @@ define([
     ready : 0
     */
     
-    return queue;
+    return Queue;
 });

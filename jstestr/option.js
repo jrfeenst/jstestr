@@ -1,19 +1,19 @@
 
 define([
-    "./queue",
-    "./event",
-    "./mouse",
-    "./key",
-    "./focus"
-], function (queue) {
+    "./Queue",
+    "./Event",
+    "./Mouse",
+    "./Key",
+    "./Focus"
+], function (Queue) {
     
-    queue.prototype.eventDefaults.change = {
+    Queue.prototype.eventDefaults.change = {
         canBubble: true,
         cancelable: true
     };
     
-    var previousMouseClickDefaultAction = queue.prototype.defaultActions.click;
-    queue.prototype.defaultActions.click = function clickDefaultAction(event) {
+    var previousMouseClickDefaultAction = Queue.prototype.defaultActions.click;
+    Queue.prototype.defaultActions.click = function clickDefaultAction(event) {
         if (this._needsChangeEvent) {
             var select = this._findParentByType(event.target, "select");
             var change = this._createEvent("change", select);
@@ -24,8 +24,8 @@ define([
     };
     
     
-    var previousMouseDownDefaultAction = queue.prototype.defaultActions.mousedown;
-    queue.prototype.defaultActions.mousedown = function mouseDownDefaultAction(event) {
+    var previousMouseDownDefaultAction = Queue.prototype.defaultActions.mousedown;
+    Queue.prototype.defaultActions.mousedown = function mouseDownDefaultAction(event) {
         var element = event.target;
         if (this._isOptionElement(element)) {
             var select = this._findParentByType(element, "select");
@@ -58,8 +58,8 @@ define([
     };
     
     
-    var previousKeyDownDefaultAction = queue.prototype.defaultActions.keydown;
-    queue.prototype.defaultActions.keydown = function keyDownDefaultAction(event) {
+    var previousKeyDownDefaultAction = Queue.prototype.defaultActions.keydown;
+    Queue.prototype.defaultActions.keydown = function keyDownDefaultAction(event) {
         var select = event.target;
         
         if (select && (event.keyCode === this._lookupKeyCode(event.type, "[up]") ||
@@ -105,13 +105,13 @@ define([
         previousKeyDownDefaultAction.apply(this, arguments);
     };
     
-    queue.prototype._isSelectElement = function _isSelectElement(element) {
+    Queue.prototype._isSelectElement = function _isSelectElement(element) {
         return "select" === element.tagName.toLowerCase();
     };
     
-    queue.prototype._isOptionElement = function _isOptionElement(element) {
+    Queue.prototype._isOptionElement = function _isOptionElement(element) {
         return "option" === element.tagName.toLowerCase();
     };
     
-    return queue;
+    return Queue;
 });

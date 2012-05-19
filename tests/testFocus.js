@@ -1,10 +1,10 @@
 
 define([
     "jstestr/assert",
-    "jstestr/focus",
-    "jstestr/mouse",
+    "jstestr/Focus",
+    "jstestr/Mouse",
     "jstestr/test"
-], function (assert, focus, mouse, test) {
+], function (assert, Focus, Mouse, test) {
     test.defineSuite("Focus", {
         "beforeEach": function () {
             this.node = test.getNewTestNode();
@@ -22,7 +22,7 @@ define([
         },
         
         "Click to Focus": function () {
-            var m = new mouse();
+            var m = new Mouse();
             var self = this;
             
             var expectedOrder = [];

@@ -1,13 +1,13 @@
 
 define([
     "jstestr/assert",
-    "jstestr/event",
-    "jstestr/mouse",
+    "jstestr/Event",
+    "jstestr/Mouse",
     "jstestr/test"
-], function (assert, event, mouse, test) {
+], function (assert, Event, Mouse, test) {
     test.defineSuite("Mouse", {
         "beforeEach": function () {
-            this.m = new mouse();
+            this.m = new Mouse();
             this.node = test.getNewTestNode();
         },
         
@@ -16,11 +16,11 @@ define([
             this.node.appendChild(button);
             
             var downHandler = assert.createMockFunction();
-            event.on("mousedown", button, downHandler);
+            Event.on("mousedown", button, downHandler);
             var upHandler = assert.createMockFunction();
-            event.on("mouseup", button, upHandler);
+            Event.on("mouseup", button, upHandler);
             var clickHandler = assert.createMockFunction();
-            event.on("click", button, clickHandler);
+            Event.on("click", button, clickHandler);
             this.m.click(button, function (btn) {
                 assert.isEqual(button, btn, "Node should be passed into the handler");
                 downHandler.verify("Down handler should be called once");
@@ -35,7 +35,7 @@ define([
             this.node.appendChild(div);
             
             var mockHandler = assert.createMockFunction();
-            event.on("click", div, mockHandler);
+            Event.on("click", div, mockHandler);
             this.m.click(div, function () {
                 mockHandler.verify("Handler should be called once");
             });
@@ -47,7 +47,7 @@ define([
             this.node.appendChild(a);
             
             var mockHandler = assert.createMockFunction();
-            event.on("click", a, mockHandler);
+            Event.on("click", a, mockHandler);
             this.m.click(a, function () {
                 mockHandler.verify("Handler should be called once");
             });
@@ -61,7 +61,7 @@ define([
             this.node.appendChild(input);
             
             var mockHandler = assert.createMockFunction();
-            event.on("click", input, mockHandler);
+            Event.on("click", input, mockHandler);
             
             this.m.click(input, function () {
                 mockHandler.verify("Handler should be called once");
@@ -89,9 +89,9 @@ define([
             this.node.appendChild(inputB);
             
             var mockHandlerA = assert.createMockFunction();
-            event.on("click", inputA, mockHandlerA);
+            Event.on("click", inputA, mockHandlerA);
             var mockHandlerB = assert.createMockFunction();
-            event.on("click", inputB, mockHandlerB);
+            Event.on("click", inputB, mockHandlerB);
             
             this.m.click(inputA, function () {
                 mockHandlerA.verify("Handler A should be called once");
@@ -114,9 +114,9 @@ define([
             
             var clickHandler = assert.createMockFunction();
             clickHandler.times(2);
-            event.on("click", div, clickHandler);
+            Event.on("click", div, clickHandler);
             var doubleClickHandler = assert.createMockFunction();
-            event.on("dblclick", div, doubleClickHandler);
+            Event.on("dblclick", div, doubleClickHandler);
             this.m.doubleClick(div, function () {
                 clickHandler.verify("Handler should be called twice");
                 doubleClickHandler.verify("Double click should be called");
@@ -129,7 +129,7 @@ define([
             this.node.appendChild(div);
             var hovered = false;
             var timeout;
-            event.on("mousemove", div, function () {
+            Event.on("mousemove", div, function () {
                 clearTimeout(timeout);
                 timeout = setTimeout(function () {
                     hovered = true;
@@ -180,11 +180,11 @@ define([
                     id: ev.target.id
                 });
             }
-            event.on("mousedown", this.node, eventHandler);
-            event.on("mousemove", this.node, eventHandler);
-            event.on("mouseover", this.node, eventHandler);
-            event.on("mouseout", this.node, eventHandler);
-            event.on("mouseup", this.node, eventHandler);
+            Event.on("mousedown", this.node, eventHandler);
+            Event.on("mousemove", this.node, eventHandler);
+            Event.on("mouseover", this.node, eventHandler);
+            Event.on("mouseout", this.node, eventHandler);
+            Event.on("mouseup", this.node, eventHandler);
             
             var expected = [
                 {type: "mouseover", x: 20, y: 20, id: "testDivA"},
