@@ -96,8 +96,7 @@ define([
         this._runSuite(suiteName);
         this._end();
         
-        var special = this.specialFunctions[suiteName];
-        return this.testQueue.start(special || special.timeout);
+        return this.testQueue.start();
     };
     
     /**
