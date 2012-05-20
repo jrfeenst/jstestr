@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+        <link rel="stylesheet" type="text/css" href="doc.css"/>
+    </head>
+    <body>
+        <article>
+            <header>
+                <h1>JsTestr</h1>
+                <div class="description">
+                    JavaScript testing framework with synthetic event based GUI testing support as well as asynchronous tests.
+                </div>
+
+                <ul>
+                    <li>
+                        <a href="https://github.com/jrfeenst/jstestr/zipball/master">
+                            Download <strong>ZIP File</strong>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://github.com/jrfeenst/jstestr/tarball/master">
+                            Download <strong>TAR Ball</strong>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="https://github.com/jrfeenst/jstestr">
+                            View On <strong>GitHub</strong>
+                        </a>
+                    </li>
+                </ul>
+            </header>
+
+            <section>
+                <h2>Overview</h2>
+                <p>
+                    JsTestr is broken up into 3 independent pieces. There is testing framework which
+                    includes support for asynchronous tests using a callback or a future, test node
+                    creation, and full page testing, console logging and reporting. There is an
+                    assert module which includes asserts for equality, truthiness, object types,
+                    mock functions with argument verification, and more. Finally, there is synthetic
+                    events based GUI testing framework.
+                </p>
+            </section>
+
+            <section>
+                <h2>Test Framework</h2>
+                <p>
+                    The test framework provides a way to define suites of tests. It also has
+                    provides an HTML page to run all the defined tests. There are two output
+                    adaptors, console and graphical. The graphical output includes a list of all the
+                    registered suites and tests as well as an output log area which is color coded.
+                    There are also buttons which can be used to execute individual tests or suites.
+                </p>
+                <p>
+                    The test framework is available through the <code>jstestr/test</code> module. It
+                    provides a function to register a suite of tests called
+                    <code>defineSuite</code>. It accepts a suite name and an object defining the set
+                    of tests. Here is a quick example of what a basic suite of tests might look
+                    like:
+                </p>
+
+                <pre><code>
+define(["jstestr/test", "jstestr/assert"], function (test, assert) {
+    test.defineSuite("A Test Suite", {
+        "A Test Case": function () {
+            this.widget = new Widget();
+            this.widget.doSomething();
+            assert.isTrue(this.widget.prop, "Prop should be true");
+        },
+
+        "Another Test Case": function () {
+            this.widget = new Widget({foo: "abc123"});
+            this.widget.doSomethingElse();
+            assert.isEqual("abc123", this.widget.foo, "foo should be abc123");
+        }
+    });
+});
+                </code></pre>
+
+                <h3>Runner HTML Page</h3>
+                <p>
+                    The test can be executed using the runner HTML page located at
+                    <code>jstestr/runner/runner.html</code>. It accepts a number of different query
+                    parameters which can be used to control how the page loads and executes tests.
+                    It includes a copy of RequireJS to support AMD module loading. The supported
+                    query parameters are:
+                </p>
+
+                <ul>
+                    <li><code>module</code> - The AMD module to load which defines the tests.</li>
+                    <li><code>suite</code> - The name of the suite to execute.</li>
+                    <li><code>test</code> - The suite and test name to execute, separated by a colon.</li>
+                    <li><code>config</code> - Extra RequireJS configuration (as JSON).</li>
+                </ul>
+
+                <p>
+                    The runner page can be used to execute the test suite for JsTestr:
+                    <a href="../jstestr/runner/runner.html?module=tests/testAll" target="_blank">
+                        jstestr/runner/runner.html?module=tests/testAll
+                    </a>
+                </p>
+
+                <h3>Test Cases</h3>
+                <p>
+                    Test cases are functions which can either execute synchronously or
+                    asynchronously. Synchronous tests are considered successful if they complete
+                    without throwing any exceptions. In the above example, the assert functions
+                    throw errors if they do not pass. Tests can also be defined using an object with
+                    a mandatory property named <code>test</code> which must contain the actual test
+                    function. A special property named <code>timeout</code> can also be specified in
+                    the test object which specifies how long to wait for an asynchronous test to
+                    complete before failing it.
+                </p>
+                <p>
+                    Asynchronous functions can be written in two ways. The first way is to return a
+                    deferred or future. The future must contain a function named <code>then</code>
+                    which accepts two callback parameters. The first callback must be executed if
+                    the test is successful, and the second must be executed if the test is
+                    successful. Note: if the test completes synchronously, but also returns a
+                    future, it must execute the correct callback once the <code>then</code> function
+                    is called. Optionally, if the future provides a <code>cancel</code> method it
+                    will be executed if the test takes longer than the test timeout allows.
+                </p>
+                <p>
+                    The second way to write an asynchronous test is to have the test function accept
+                    a parameter that must be called <code>done</code>. The <code>done</code>
+                    parameter is a function which must be executed when the test is complete. If it
+                    is passed true, the test is considered successful, if it is passed false, it is
+                    considered failed. The <code>done</code> function has a helper field called
+                    <code>wrap</code> which can be used to wrap functions which may throw errors. If
+                    the function completes without error, the test is considered successful, if it
+                    throws an error, it is considered failed.
+                </p>
+
+                <pre><code>
+test.defineSuite("Another Test Suite", {
+    "Synchronous Test": function () {
+        this.widget = new Widget();
+        this.widget.doSomething();
+        assert.isTrue(this.widget.prop, "Prop should be true");
+    },
+
+    "Synchronous Test With Object": {
+        widget: new Widget(),
+        otherProp: true,
+        test: function () {
+            this.widget.doSomething();
+            assert.isTrue(this.otherProp, "Other test property");
+        }
+    },
+
+    "Future Asynchronous Test": function () {
+        var future = new Future();
+        setTimeout(function () {
+            future.resolve();
+        }, 0);
+        return future;
+    },
+
+    "Done Asynchronous Test": function (done) {
+        setTimeout(function () {
+            done(true);
+        }, 0);
+    },
+
+    "Done With Asynchronous Test": function (done) {
+        setTimeout(done.with(function () {
+            assert.isTrue(true, "true should be true");
+        }), 0);
+    }
+});
+                </code></pre>
+
+                <h3>Special Suite Function</h3>
+                <p>
+                    There are a few special fields that can be defined in the suite object:
+                </p>
+
+                <ul>
+                    <li><code>beforeEach</code> - Executed before each test case.</li>
+                    <li><code>afterEach</code> - Executed after each test case (successful or not).</li>
+                    <li><code>beforeSuite</code> - Executed at the start of the suite.</li>
+                    <li><code>afterSuite</code> - Executed after the suite is done.</li>
+                    <li><code>pageUnderTest</code> - Page to load before the suite is started.</li>
+                </ul>
+
+                <h4><code>beforeEach/afterEach</code></h4>
+                <p>
+                    These functions are executed before and after each test. They are executed with
+                    the same context as the test, so values can be shared between the functions
+                    using <code>this</code>. The <code>afterEach</code> function is execute after
+                    the test is done event if the test failed. If either function throws an error,
+                    the test is considered failed. These functions must be synchronous.
+                </p>
+
+                <h4><code>beforeSuite/afterSuite</code></h4>
+                <p>
+                    These functions are executed before the first test in the suite and after the
+                    last test in the suite. These can be useful for things which are either
+                    expensive to construct or don't need to be cleaned up between tests, but the
+                    <code>beforeEach</code>/<code>afterEach</code> functions should be preferred.
+                    The context used by the functions is available in the test functions through the
+                    <code>suite</code> property of the test's context. These functions must be
+                    synchronous.
+                </p>
+
+                <h4><code>pageUnderTest</code></h4>
+                <p>
+                    The <code>pageUnderTest</code> property can be used to specify a URL which will
+                    be loaded before the first test is executed. The page is loaded into an iFrame
+                    and the iFrame's <code>contentWindow</code> and <code>contentDocument</code>
+                    properties are passed to the tests in the fields <code>document</code> and
+                    <code>global</code> of the function's context. The iFrame is automatically
+                    destroyed when the suite finishes, but it is not reset between each test. The
+                    framework will wait up to 20 seconds for the page to load.
+                </p>
+
+                <pre><code>
+test.defineSuite("Page Under Test", {
+    "pageUnderTest": require.toUrl("./pageUnderTest.html"),
+
+    "Page Load": function () {
+        assert.isTrue(this.document, "Document should be set");
+        assert.isTrue(this.global, "Global should be set");
+    }
+});
+                </code></pre>
+            </section>
+
+            <section>
+                <h2>Asserts</h2>
+                <p>
+                    The assert module provides a number of assertion functions as well as mock
+                    functions. The module is available in <code>jstestr/assert</code>. All methods
+                    take an optional help message to add to the error if the assertion fails. The
+                    assert module provides the following methods:
+                </p>
+
+                <ul>
+                    <li><code>isTrue(value, help)</code> - Test for truthy value.</li>
+                    <li><code>isFalse(value, help)</code> - Test for falsy value.</li>
+                    <li><code>isEqual(expected, actual, help)</code> - Test for deep equality.</li>
+                    <li><code>isNotEqual(expected, actual, help)</code> - Test for deep inequality.</li>
+                    <li><code>isSame(expected, actual, help)</code> - Test for strict equality (===).</li>
+                    <li><code>isNotSame(expected, actual, help)</code> - Test for strict inequality (!==).</li>
+                    <li><code>isObject(value, help)</code> - Throws if the value is not an object.
+                        Arrays are not counted as objects.</li>
+                    <li><code>isArray(value, help)</code> - Test for arrays. Checks the constructor,
+                        so it must be an actual Array, not a pseudo array.</li>
+                    <li><code>isFunction(value, help)</code> - Test for functions.</li>
+                    <li><code>isNumber(value, help)</code> - Test for numbers.</li>
+                    <li><code>isString(value, help)</code> - Test for strings.</li>
+                    <li><code>doesThrow(expectedType, func, help)</code> - Call the function and
+                        verify that it throws an error of the expected type.</li>
+                    <li><code>createMockFunction():Function</code> - Create a mock function which
+                        can verify how many times it is called and the arguments passed to it.</li>
+                    <li><code>createMockObject(methodsOrObj):Object</code> - Create an object
+                        with a set of mock methods. Each method is a mock function.</li>
+                </ul>
+
+                <h3>Mocks</h3>
+                <p>
+                    Mocks are a way to isolate components from the rest of the system. They are
+                    useful in a number of different ways. The assert module provides two ways to use
+                    mocks. First, a function can be created which can be configured using the
+                    following methods:
+                </p>
+                <ul>
+                    <li><code>times(num)</code> - Set the mock to expect to be called the specified
+                        number of times.</li>
+                    <li><code>expect(arg1, arg2, ...)</code> - Expect the mock the be called with
+                        the specified arguments.</li>
+                    <li><code>result(value)</code> - Return the specified result when the function
+                        is called.</li>
+                    <li><code>error(err)</code> - Throw the specified error object when the function
+                        is called.</li>
+                    <li><code>verify(help)</code> - Verify the number of times the function has been
+                        called and the arguments used.</li>
+                    <li><code>reset()</code> - Reset the mock's internal count of how it's been
+                        called. This will not reset the expected arguments, results, errors, or
+                        called times.</li>
+                </ul>
+
+                <pre><code>
+var mock = assert.createMockFunction();
+mock.expect(1, "two", {three: true}).result(4);
+mock.times(2);
+
+var result1 = mock(1, "two", {three: true});
+var result2 = mock(1, "two", {three: true});
+mock.verify("Arguments should be: 1, "two", {three: true}");
+assert.isEqual(4, result1, "Result 1 should be 4");
+assert.isEqual(4, result2, "Result 2 should be 4");
+                </code></pre>
+
+                <p>
+                    Mock objects are simply collections of mock functions which can be verified and
+                    reset as a group (<code>verify</code>, <code>reset</code>). The methods are
+                    created based on either an array of strings, which represent the names of
+                    methods to mock, or an object containing methods to be mocked.
+                </p>
+
+                <pre><code>
+var mock = assert.createMockObject(["method1", "method2"]);
+mock.method1();
+mock.method2();
+mock.verify();
+
+var Constructor = function () {};
+Constructor.prototype.method1 = function () {};
+Constructor.prototype.method2 = function () {};
+Constructor.prototype.prop1 = true;
+
+// mock from a constructor function
+mock = assert.createMockObject(Constructor);
+mock.method1();
+mock.method2();
+assert.isFalse(mock.prop1, "This should be undefined");
+mock.verify();
+                </code></pre>
+            </section>
+
+            <section>
+                <h2>Synthetic Events</h2>
+                <p>
+                    The synthetic events module provides functionality for simulating mouse
+                    operations, keyboard events such as typing, focus changes. It also provides a
+                    way to asynchronously query the DOM.
+                </p>
+                <p>
+                    The tests are executed asynchronously using a queue of tasks. The Synthetic
+                    event module is instantiated and each method call will simply add to the queue.
+                    The queue must be started before any tasks will be executed. The
+                    <code>start</code> method returns a cancelable future object which can be
+                    directly returned to the test framework.
+                </p>
+                <p>
+                    Here is an example of a basic synthetic event test:
+                </p>
+                <pre><code>
+test.defineSuite("Synthetic Test", {
+    "pageUnderTest": require.toUrl("./testPage.html"),
+
+    "Click Button": function () {
+        var synth = new Synthetic({document: this.document, global: this.global});
+        synth.click("#aButton");
+        return synth.start();
+    }
+});
+                </code></pre>
+
+                <p>
+                    The Synthetic constructor function accepts options for overriding the
+                    <code>document</code> and <code>global</code> object used while executing the
+                    tasks. Queries and other DOM interaction will go against the specified objects.
+                </p>
+                <p>
+                    All methods accept an optional <code>handler</code> function, which will be
+                    executed when the task completes successfully, and optional options object,
+                    which is used for options such as the shift key flag. Any place an element is
+                    passed as a parameter a selector can be passed instead. The first element which
+                    matches the selector will be used.
+                </p>
+                <p>
+                    The Synthetic event class
+                    provides the following methods:
+                </p>
+
+                <ul>
+                    <li><code>byId(id, handler, options)</code> - Search the DOM for an element id.</li>
+                    <li><code>query(selector, handler, options)</code> - Query for a single element
+                        based on a selector. If multiple elements match, the first one will be used.</li>
+                    <li><code>queryAll(selector, expectedCount, handler, options)</code> - Query for
+                        the specified number of elements which match the selector.</li>
+                    <li><code>type(string, element, handler, options)</code> - Type into the
+                        specified element.</li>
+                    <li><code>click(element, handler, options)</code> - Click the specified element.</li>
+                    <li><code>doubleClick(element, handler, options)</code> - Double click the
+                        specified element.</li>
+                    <li><code>hover(element, handler, options)</code> - Hover over the specified element.</li>
+                    <li><code>move(from, to, handler, options)</code> - Move the mouse from one place
+                        to another.</li>
+                    <li><code>drag(from, to, handler, options)</code> - Drag the mouse from one place
+                        to another. The difference from <code>move</code> is that it starts with a
+                        mouse down and ends with mouse up.</li>
+                </ul>
+
+                <h3><code>byId/query/queryAll</code></h3>
+                <p>
+                    The trio of DOM query methods can be used to lookup a specific element so that
+                    it can be manipulated in some way. They can also be used as assertions. They
+                    poll the DOM for a certain amount of time (overridable in the
+                    <code>options</code> object) until the element(s) are found. If they are not
+                    found the test is failed.
+                </p>
+                <p>
+                    The <code>queryAll</code> method's <code>expectedCount</code> parameter can be
+                    specified as either a number (including 0) or a string. If it is a string, then
+                    it must be a combination of comparison expression involving
+                    <code><, >, =, &, |</code> and number constants. The comparisons are evaluated
+                    left-to-right and all white space is ignored. Here are a few examples:
+                </p>
+
+                <ul>
+                    <li><code>"<3"</code> - Less than 3 elements.</li>
+                    <li><code>">2"</code> - More than 2 elements.</li>
+                    <li><code>"=0"</code> - Exactly 0 elements.</li>
+                    <li><code>"<5 & >1 | =10"</code> - Less than 5 and more than 1 or exactly 10.</li>
+                </ul>
+
+                <h3><code>type</code></h3>
+                <p>
+                    The <code>type</code> method is used to type characters and keys into an element.
+                    Printing characters are specified as characters in the string. Other keys can be
+                    typed by using special codes inside the strings such as <code>[backspace]</code>.
+                    Not all other keys are supported. The following are minimally supported:
+                </p>
+
+                <ul>
+                    <li><code>[backspace]</code> - Key code: 8.</li>
+                    <li><code>[escape]</code> - Key code: 27.</li>
+                    <li><code>\n</code> - Key identifier: <code>Enter</code>, key code: 10.</li>
+                    <li><code>[left]</code> - Key identifier: <code>Left</code>, key code: 37.</li>
+                    <li><code>[up]</code> - Key identifier: <code>Up</code>, key code: 38.</li>
+                    <li><code>[right]</code> - Key identifier: <code>Right</code>, key code: 39.</li>
+                    <li><code>[down]</code> - Key identifier: <code>Down</code>, key code: 40.</li>
+                    <li><code>[pageup]</code> - Key identifier: <code>PageUp</code>, key code: 33.</li>
+                    <li><code>[pagedown]</code> - Key identifier: <code>PageDown</code>, key code: 34.</li>
+                </ul>
+
+                <pre><code>
+sequence.type("this is a strig[backspace]ng", "#anElement", function (element) {
+    console.log("Typing completed on element:", element);
+});
+                </code></pre>
+
+                <h3><code>click/doubleClick/hover</code></h3>
+                <p>
+                    These three mouse related methods operate on single elements. <code>click</code>
+                    and <code>doubleClick</code> dispatch <code>mousedown</code>,
+                    <code>mouseup</code>, and <code>click</code> events. <code>doubleClick</code>
+                    dispatches an extra <code>dblclick</code> event after two clicks.
+                    <code>hover</code> dispatches <code>mouseover</code>, <code>mousemove</code>,
+                    and then waits for the specified amount of time (default of 500ms).
+                </p>
+
+                <pre><code>
+sequence.click("#anElement", function (element) {
+    console.log("Click completed on element:", element);
+});
+                </code></pre>
+
+                <h3><code>move/drag</code></h3>
+                <p>
+                    The <code>move</code> and <code>drag</code> methods take two elements as inputs
+                    which represent the start and end points of a series of <code>mousemove</code>
+                    events. As the mouse moves over elements in the page <code>mouseout</code> and
+                    <code>mouseover</code> events are dispatched as appropriate. For the
+                    <code>drag</code> method, the sequence is started with a <code>mousedown</code>
+                    and ended with <code>mouseup</code>.
+                </p>
+
+                <pre><code>
+sequence.drag("#firstElement", ".secondElement", function (elementA, elementB) {
+    console.log("Drag completed:", elementA, elementB);
+});
+                </code></pre>
+
+            </section>
+
+            <footer>
+                <div>
+                    Code available on GitHub: <a href="https://github.com/jrfeenst/jstestr">JsTestr</a>.
+                </div>
+                <div class="copyright">
+                    Copyright (c) 2012, Joel Feenstra
+                </div>
+            </footer>
+        </article>
+    </body>
+</html>

@@ -74,9 +74,8 @@ define([
     
     
     var escape = function escape(str) {
-      var self = arguments.callee;
-      self.text.data = str;
-      return self.div.innerHTML;
+      escape.text.data = str;
+      return escape.div.innerHTML;
     };
     escape.div = document.createElement("div");
     escape.text = document.createTextNode("");

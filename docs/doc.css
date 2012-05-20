@@ -1,0 +1,183 @@
+/*
+    Primary Color:
+    006699	336666	006666	3399CC
+    Secondary Color A:
+    003399	333366	003366	3366CC	6666CC
+    Secondary Color B:
+    009933	339933	006633	33CC66
+*/
+
+* {
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
+}
+
+:not(code) {
+    font-family: Lato, "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+p, div, code, li {
+    font-size: 10.5pt;
+    font-weight: lighter;
+}
+
+html {
+    width: 98%;
+    max-width: 8in;
+    margin-left: auto;
+    margin-right: auto;
+    background: #708090;
+}
+
+body {
+    margin: .25in 0 0 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    padding-left: .25in;
+    padding-right: .25in;
+    width: 100%;
+    background: #eeeeee;
+    border-radius: .125in;
+    -moz-border-radius: .125in;
+    -moz-box-shadow: 0 0 10px 1px #000;
+    -webkit-box-shadow: 0 0 10px 1px #000;
+    box-shadow: 0 0 10px 1px #000;
+}
+
+footer {
+    padding: 0;
+    margin: .25in -.25in .25in -.25in;
+    background: lightblue;
+    border-radius: 0 0 .125in .125in;
+    -moz-border-radius: 0 0 .125in .125in;
+    border-top: 1px solid #bbbbbb;
+    padding: .125in .25in .125in .25in;
+}
+
+
+h2, h3, h4, h5, h6 {
+    color: #444444;
+}
+
+p {
+    color: #444444;
+}
+
+pre {
+    margin-left: -.25in;
+    margin-right: -.25in;
+    padding-left: 1em;
+    padding-right: 1em;
+    background: #343434;
+    color: white;
+    overflow-x: auto;
+}
+
+
+header {
+    padding: .25in;
+    margin: .25in -.25in 0 -.25in;
+    background: lightblue;
+    border-radius: .125in .125in 0 0;
+    -moz-border-radius: .125in .125in 0 0;
+    border-bottom: 1px solid #bbbbbb;
+    position: relative;
+}
+
+header h1 {
+    color: #1e2754;
+    padding: 0;
+    margin: 0;
+}
+
+header .description {
+    max-width: 4in;
+}
+
+header a {
+    text-decoration: none;
+}
+
+header ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    position: absolute;
+    z-index: 1;
+    right: 20px;
+    top: 20px;
+    height: 38px;
+    padding: 1px 0;
+    background: #5198DF;
+    background: -webkit-gradient(linear, 50% 0%, 50% 100%, color-stop(0%, #77b9fb), color-stop(100%, #3782cd));
+    background: -webkit-linear-gradient(#77b9fb, #3782cd);
+    background: -moz-linear-gradient(#77b9fb, #3782cd);
+    background: -o-linear-gradient(#77b9fb, #3782cd);
+    background: -ms-linear-gradient(#77b9fb, #3782cd);
+    background: linear-gradient(#77b9fb, #3782cd);
+    border-radius: 5px;
+    -webkit-box-shadow: inset rgba(255, 255, 255, 0.45) 0 1px 0, inset rgba(0, 0, 0, 0.2) 0 -1px 0;
+    -moz-box-shadow: inset rgba(255, 255, 255, 0.45) 0 1px 0, inset rgba(0, 0, 0, 0.2) 0 -1px 0;
+    box-shadow: inset rgba(255, 255, 255, 0.45) 0 1px 0, inset rgba(0, 0, 0, 0.2) 0 -1px 0;
+    width: auto;
+}
+
+header ul:before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    left: -5px;
+    top: -4px;
+    right: -5px;
+    bottom: -6px;
+    background: rgba(0, 0, 0, 0.1);
+    -webkit-border-radius: 8px;
+    -moz-border-radius: 8px;
+    -ms-border-radius: 8px;
+    -o-border-radius: 8px;
+    border-radius: 8px;
+    -webkit-box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 0, inset rgba(255, 255, 255, 0.7) 0 -1px 0;
+    -moz-box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 0, inset rgba(255, 255, 255, 0.7) 0 -1px 0;
+    box-shadow: rgba(0, 0, 0, 0.2) 0 -1px 0, inset rgba(255, 255, 255, 0.7) 0 -1px 0;
+}
+
+header ul li {
+    width: 79px;
+    float: left;
+    border-right: 1px solid #3A7CBE;
+    height: 38px;
+}
+
+header ul li.single {
+    border: none;
+}
+
+header ul li + li {
+    width: 78px;
+    border-left: 1px solid #8BBEF3;
+}
+
+header ul li + li + li {
+    border-right: none;
+    width: 79px;
+}
+
+header ul a {
+    line-height: 1;
+    font-size: 11px;
+    color: #fff;
+    color: rgba(255, 255, 255, 0.8);
+    display: block;
+    text-align: center;
+    font-weight: 400;
+    padding-top: 6px;
+    height: 40px;
+    text-shadow: rgba(0, 0, 0, 0.4) 0 -1px 0;
+}
+
+header ul a strong {
+    font-size: 14px;
+    display: block;
+    color: #fff;
+    -webkit-font-smoothing: antialiased;
+}

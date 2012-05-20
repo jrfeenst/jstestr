@@ -96,7 +96,8 @@ define([
         this._runSuite(suiteName);
         this._end();
         
-        return this.testQueue.start(this.suites[suiteName].timeout);
+        var special = this.specialFunctions[suiteName];
+        return this.testQueue.start(special || special.timeout);
     };
     
     /**
@@ -112,9 +113,8 @@ define([
         this._endSuite(suiteName);
         this._end();
         
-        return this.testQueue.start(this.suites[suiteName][testName].timeout);
+        return this.testQueue.start();
     };
-    
     
     /**
      * Set the parent node for any tests which need DOM nodes.
@@ -272,7 +272,9 @@ define([
                 var timeout;
                 
                 // suite level options and callbacks (beforeEach, timeout, etc)
-                var specialFunction = self.specialFunctions[suiteName];
+                var specialFunction = self.specialFunctions[suiteName] || {};
+                
+                test.suite = specialFunction.context;
                 
                 // executed when the test is done, either succesfully or in failure
                 function done() {
