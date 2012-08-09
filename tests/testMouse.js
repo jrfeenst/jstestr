@@ -145,8 +145,8 @@ define([
         "Drag": function () {
             this.node.style.position = "relative";
             this.node.id = "testNode";
-            this.node.style.width = "200px";
-            this.node.style.height = "100px";
+            this.node.style.width = "100px";
+            this.node.style.height = "50px";
             this.node.style.backgroundColor = "lightgray";
             
             var pos = this.node.getBoundingClientRect();
@@ -154,20 +154,20 @@ define([
             var divA = document.createElement("div");
             divA.id = "testDivA";
             divA.style.position = "absolute";
-            divA.style.left = "9px";
-            divA.style.top = "9px";
-            divA.style.width = "22px";
-            divA.style.height = "22px";
+            divA.style.left = "1px";
+            divA.style.top = "5px";
+            divA.style.width = "44px";
+            divA.style.height = "40px";
             divA.style.backgroundColor = "gray";
             this.node.appendChild(divA);
             
             var divB = document.createElement("div");
             divB.id = "testDivB";
             divB.style.position = "absolute";
-            divB.style.left = "100px";
-            divB.style.top = "20px";
-            divB.style.width = "20px";
-            divB.style.height = "20px";
+            divB.style.left = "55px";
+            divB.style.top = "5px";
+            divB.style.width = "44px";
+            divB.style.height = "40px";
             divB.style.backgroundColor = "gray";
             this.node.appendChild(divB);
             
@@ -187,33 +187,25 @@ define([
             Event.on("mouseup", this.node, eventHandler);
             
             var expected = [
-                {type: "mouseover", x: 20, y: 20, id: "testDivA"},
-                {type: "mousedown", x: 20, y: 20, id: "testDivA"},
-                {type: "mousemove", x: 20, y: 20, id: "testDivA"},
-                {type: "mousemove", x: 24, y: 20, id: "testDivA"},
-                {type: "mousemove", x: 29, y: 21, id: "testDivA"},
-                {type: "mouseout", x: 34, y: 21, id: "testDivA"},
-                {type: "mouseover", x: 34, y: 21, id: "testNode"},
-                {type: "mousemove", x: 34, y: 21, id: "testNode"},
-                {type: "mousemove", x: 39, y: 22, id: "testNode"},
-                {type: "mousemove", x: 44, y: 22, id: "testNode"},
-                {type: "mousemove", x: 49, y: 23, id: "testNode"},
-                {type: "mousemove", x: 54, y: 23, id: "testNode"},
-                {type: "mousemove", x: 59, y: 24, id: "testNode"},
-                {type: "mousemove", x: 64, y: 24, id: "testNode"},
-                {type: "mousemove", x: 69, y: 25, id: "testNode"},
-                {type: "mousemove", x: 74, y: 26, id: "testNode"},
-                {type: "mousemove", x: 79, y: 26, id: "testNode"},
-                {type: "mousemove", x: 84, y: 27, id: "testNode"},
-                {type: "mousemove", x: 89, y: 27, id: "testNode"},
-                {type: "mousemove", x: 94, y: 28, id: "testNode"},
-                {type: "mousemove", x: 99, y: 28, id: "testNode"},
-                {type: "mouseout", x: 104, y: 29, id: "testNode"},
-                {type: "mouseover", x: 104, y: 29, id: "testDivB"},
-                {type: "mousemove", x: 104, y: 29, id: "testDivB"},
-                {type: "mousemove", x: 109, y: 29, id: "testDivB"},
-                {type: "mousemove", x: 110, y: 30, id: "testDivB"},
-                {type: "mouseup", x: 110, y: 30, id: "testDivB"}
+                {"type": "mouseover", "x": 23, "y": 25, "id": "testDivA"},
+                {"type": "mousedown", "x": 23, "y": 25, "id": "testDivA"},
+                {"type": "mousemove", "x": 23, "y": 25, "id": "testDivA"},
+                {"type": "mousemove", "x": 28, "y": 25, "id": "testDivA"},
+                {"type": "mousemove", "x": 33, "y": 25, "id": "testDivA"},
+                {"type": "mousemove", "x": 38, "y": 25, "id": "testDivA"},
+                {"type": "mousemove", "x": 43, "y": 25, "id": "testDivA"},
+                {"type": "mouseout", "x": 48, "y": 25, "id": "testDivA"},
+                {"type": "mouseover", "x": 48, "y": 25, "id": "testNode"},
+                {"type": "mousemove", "x": 48, "y": 25, "id": "testNode"},
+                {"type": "mousemove", "x": 53, "y": 25, "id": "testNode"},
+                {"type": "mouseout", "x": 58, "y": 25, "id": "testNode"},
+                {"type": "mouseover", "x": 58, "y": 25, "id": "testDivB"},
+                {"type": "mousemove", "x": 58, "y": 25, "id": "testDivB"},
+                {"type": "mousemove", "x": 63, "y": 25, "id": "testDivB"},
+                {"type": "mousemove", "x": 68, "y": 25, "id": "testDivB"},
+                {"type": "mousemove", "x": 73, "y": 25, "id": "testDivB"},
+                {"type": "mousemove", "x": 77, "y": 25, "id": "testDivB"},
+                {"type": "mouseup", "x": 77, "y": 25, "id": "testDivB"}
             ];
             
             this.m.drag(divA, divB, function (nodeA, nodeB) {
