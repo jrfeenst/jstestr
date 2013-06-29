@@ -15,7 +15,7 @@ define([
         args = args || {};
         this.suites = {};
         this.specialFunctions = {};
-        this.document = args.document || document;
+        this.document = args.document || global.document;
         this.global = args.global || global;
         this.testNodes = [];
     };
@@ -554,25 +554,12 @@ define([
 	}
     
 	if (!Function.prototype.bind) {
-		Function.prototype.bind = function (that) {
-			if (typeof this !== "function") {
-				// closest thing possible to the ECMAScript 5 internal IsCallable function
-				throw new TypeError("Function.prototype.bind - what is trying to be bound is not callable");
-			}
-
-			var args = Array.prototype.slice.call(arguments, 1);
-			var functionToBind = this; 
-			var nop = function () {};
-			var bound = function () {
-				return functionToBind.apply(this instanceof nop ? this : that || global,
-					args.concat(Array.prototype.slice.call(arguments)));
-			};
-
-			nop.prototype = this.prototype;
-			bound.prototype = new nop();
-
-			return bound;
-		};
+        Function.prototype.bind = Function.prototype.bind || function (that) {
+            var fn = this;
+            return function () {
+                return fn.apply(that, arguments);
+            };
+        };
 	}  
 	
     var oldLog = Function.prototype.bind.call(global.console.log, global.console);

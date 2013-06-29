@@ -187,7 +187,7 @@ define([], function () {
             return result;
         };
         mock.expect = function mockExpect() {
-            expectedArgs = arguments;
+            expectedArgs = Array.prototype.slice.call(arguments);
             return mock;
         };
         mock.error = function mockError(err) {

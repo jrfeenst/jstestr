@@ -1,9 +1,10 @@
 
 define([], function () {
+    var global = this;
     
     var Queue = function JSTestr(args) {
         args = args || {};
-        this.document = args.document || document;
+        this.document = args.document || global.document;
         this.timeout = args.timeout || 10000;
         this._currentTask = 0;
         this._insertionPoint = 0;
