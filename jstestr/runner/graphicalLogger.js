@@ -80,6 +80,8 @@ define([
     escape.div = document.createElement("div");
     escape.text = document.createTextNode("");
     escape.div.appendChild(escape.text);
+
+    var win = this;
     
     return {
         listen: function(test, containerDiv) {
@@ -357,10 +359,12 @@ define([
             });
             
             on(test, "onFailure", function (suiteName, testName, error) {
+                var testPoint = test.suites[suiteName][testName];
+
                 var testNode = doc.createElement("div");
                 testNode.className = "failure";
                 testNode.innerHTML = "[FAILURE] '" + testName + "' - elapsed time: " +
-                    test.suites[suiteName][testName].elapsedTime + "ms";
+                        testPoint.elapsedTime + "ms";
                 
                 var errorNode = doc.createElement("div");
                 errorNode.className = "error";
@@ -374,7 +378,7 @@ define([
                 
                 var functionNode = doc.createElement("div");
                 functionNode.className = "function";
-                functionNode.innerHTML = escape(this._formatFunction(this.suites[suiteName][testName].test));
+                functionNode.innerHTML = escape(this._formatFunction(testPoint.test));
                 functionHeaderNode.appendChild(functionNode);
                 
                 if (error && (error.stack || error.stacktrace)) {
@@ -391,6 +395,41 @@ define([
                 
                 logContent.querySelector(testSelector(suiteName, testName)).appendChild(testNode);
                 addClass(testList.querySelector(testSelector(suiteName, testName)), "failure");
+
+                // Add the dom snapshots after the test has been added to dom
+                if (testPoint.domSnapshot.length > 0) {
+                    var snapshotNode = doc.createElement("div");
+                    snapshotNode.className = "domSnapshot";
+                    snapshotNode.innerHTML = "DOM Snapshots: ";
+                    testNode.appendChild(snapshotNode);
+
+                    function createSnapshotCallback(i) {
+                        return function (ev) {
+                            ev.preventDefault();
+                            ev.stopPropagation();
+                            
+                            var domWindow = win.open("snapshot.html");
+                            domWindow.onload = function () {
+                                domWindow.document.open();
+                                // strip out scripts so that they don't mess up the dom when run
+                                domWindow.document.write(testPoint.domSnapshot[i].replace(
+                                        /<script[\s\S]*?>[\s\S]*?<\/script>/g, "<!--removed $& -->"));
+                                domWindow.document.close();
+                            };
+                        };
+                    }
+
+                    for (i = 0; i < testPoint.domSnapshot.length; i += 1) {
+                        if (testPoint.domSnapshot[i]) {
+                            var showSnapshot = doc.createElement("button");
+                            showSnapshot.className = "showSnapshot";
+                            showSnapshot.innerHTML = "Show DOM Snapshot";
+                            snapshotNode.appendChild(showSnapshot);
+                            
+                            Event.on("click", showSnapshot, createSnapshotCallback(i));
+                        }
+                    }
+                }
             });
             
             on(test, "onLog", function () {

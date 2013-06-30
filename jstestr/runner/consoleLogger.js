@@ -65,13 +65,21 @@ define([], function () {
             });
             
             on(test, "onFailure", function onFailure(suiteName, testName, error) {
+                var i, testPoint = this.suites[suiteName][testName];
                 this.doError("[Failure]: " + suiteName + ", " + testName + ". " + error.message);
                 global.console.group("Failed function:");
-                this.doInfo(this._formatFunction(this.suites[suiteName][testName].test));
+                this.doInfo(this._formatFunction(testPoint.test));
                 global.console.groupEnd();
                 if (error && (error.stack || error.stacktrace)) {
                     global.console.group("Stack trace:");
                     this.doInfo(error.stack || error.stacktrace);
+                    global.console.groupEnd();
+                }
+                if (testPoint.domSnapshot.length > 0) {
+                    global.console.group("DOM Snapshots after failure: ");
+                    for (i = 0; i < testPoint.domSnapshot.length; i += 1) {
+                        this.doInfo(testPoint.domSnapshot[i]);
+                    }
                     global.console.groupEnd();
                 }
                 global.console.groupEnd();

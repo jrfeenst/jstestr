@@ -245,6 +245,7 @@ define([
                 test.elapsedTime = undefined;
                 test.success = undefined;
                 test.error = undefined;
+                test.domSnapshot = [];
                 
                 
                 if (self.pageUnderTestNode) {
@@ -309,6 +310,21 @@ define([
                 
                 function failure(error) {
                     try {
+                        if (self.pageUnderTestNode) {
+                            test.domSnapshot.push(self.pageUnderTestNode.contentDocument.innerHTML);
+                        }
+                        if (self.testNodeParent) {
+                            var i, node;
+                            for (i = 0; i < self.testNodeParent.children.length; i += 1) {
+                                node = self.testNodeParent.children[i];
+                                if (node.tagName.toLowerCase() === "iframe") {
+                                    test.domSnapshot.push(node.contentDocument.body.parentNode.innerHTML);
+                                } else if (node.innerHTML) {
+                                    test.domSnapshot.push(node.innerHTML);
+                                }
+                            }
+                        }
+
                         if (specialFunction && specialFunction.afterEach) {
                             specialFunction.afterEach.apply(test);
                         }
@@ -336,16 +352,6 @@ define([
                         specialFunction.beforeEach.apply(test);
                     }
                     
-                    var runner;
-                    if (test.test.name) {
-                        runner = test.test;
-                    } else {
-                        // create a wrapper function with the testName as the name of the function so
-                        // that the test function shows up in the stack trace
-                        eval("runner = function " + testName.replace(/ /g, "_") +
-                            "(done) { return test.test(done); };");
-                    }
-                    
                     var doneCallback = function doneCallback(error) {
                         if (error === true || error === undefined) {
                             success();
@@ -353,6 +359,7 @@ define([
                             failure(error);
                         }
                     };
+
                     doneCallback.wrap = function (func) {
                         return function () {
                             try {
@@ -364,7 +371,7 @@ define([
                         };
                     }
                     
-                    test.future = runner(doneCallback);
+                    test.future = test.test(doneCallback);
                     
                     // create a timeout that cancels the test after the specified time
                     timeout = setTimeout(function () {

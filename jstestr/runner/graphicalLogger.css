@@ -216,6 +216,10 @@
     font-size: x-large;
 }
 
+.graphicalLogger #logContent .showSnapshot {
+    padding: 0;
+}
+
 .graphicalLogger #testPageContent {
     position: relative;
     width: 100%;

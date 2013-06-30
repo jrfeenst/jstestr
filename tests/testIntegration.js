@@ -12,8 +12,7 @@ define([
         "Click and Type": function () {
             var synth = new Synthetic({document: this.document, global: this.global});
             var self = this;
-            synth.click("#input1", function () {
-            });
+            synth.click("#input1");
 
             synth.click("#input2", function (input) {
                 assert.isEqual(input, self.document.activeElement, "Input 2 selected");
