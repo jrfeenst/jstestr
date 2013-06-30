@@ -1,0 +1,24 @@
+{
+	"name": "jstestr",
+	"preferGlobal": true,
+	"version": "0.2.0",
+	"author": "Joel Feenstra <jrfeenst@gmail.com>",
+	"description": "A testing framework for JavaScript UIs.",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/jrfeenst/jstestr.git"
+	},
+	"keywords": [
+		"junit",
+	"test"
+		],
+	"dependencies" : {
+		"phantomjs" :  ">=1.9"
+	},
+	"analyze": false,
+	"license": "BSD",
+	"engines": {
+		"node": ">=0.6"
+	}
+}
+
