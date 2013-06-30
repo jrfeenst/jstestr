@@ -2,6 +2,8 @@
     width: 100%;
     height: 100%;
     margin: 0;
+    box-sizing: border-box;
+    -moz-box-sizing: border-box;
 }
 
 .graphicalLogger * {
@@ -32,6 +34,17 @@
 .graphicalLogger .progressBar {
     border: 1px solid;
     height: 1.25em;
+    table-layout: fixed;
+    border-spacing: 0;
+    border-collapse: collapse;
+    overflow: hidden;
+}
+
+.graphicalLogger .progressBar .test {
+    height: 1.25em;
+    width: 1000px;
+    padding: 0;
+    margin: 0;
 }
 
 .graphicalLogger #mainWrapper {
@@ -73,7 +86,7 @@
     border-bottom: 1px solid gray;
 }
 
-.graphicalLogger #testList .test {
+.graphicalLogger .test {
     padding-left: 1em;
     border-bottom: 1px solid lightgray;
     color: black;
@@ -84,17 +97,17 @@
     border-bottom: 0;
 }
 
-.graphicalLogger #testList .suite.success, .graphicalLogger #testList .test.success {
+.graphicalLogger .suite.success, .graphicalLogger .test.success {
     background-color: lightgreen;
     color: black;
 }
 
-.graphicalLogger #testList .suite.failure, .graphicalLogger #testList .test.failure {
+.graphicalLogger .suite.failure, .graphicalLogger .test.failure {
     background-color: lightcoral;
     color: black;
 }
 
-.graphicalLogger #testList .suite.running, .graphicalLogger #testList .test.running {
+.graphicalLogger .suite.running, .graphicalLogger .test.running {
     background-color: lightblue;
     color: black;
 }

@@ -8,7 +8,7 @@ define([
             '<div id="top">' +
                 '<button id="runAll">Run All</button>' +
                 '<button id="reloadRunAll">Reload All</button>' +
-                '<div id="testProgressBar" class="progressBar"></div>' +
+                '<table id="testProgressBar" class="progressBar"></table>' +
             '</div>' +
             '<div id="mainWrapper">' +
                 '<div id="main">' +
@@ -69,7 +69,7 @@ define([
     }
 
     function testSelector(suiteName, testName) {
-        return suiteSelector(suiteName) + ' [data-testName="' + testName + '"]';
+        return suiteSelector(suiteName) + '[data-testName="' + testName + '"]';
     }
     
     
@@ -105,6 +105,7 @@ define([
             var testList = doc.getElementById("testList");
             var runAll = doc.getElementById("runAll");
             var reloadRunAll = doc.getElementById("reloadRunAll");
+            var testProgressBar = doc.getElementById("testProgressBar");
             
             function switchTab(node) {
                 var i, id = node.id;
@@ -227,6 +228,7 @@ define([
             function renderTest(suiteName, testName) {
                 var testNode = doc.createElement("div");
                 testNode.className = "test";
+                testNode.setAttribute("data-suiteName", suiteName);
                 testNode.setAttribute("data-testName", testName);
                 testNode.innerHTML = testName;
                 
@@ -236,6 +238,21 @@ define([
                 testNode.appendChild(renderControls(suiteName, testName));
                 
                 Event.on("click", testNode, function () {
+                    var output = logContent.querySelector(testSelector(suiteName, testName));
+                    if (output) {
+                        output.scrollIntoView();
+                    }
+                    toggleControls(testNode);
+                });
+
+                var progressNode = doc.createElement("td");
+                progressNode.className = "test";
+                progressNode.setAttribute("data-suiteName", suiteName);
+                progressNode.setAttribute("data-testName", testName);
+                testProgressBar.appendChild(progressNode);
+
+                Event.on("click", progressNode, function () {
+                    testNode.scrollIntoView();
                     var output = logContent.querySelector(testSelector(suiteName, testName));
                     if (output) {
                         output.scrollIntoView();
@@ -299,9 +316,7 @@ define([
                 removeClass(suiteListNode, "success");
                 removeClass(suiteListNode, "failure");
                 addClass(suiteListNode, "running");
-                
-                
-                
+
                 scrollToBottom();
             });
             
@@ -321,6 +336,7 @@ define([
             on(test, "onTestStart", function (suiteName, testName) {
                 var testNode = doc.createElement("div");
                 testNode.className = "test";
+                testNode.setAttribute("data-suiteName", suiteName);
                 testNode.setAttribute("data-testName", testName);
                 
                 var testStartNode = doc.createElement("div");
@@ -334,16 +350,25 @@ define([
                 
                 logContent.querySelector(suiteSelector(suiteName)).appendChild(testNode);
                 
+                // Update the test list css state
                 var testListNode = testList.querySelector(testSelector(suiteName, testName));
                 removeClass(testListNode, "success");
                 removeClass(testListNode, "failure");
                 addClass(testListNode, "running");
                 
+                // Update the progress bar state
+                var testProgressNode = testProgressBar.querySelector(testSelector(suiteName, testName));
+                removeClass(testProgressNode, "success");
+                removeClass(testProgressNode, "failure");
+                addClass(testProgressNode, "running");
+
                 scrollToBottom();
             });
             
             on(test, "onTestEnd", function (suiteName, testName) {
                 removeClass(testList.querySelector(testSelector(suiteName, testName)), "running");
+                removeClass(testProgressBar.querySelector(testSelector(suiteName, testName)), "running");
+
                 scrollToBottom();
             });
             
@@ -356,6 +381,7 @@ define([
                 logContent.querySelector(testSelector(suiteName, testName)).appendChild(testNode);
                 
                 addClass(testList.querySelector(testSelector(suiteName, testName)), "success");
+                addClass(testProgressBar.querySelector(testSelector(suiteName, testName)), "success");
             });
             
             on(test, "onFailure", function (suiteName, testName, error) {
@@ -392,11 +418,7 @@ define([
                     stackNode.innerHTML = escape(error.stack || error.stacktrace);
                     stackHeaderNode.appendChild(stackNode);
                 }
-                
-                logContent.querySelector(testSelector(suiteName, testName)).appendChild(testNode);
-                addClass(testList.querySelector(testSelector(suiteName, testName)), "failure");
 
-                // Add the dom snapshots after the test has been added to dom
                 if (testPoint.domSnapshot.length > 0) {
                     var snapshotNode = doc.createElement("div");
                     snapshotNode.className = "domSnapshot";
@@ -430,6 +452,10 @@ define([
                         }
                     }
                 }
+
+                logContent.querySelector(testSelector(suiteName, testName)).appendChild(testNode);
+                addClass(testList.querySelector(testSelector(suiteName, testName)), "failure");
+                addClass(testProgressBar.querySelector(testSelector(suiteName, testName)), "failure");
             });
             
             on(test, "onLog", function () {
