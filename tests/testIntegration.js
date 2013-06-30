@@ -61,9 +61,9 @@ define([
 
             synth.drag("#movable", "#div1", function (moveable, div) {
                 var rect = div.getBoundingClientRect();
-                assert.isEqual(Math.floor(rect.left + rect.width / 2 - 5) + "px",
+                assert.isEqual(Math.round(rect.left + rect.width / 2 - 5) + "px",
                     moveable.style.left, "Moveable div x");
-                assert.isEqual(Math.floor(rect.top + rect.height / 2 - 5) + "px",
+                assert.isEqual(Math.round(rect.top + rect.height / 2 - 5) + "px",
                     moveable.style.top, "Moveable div y");
             });
 

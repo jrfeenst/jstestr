@@ -62,7 +62,7 @@
             
             <div class="border">
                 DIV <span class="border"> SPAN </span>
-                <div id="div1" class="border" style="height: 20px;">
+                <div id="div1" class="border" style="width: 400px; height: 40px;">
                     Nested DIV 1
                 </div>
                 <div id="div2" class="border">
@@ -139,6 +139,9 @@
                     "altKey", "metaKey", "x", "y", "layerX", "layerY", "clientX", "clientY",
                     "screenX", "screenY", "keyIdentifier", "keyLocation", "keyCode", "charCode"];
                 var eventListener = function (e) {
+                    if (e.target === eventLog) {
+                        return; // IE gets into an event loop for updates to the pre log element
+                    }
                     var log = [];
                     
                     if (lastEventType === "mousemove" && lastEventType === e.type) {
@@ -153,7 +156,9 @@
                     
                     e.target.id && log.push("target:" + e.target.id);
                     
-                    eventLog.innerHTML += (new Date()).getTime() + ": " + log.join(", ") + "\n";
+                    var pastLog = eventLog.innerHTML;
+                    pastLog = pastLog.substr(Math.max(0, pastLog.length - 10000), pastLog.length);
+                    eventLog.innerHTML = pastLog + Date.now() + ": " + log.join(", ") + "\n";
                     
                     if ((e.type === "keypress" || e.type === "textInput"  || e.type === "input") &&
                         e.target.value !== undefined) {

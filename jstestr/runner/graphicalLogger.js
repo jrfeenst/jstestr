@@ -8,7 +8,7 @@ define([
             '<div id="top">' +
                 '<button id="runAll">Run All</button>' +
                 '<button id="reloadRunAll">Reload All</button>' +
-                '<table id="testProgressBar" class="progressBar"></table>' +
+                '<table id="testProgressBar" class="progressBar"><tbody><tr></tr></tbody></table>' +
             '</div>' +
             '<div id="mainWrapper">' +
                 '<div id="main">' +
@@ -86,14 +86,11 @@ define([
     return {
         listen: function(test, containerDiv) {
             var doc = containerDiv.ownerDocument;
-            
-            var link = doc.createElement("link");
-            link.setAttribute("rel", "stylesheet");
-            link.setAttribute("type", "text/css");
-            link.setAttribute("href", "graphicalLogger.css");
-            doc.querySelector("head").appendChild(link);
-            
+                        
             containerDiv.innerHTML = template;
+            if (win.navigator.userAgent.indexOf("MSIE 9") >= 0) {
+                addClass(containerDiv.firstElementChild, "ie9");
+            }
             
             test.setTestNodeParent(doc.getElementById("testPageContent"));
             
@@ -105,7 +102,7 @@ define([
             var testList = doc.getElementById("testList");
             var runAll = doc.getElementById("runAll");
             var reloadRunAll = doc.getElementById("reloadRunAll");
-            var testProgressBar = doc.getElementById("testProgressBar");
+            var testProgressBar = doc.querySelector("#testProgressBar tr");
             
             function switchTab(node) {
                 var i, id = node.id;
