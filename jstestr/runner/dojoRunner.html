@@ -18,10 +18,15 @@
     <body>
         <div id="graphicalLogger"></div>
         
-        <script src="../../requirejs/require.js"></script>
+        <script src="../../dojo/dojo.js"></script>
         <script type="text/javascript">
-            require({baseUrl: "../../"}, ["jstestr/runner/browserRunner"]);
-        </script>
+            require({
+                baseUrl: "../",
+                packages: [{
+                    name: "tests",
+                    location: "../tests" // dojo's loader defautls to overriding the "tests" module, put it back
+                }]
+            }, ["jstestr/runner/browserRunner"]);
         </script>
     </body>
 </html>
