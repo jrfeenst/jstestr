@@ -26,6 +26,9 @@
                 packages: [{
                     name: "tests",
                     location: "../tests" // dojo's loader defautls to overriding the "tests" module, put it back
+                }, {
+                    name:"doh", // replace doh with the doh adapter
+                    location: "../jstestr/adapter/doh"
                 }]
             }, ["jstestr/runner/browserRunner"]);
         </script>

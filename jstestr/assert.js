@@ -60,9 +60,16 @@ define([], function () {
     }
     
     
-    // todo: handle cycles in the objects
-    // recursive deep equality test
-    function _isEqual(expected, actual) {
+    function _isEqual(expected, actual, seenObjs) {
+        var i;
+        // check to see if we've already seen this pair of objects and stop recursing if we did
+        for (i = 0; i < seenObjs.length; i++) {
+            if (seenObjs[i][0] === expected && seenObjs[i][1] === actual) {
+                return true;
+            }
+        }
+        seenObjs.push([expected, actual]);
+
         if (expected === actual) {
             // short circuit for strict equality
             return true;
@@ -89,9 +96,11 @@ define([], function () {
             if (expectedKeys.length !== actualKeys.length) {
                 return false;
             }
-            for (var i = 0; i < expectedKeys.length; i++) {
+            expectedKeys.sort();
+            actualKeys.sort();
+            for (i = 0; i < expectedKeys.length; i++) {
                 key = expectedKeys[i];
-                if (key !== actualKeys[i] || !_isEqual(expected[key], actual[key])) {
+                if (key !== actualKeys[i] || !_isEqual(expected[key], actual[key], seenObjs)) {
                     return false;
                 }
             }
@@ -102,14 +111,14 @@ define([], function () {
     }
     
     function isEqual(expected, actual, help) {
-        if (!_isEqual(expected, actual)) {
+        if (!_isEqual(expected, actual, [])) {
             throw createError("Expected " + toString(expected) + " but found: " +
                 toString(actual) + ".", help);
         }
     }
     
     function isNotEqual(expected, actual, help) {
-        if (_isEqual(expected, actual)) {
+        if (_isEqual(expected, actual, [])) {
             throw createError("Expected " + toString(expected) + " to be different from: " +
                 toString(actual) + ".", help);
         }
