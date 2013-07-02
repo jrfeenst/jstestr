@@ -261,7 +261,10 @@ define([
                 var errorHandler = registerErrorHandler(self.global, function (ev) {
                     var message = ev.message + ", " + ev.filename + "@" + ev.lineno;
                     if (test.future) {
-                        test.future.cancel(message);
+                        if (test.future.cancel) {
+                            test.future.cancel(message);
+                        }
+                        failure(message);
                     } else if (self.ASYNC_TEST_PATTERN.test(test.test.toString())) {
                         failure(message);
                     } else {
