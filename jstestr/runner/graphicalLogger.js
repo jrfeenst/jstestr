@@ -65,11 +65,11 @@ define([
     
             
     function suiteSelector(suiteName) {
-        return '[data-suiteName="' + suiteName + '"]';
+        return '.suite[data-suiteName="' + suiteName + '"]';
     }
 
     function testSelector(suiteName, testName) {
-        return suiteSelector(suiteName) + '[data-testName="' + testName + '"]';
+        return '.test[data-suiteName="' + suiteName + '"]' + '[data-testName="' + testName + '"]';
     }
     
     
@@ -309,7 +309,7 @@ define([
                 
                 logContent.appendChild(suiteNode);
                 
-                var suiteListNode = testList.querySelector(suiteSelector(suiteName));
+                var suiteListNode = doc.querySelector(suiteSelector(suiteName));
                 removeClass(suiteListNode, "success");
                 removeClass(suiteListNode, "failure");
                 addClass(suiteListNode, "running");
@@ -323,7 +323,7 @@ define([
                     success = success && test.suites[suiteName][testName].success !== false;
                 }
                 
-                var suite = testList.querySelector(suiteSelector(suiteName));
+                var suite = doc.querySelector(suiteSelector(suiteName));
                 addClass(suite, success ? "success" : "failure");
                 removeClass(suite, "running");
                 

@@ -35,10 +35,12 @@ define([
             case "config":
                 config = JSON.parse(value);
                 break;
-            case "configUrl":
+            case "configurl":
                 configUrl = value;
+                break;
             case "run":
                 run = value === "true";
+                break;
             default:
                 console.error("Unknown argument: " + args[i]);
                 break;
@@ -47,14 +49,19 @@ define([
 
     function runTests() {
         if (run) {
+            var future;
             if (suite) {
-                test.runSuite(suite);
+                future = test.runSuite(suite);
             } else if (suiteTest) {
                 var parts = suiteTest.split(":");
-                test.runTest(parts[0], parts[1]);
+                future = test.runTest(parts[0], parts[1]);
             } else {
-                test.runAll();
+                future = test.runAll();
             }
+
+            future.then(null, function (failure) {
+                self.doError("The test runner failed to complete: " + failure);
+            });
         } 
     }
 

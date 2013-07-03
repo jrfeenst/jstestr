@@ -18,6 +18,8 @@ define([
         this.document = args.document || global.document;
         this.global = args.global || global;
         this.testNodes = [];
+        this.timeout = 10*60*1000;
+        this._totalTests = 0;
     };
     
     
@@ -61,9 +63,15 @@ define([
             this.suites[suiteName] = {};
             this.onSuiteDefined(suiteName);
         }
-        test = this._normalizeTest(test);
-        this.suites[suiteName][name] = test;
-        this.onTestDefined(suiteName, name, test);
+
+        if (!this.suites[suiteName][name]) {
+            test = this._normalizeTest(test);
+            this.suites[suiteName][name] = test;
+            this.onTestDefined(suiteName, name, test);
+            this._totalTests++;
+        } else {
+            this.doError("Duplicate test definition: " + suiteName + " - " + name);
+        }
     };
     
     
@@ -72,14 +80,10 @@ define([
      * @return Future An object which can be used to be notified of the end of the test execution.
      */
     TestFramework.prototype.runAll = function runAll() {
-        this.testQueue = new Queue();
-        
         this._start();
-        
         for (var suiteName in this.suites) {
             this._runSuite(suiteName);
         }
-        
         this._end();
         
         return this.testQueue.start(this.timeout);
@@ -90,8 +94,6 @@ define([
      * @return Future An object which can be used to be notified of the end of the test execution.
      */
     TestFramework.prototype.runSuite = function runSuite(suiteName) {
-        this.testQueue = new Queue();
-        
         this._start();
         this._runSuite(suiteName);
         this._end();
@@ -104,8 +106,6 @@ define([
      * @return Future An object which can be used to be notified of the end of the test execution.
      */
     TestFramework.prototype.runTest = function runTest(suiteName, testName) {
-        this.testQueue = new Queue();
-        
         this._start();
         this._startSuite(suiteName);
         this._runTest(suiteName, testName);
@@ -187,6 +187,8 @@ define([
      * Start of all test execution.
      */
     TestFramework.prototype._start = function _start() {
+        this.testQueue = new Queue({timeout: this.timeout});
+
         this.totalTests = 0;
         this.executedTests = 0;
         this.successfulTests = 0;
@@ -336,17 +338,20 @@ define([
                         self.onError("Error while executing afterEach method: " + e.message);
                     }
                     
-                    if (!error.message) {
-                        error = {message: error};
+                    try {
+                        if (!error.message) {
+                            error = {message: error};
+                        }
+                        
+                        done();
+                        test.success = false;
+                        test.error = error;
+                        
+                        self.onFailure(suiteName, testName, error);
+                        self.onTestEnd(suiteName, testName);
+                    } finally {
+                        self.testQueue.next();   
                     }
-                    
-                    done();
-                    test.success = false;
-                    test.error = error;
-                    
-                    self.onFailure(suiteName, testName, error);
-                    self.onTestEnd(suiteName, testName);
-                    self.testQueue.next();
                 }
                 
                 try {
@@ -383,7 +388,7 @@ define([
                         } else {
                             failure("Test timeout");
                         }
-                    }, test.timeout || (specialFunction && specialFunction.timeout) || 2000);
+                    }, test.timeout || (specialFunction && specialFunction.timeout) || 1000);
                     
                     // handle sync errors, async tests, and sync success
                     if (test.error) {
@@ -502,7 +507,7 @@ define([
     
     // normalize the indentation of the function to strip out extra indentation in the source code
     TestFramework.prototype._formatFunction = function _formatFunction(func) {
-        var lines = func.toString().split("\n");
+        var lines = func ? func.toString().split("\n") : [];
         var numLines = lines.length;
         if (numLines) {
             var offset = 0;

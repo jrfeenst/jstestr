@@ -138,7 +138,6 @@ define([], function () {
         }
     }
     
-    
     function isObject(obj, help) {
         if (typeof obj !== "object" || obj.constructor === Array) {
             throw createError("Expected a function, by found: " + toString(obj) + ".", help);
