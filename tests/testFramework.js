@@ -139,6 +139,21 @@ define([
                 assert.isTrue(ran, "First test should run");
                 assert.isFalse(framework.suites["fake suite"]["fake test 1d"].success, "Test should fail");
             }));
+        },
+        
+        "Ignored Test": function (done) {
+            var ran = false;
+            var framework = new test.Framework();
+            framework.defineSuite("fake suite", {
+                "//ignored fake test": function () {
+                    ran = true;
+                }
+            });
+            framework.runSync = true; // useful for testing the tests
+            framework.runAll().then(done.wrap(function () {
+                assert.isFalse(ran, "First test should not run");
+                assert.isTrue(framework.suites["fake suite"]["//ignored fake test"].ignored, "Test should be ignored");
+            }));
         }
     });
     

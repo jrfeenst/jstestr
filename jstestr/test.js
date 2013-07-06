@@ -4,7 +4,18 @@ define([
 ], function (Queue) {
     
     var global = this;
+    var MAX_INT32 = 4294967296;
     
+    
+    if (!Function.prototype.bind) {
+        Function.prototype.bind = Function.prototype.bind || function (that) {
+            var fn = this;
+            return function () {
+                return fn.apply(that, arguments);
+            };
+        };
+    }
+
     /**
      * Test framework which can define and run suites of tests. Tests can be synchronous or
      * asynchronous using either futures or a callback. Test and suite before/after functions can
@@ -18,8 +29,12 @@ define([
         this.document = args.document || global.document;
         this.global = args.global || global;
         this.testNodes = [];
-        this.timeout = 10*60*1000;
+        this.timeout = args.timeout || 10*60*1000;
         this._totalTests = 0;
+        this.randomOrder = args.randomOrder || true;
+        this.suiteOrder = [];
+        this.testOrder = {};
+        this.randSeed(args.randSeed || (Math.random() * MAX_INT32));
     };
     
     
@@ -59,15 +74,23 @@ define([
      * "test" with a value of the test function.
      */
     TestFramework.prototype.defineTest = function defineTest(suiteName, name, test) {
+        var i;
         if (!this.suites[suiteName]) {
             this.suites[suiteName] = {};
-            this.onSuiteDefined(suiteName);
+
+            i = this.randomOrder ? this.randInt() % (this.suiteOrder.length + 1) : this.suiteOrder.length;
+            this.suiteOrder.splice(i, 0, suiteName);
+            this.testOrder[suiteName] = [];
+            this.onSuiteDefined(suiteName, i);
         }
 
         if (!this.suites[suiteName][name]) {
             test = this._normalizeTest(test);
             this.suites[suiteName][name] = test;
-            this.onTestDefined(suiteName, name, test);
+
+            i = this.randomOrder ? this.randInt() % (this.testOrder[suiteName].length + 1) : this.testOrder[suiteName].length;
+            this.testOrder[suiteName].splice(i, 0, name);
+            this.onTestDefined(suiteName, name, test, i);
             this._totalTests++;
         } else {
             this.doError("Duplicate test definition: " + suiteName + " - " + name);
@@ -81,9 +104,9 @@ define([
      */
     TestFramework.prototype.runAll = function runAll() {
         this._start();
-        for (var suiteName in this.suites) {
+        this.suiteOrder.forEach(function (suiteName) {
             this._runSuite(suiteName);
-        }
+        }, this);
         this._end();
         
         return this.testQueue.start(this.timeout);
@@ -135,7 +158,7 @@ define([
     TestFramework.prototype.getNewTestNode = function getNewTestNode(cleanup) {
         this._ensureTestNodeParentExists();
         if (cleanup) {
-            this._cleanupTestNodes();
+            this._cleanupBeforeTest();
         }
         var node = this.document.createElement("div");
         this.testNodeParent.appendChild(node);
@@ -144,6 +167,14 @@ define([
         return node;
     };
     
+    TestFramework.prototype.on = function on(method, func) {
+        var oldMethod = this[method];
+        var self = this;
+        this[method] = function () {
+            func.apply(self, arguments);
+            oldMethod.apply(self, arguments);
+        };
+    };
     
     /**
      * Start and end events for all the suites and tests.
@@ -156,6 +187,7 @@ define([
      */
     TestFramework.prototype.onSuccess = function onSuccess(suiteName, testName) {};
     TestFramework.prototype.onFailure = function onFailure(suiteName, testName, error) {};
+    TestFramework.prototype.onIgnore = function onIgnore(suiteName, testName) {};
     
     /**
      * Suite start and end events.
@@ -178,8 +210,8 @@ define([
     /**
      * Suite and test defined events. These are fired when a new test or suite is created.
      */
-    TestFramework.prototype.onSuiteDefined = function onSuiteDefined(suiteName) {};
-    TestFramework.prototype.onTestDefined = function onTestDefined(suiteName, testName, test) {};
+    TestFramework.prototype.onSuiteDefined = function onSuiteDefined(suiteName, index) {};
+    TestFramework.prototype.onTestDefined = function onTestDefined(suiteName, testName, test, index) {};
     
     
     
@@ -218,13 +250,12 @@ define([
     TestFramework.prototype._runSuite = function _runSuite(suiteName) {
         this._startSuite(suiteName);
 
-        for (var testName in this.suites[suiteName]) {
+        this.testOrder[suiteName].forEach(function (testName) {
             this._runTest(suiteName, testName);
-        }
+        }, this);
 
         this._endSuite(suiteName);
     };
-    
     
     /**
      * Main runTest helper function. It queues up a test for execution. It also handles alot of
@@ -236,159 +267,59 @@ define([
         var self = this;
         this.testQueue.then(function _runTestTask() {
             var testExecutor = function testExecutor() {
-                
-                self.currentSuiteName = suiteName;
-                self.currentTestName = testName;
-                
-                self.onTestStart(suiteName, testName);
-                
-                var test = self.suites[suiteName][testName];
-                test.startTime = new Date();
-                test.elapsedTime = undefined;
-                test.success = undefined;
-                test.error = undefined;
-                test.domSnapshot = [];
-                
-                
-                if (self.pageUnderTestNode) {
-                    test.document = self.pageUnderTestNode.contentDocument;
-                    test.global = self.pageUnderTestNode.contentWindow;
-                } else {
-                    test.document = self.document;
-                    test.global = self.global;
-                }
-                self._cleanupTestNodes();
-                
-                // setup an error handler on the global for this test.
-                var errorHandler = registerErrorHandler(self.global, function (ev) {
-                    var message = ev.message + ", " + ev.filename + "@" + ev.lineno;
-                    if (test.future) {
-                        if (test.future.cancel) {
-                            test.future.cancel(message);
-                        }
-                        failure(message);
-                    } else if (self.ASYNC_TEST_PATTERN.test(test.test.toString())) {
-                        failure(message);
-                    } else {
-                        test.error = message;
-                    }
-                });
-                
-                var timeout;
-                
-                // suite level options and callbacks (beforeEach, timeout, etc)
-                var specialFunction = self.specialFunctions[suiteName] || {};
-                
-                test.suite = specialFunction.context;
-                
-                // executed when the test is done, either succesfully or in failure
-                function done() {
-                    clearTimeout(timeout);
-                    errorHandler.remove();
-                    
-                    test.endTime = new Date();
-                    test.elapsedTime = test.endTime.getTime() - test.startTime.getTime();
-                    
-                    self.currentSuiteName = undefined;
-                    self.currentTestName = undefined;
-                    self.executedTests++;
-                }
-                
-                function success() {
-                    try {
-                        if (specialFunction && specialFunction.afterEach) {
-                            specialFunction.afterEach.apply(test);
-                        }
-
-                        done();
-                        test.success = true;
-                        
-                        self.successfulTests++;
-                        self.onSuccess(suiteName, testName);
-                        self.onTestEnd(suiteName, testName);
-                        self.testQueue.next();
-                        
-                    } catch (e) {
-                        failure(e);
-                    }
-                }
-                
-                function failure(error) {
-                    try {
-                        if (self.pageUnderTestNode) {
-                            test.domSnapshot.push(self.pageUnderTestNode.contentDocument.innerHTML);
-                        }
-                        if (self.testNodeParent) {
-                            var i, node;
-                            for (i = 0; i < self.testNodeParent.children.length; i += 1) {
-                                node = self.testNodeParent.children[i];
-                                if (node.tagName.toLowerCase() === "iframe") {
-                                    test.domSnapshot.push(node.contentDocument.body.parentNode.innerHTML);
-                                } else if (node.innerHTML) {
-                                    test.domSnapshot.push(node.innerHTML);
-                                }
-                            }
-                        }
-
-                        if (specialFunction && specialFunction.afterEach) {
-                            specialFunction.afterEach.apply(test);
-                        }
-                    } catch (e) {
-                        // catch, but keep going because this test is already in error
-                        self.onError("Error while executing afterEach method: " + e.message);
-                    }
-                    
-                    try {
-                        if (!error.message) {
-                            error = {message: error};
-                        }
-                        
-                        done();
-                        test.success = false;
-                        test.error = error;
-                        
-                        self.onFailure(suiteName, testName, error);
-                        self.onTestEnd(suiteName, testName);
-                    } finally {
-                        self.testQueue.next();   
-                    }
-                }
-                
                 try {
+                    var test = self._resetTest(self.suites[suiteName][testName]);
+
+                    self.currentSuiteName = suiteName;
+                    self.currentTestName = testName;
                     
-                    if (specialFunction && specialFunction.beforeEach) {
+                    self.onTestStart(suiteName, testName);
+                    
+                    // executed when the test is done, either succesfully or in failure
+                    var done = self._testDone.bind(self, test);
+
+                    var failure = self._testFailure.bind(self, test, done, suiteName, testName);
+                    var success = self._testSuccess.bind(self, test, done, failure, suiteName, testName);
+
+                    if (testName.indexOf("//") === 0) {
+                        test.ignored = true;
+                        self.onIgnore(suiteName, testName);
+                        self.onTestEnd(suiteName, testName);
+                        done();
+                        self.testQueue.next();  
+                        return;
+                    }
+
+                    // suite level options and callbacks (beforeEach, timeout, etc)
+                    var specialFunction = self.specialFunctions[suiteName] || {};
+                    test.suite = specialFunction.context;
+
+                    if (specialFunction.beforeEach) {
                         specialFunction.beforeEach.apply(test);
                     }
-                    
-                    var doneCallback = function doneCallback(error) {
-                        if (error === true || error === undefined) {
-                            success();
-                        } else {
-                            failure(error);
-                        }
-                    };
 
-                    doneCallback.wrap = function (func) {
-                        return function () {
-                            try {
-                                func.apply(this, arguments);
-                                success();
-                            } catch (e) {
-                                failure(e);
-                            }
-                        };
-                    }
-                    
+                    // setup an error handler on the global for this test.
+                    var globalError = self._globalErrorHandler.bind(self, test, failure);
+                    test._errorHandler = registerErrorHandler(self.global, globalError);
+
+                    // Create the async test done callback
+                    var doneCallback = self._doneCallback.bind(self, success, failure);
+                    doneCallback.wrap = self._doneWrapper.bind(self, success, failure);
+
+                    // Actually execute the test function
                     test.future = test.test(doneCallback);
                     
+                    if (test.done) {
+                        return;
+                    }
                     // create a timeout that cancels the test after the specified time
-                    timeout = setTimeout(function () {
+                    test._timeout = setTimeout(function () {
                         if (test.future && test.future.cancel) {
                             test.future.cancel();
                         } else {
                             failure("Test timeout");
                         }
-                    }, test.timeout || (specialFunction && specialFunction.timeout) || 1000);
+                    }, test.timeout || specialFunction.timeout || 1000);
                     
                     // handle sync errors, async tests, and sync success
                     if (test.error) {
@@ -411,6 +342,138 @@ define([
         });
     };
     
+
+    TestFramework.prototype._resetTest = function _resetTest(test) {
+        test.startTime = new Date();
+        test.elapsedTime = undefined;
+        test.success = undefined;
+        test.error = undefined;
+        test.done = false;
+        test.domSnapshot = [];
+
+        if (this.pageUnderTestNode) {
+            test.document = this.pageUnderTestNode.contentDocument;
+            test.global = this.pageUnderTestNode.contentWindow;
+        } else {
+            test.document = this.document;
+            test.global = this.global;
+        }
+        this._cleanupBeforeTest();
+
+        return test;
+    };
+
+    TestFramework.prototype._testSuccess = function _testSuccess(test, done, failure, suiteName, testName) {
+        try {
+            var specialFunction = this.specialFunctions[suiteName] || {};
+            if (specialFunction.afterEach) {
+                specialFunction.afterEach.apply(test);
+            }
+
+            done();
+            
+            this.onSuccess(suiteName, testName);
+            this.onTestEnd(suiteName, testName);
+
+            test.success = true;
+            this.successfulTests++;
+
+            this.testQueue.next();
+        } catch (e) {
+            failure(e);
+        }
+    };
+
+    TestFramework.prototype._testFailure = function failure(test, done, suiteName, testName, error) {
+        try {
+            if (this.pageUnderTestNode) {
+                test.domSnapshot.push(this.pageUnderTestNode.contentDocument.innerHTML);
+            }
+            if (this.testNodeParent) {
+                var i, node;
+                for (i = 0; i < this.testNodeParent.children.length; i += 1) {
+                    node = this.testNodeParent.children[i];
+                    if (node.tagName.toLowerCase() === "iframe") {
+                        test.domSnapshot.push(node.contentDocument.body.parentNode.innerHTML);
+                    } else if (node.innerHTML) {
+                        test.domSnapshot.push(node.innerHTML);
+                    }
+                }
+            }
+
+            var specialFunction = this.specialFunctions[suiteName] || {};
+            if (specialFunction.afterEach) {
+                specialFunction.afterEach.apply(test);
+            }
+        } catch (e) {
+            // catch, but keep going because this test is already in error
+            this.onError("Error while executing afterEach method: " + e.message);
+        }
+        
+        try {
+            if (!error.message) {
+                error = {message: error};
+            }
+            
+            done();
+            test.success = false;
+            test.error = error;
+            
+            this.onFailure(suiteName, testName, error);
+            this.onTestEnd(suiteName, testName);
+        } finally {
+            this.testQueue.next();   
+        }
+    };
+
+    TestFramework.prototype._testDone = function _testDone(test) {
+        clearTimeout(test._timeout);
+        if (test._errorHandler) {
+            test._errorHandler.remove();
+        }
+        
+        test.endTime = new Date();
+        test.elapsedTime = test.endTime.getTime() - test.startTime.getTime();
+        test.done = true;
+        
+        this.currentSuiteName = undefined;
+        this.currentTestName = undefined;
+        this.executedTests++;
+    };
+
+    TestFramework.prototype._globalErrorHandler = function (test, failure, ev) {
+        var message = ev.message + ", " + ev.filename + "@" + ev.lineno;
+        if (test.future) {
+            if (test.future.cancel) {
+                test.future.cancel(message);
+            }
+            failure(message);
+        } else if (this.ASYNC_TEST_PATTERN.test(test.test.toString())) {
+            failure(message);
+        } else {
+            test.error = message;
+        }
+    };
+
+    TestFramework.prototype._doneCallback = function _doneCallback(success, failure, error) {
+        if (error === true || error === undefined) {
+            success();
+        } else {
+            failure(error);
+        }
+    };
+
+    TestFramework.prototype._doneWrapper = function _doneWrapper(success, failure, func) {
+        return function () {
+            try {
+                func.apply(this, arguments);
+                success();
+            } catch (e) {
+                failure(e);
+            }
+        };
+    };
+
     
     TestFramework.prototype._normalizeTest = function _normalizeTest(test) {
         if (typeof test === "function") {
@@ -427,7 +490,7 @@ define([
         }
     };
     
-    TestFramework.prototype._cleanupTestNodes = function _cleanupTestNodes() {
+    TestFramework.prototype._cleanupBeforeTest = function _cleanupBeforeTest() {
         var parent = this.testNodeParent;
         this.testNodes.forEach(function (node) {
             parent.removeChild(node);
@@ -449,6 +512,7 @@ define([
     TestFramework.prototype._startSuite = function _startSuite(suiteName) {
         var self = this;
         this.testQueue.then(function startSuiteTask() {
+
             self.onSuiteStart(suiteName);
             
             if (self.pageUnderTestNode) {
@@ -457,16 +521,17 @@ define([
                 self.onCleanTestNodes();
             }
             
-            var specialFunction = self.specialFunctions[suiteName];
-            if (specialFunction && specialFunction.pageUnderTest) {
+            var specialFunction = self.specialFunctions[suiteName] || {};
+            if (specialFunction.pageUnderTest) {
                 self.testQueue.then(function _loadPageUnderTestTask() {
                     
                     var timeout = setTimeout(function _loadError() {
+                        self.doError("Unable to load page under test: " + specialFunction.pageUnderTest);
                         self.testQueue.next();
                     }, 20000);
                     
                     self._ensureTestNodeParentExists();
-                    self._cleanupTestNodes();
+                    self._cleanupBeforeTest();
                     
                     self.pageUnderTestNode = self.document.createElement("iframe");
                     self.pageUnderTestNode.src = specialFunction.pageUnderTest;
@@ -480,9 +545,13 @@ define([
                 });
             }
             
-            if (specialFunction && specialFunction.beforeSuite) {
-                specialFunction.context = {};
-                specialFunction.beforeSuite.apply(specialFunction.context);
+            try {
+                if (specialFunction.beforeSuite) {
+                    specialFunction.context = {};
+                    specialFunction.beforeSuite.apply(specialFunction.context);
+                }
+            } catch (e) {
+                self.doError("Error executing beforeSuite: " + e.message);
             }
             
             self.testQueue.next();
@@ -492,11 +561,14 @@ define([
     TestFramework.prototype._endSuite = function _endSuite(suiteName) {
         var self = this;
         this.testQueue.then(function endSuiteTask() {
-            
-            var specialFunction = self.specialFunctions[suiteName];
-            if (specialFunction && specialFunction.afterSuite) {
-                specialFunction.context = specialFunction.context || {};
-                specialFunction.afterSuite.apply(specialFunction.context);
+            try {
+                var specialFunction = self.specialFunctions[suiteName];
+                if (specialFunction && specialFunction.afterSuite) {
+                    specialFunction.context = specialFunction.context || {};
+                    specialFunction.afterSuite.apply(specialFunction.context);
+                }
+            } catch (e) {
+                self.doError("Error executing afterSuite: " + e.message);
             }
             
             self.onSuiteEnd(suiteName);
@@ -517,6 +589,19 @@ define([
         }
         return lines.join("\n").replace(new RegExp("\n[ ]{" + offset + "}", "g"), "\n");
     };
+
+    // Simple seedable random number generator
+    TestFramework.prototype.randSeed = function randSeed(seed) {
+        this.doLog("Using random seed: " + seed);
+        this._rand_z = seed;
+        this._rand_w = seed + 1;
+    };
+
+    TestFramework.prototype.randInt = function randInt() {
+        this._rand_z = (36969 * (this._rand_z & 65535) + (this._rand_z >> 16)) % MAX_INT32;
+        this._rand_w = (18000 * (this._rand_w & 65535) + (this._rand_w >> 16)) % MAX_INT32;
+        return ((this._rand_z << 16) + this._rand_w + MAX_INT32) % MAX_INT32;
+    }
     
     
     var errorHandlers = [];
@@ -545,10 +630,6 @@ define([
         }
     }
     
-    
-    var testModule = new TestFramework();
-    testModule.Framework = TestFramework;
-    
     if (!global.console) {
         global.console = {};
 	}
@@ -567,15 +648,6 @@ define([
 	if (!global.console.groupEnd) {
 		global.console.groupEnd = function () {};
 	}
-    
-	if (!Function.prototype.bind) {
-        Function.prototype.bind = Function.prototype.bind || function (that) {
-            var fn = this;
-            return function () {
-                return fn.apply(that, arguments);
-            };
-        };
-	}  
 	
     var oldLog = Function.prototype.bind.call(global.console.log, global.console);
     var oldInfo = Function.prototype.bind.call(global.console.info, global.console);
@@ -593,6 +665,9 @@ define([
         oldError.apply(global.console, arguments);
     };
     
+
+    var testModule = new TestFramework();
+    testModule.Framework = TestFramework;
     
     testModule.onLog = function () {};
     testModule.onInfo = function () {};

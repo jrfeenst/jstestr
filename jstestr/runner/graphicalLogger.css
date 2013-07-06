@@ -43,20 +43,23 @@
 }
 
 .graphicalLogger .progressBar * {
-    width: 100%;
     height: 100%;
-}
-
-.graphicalLogger .progressBar .test {
-    border-top: 1px solid;
-    border-bottom: 1px solid;
-    height: 1.25em;
-    width: 1000px;
     padding: 0;
     margin: 0;
 }
 
-.graphicalLogger .progressBar .test:first-child {
+.graphicalLogger .progressBar .suite {
+    border-top: 1px solid;
+    border-bottom: 1px solid;
+}
+
+.graphicalLogger .progressBar .test {
+    height: 1.125em;
+    width: 1000px;
+    padding-left: 0;
+}
+
+.graphicalLogger .progressBar .suite:first-child {
     border-left: 1px solid;
 }
 
@@ -64,6 +67,7 @@
     border-right: 1px solid;
 }
 
+.graphicalLogger.ie9 .progressBar .suite,
 .graphicalLogger.ie9 .progressBar .test {
     width: auto;
 }
@@ -129,6 +133,11 @@
 
 .graphicalLogger .suite.failure, .graphicalLogger .test.failure {
     background-color: lightcoral;
+    color: black;
+}
+
+.graphicalLogger .suite.ignore, .graphicalLogger .test.ignore {
+    background-color: lightyellow;
     color: black;
 }
 
@@ -248,6 +257,10 @@
 
 .graphicalLogger #logContent .failure {
     color: red;
+}
+
+.graphicalLogger #logContent .ignore {
+    color: darkgoldenrod;
 }
 
 .graphicalLogger #logContent .results {

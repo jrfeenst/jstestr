@@ -16,6 +16,7 @@ define([
     var suiteTest;
     var config = {};
     var configUrl = "";
+    var randomOrder = true;
     var run = true;
 
     for (var i in args) {
@@ -38,6 +39,12 @@ define([
             case "configurl":
                 configUrl = value;
                 break;
+            case "randomorder":
+                randomOrder = value === "true";
+                break;
+            case "randseed":
+                test.randSeed(parseInt(value, 10));
+                break;
             case "run":
                 run = value === "true";
                 break;
@@ -46,6 +53,8 @@ define([
                 break;
         }
     }
+
+    test.randomOrder = randomOrder;
 
     function runTests() {
         if (run) {

@@ -143,6 +143,42 @@ define([
             }
         },
         
+        "Assert Close": function () {
+            assert.isClose(1, 1, .001, "1 is 1");
+            assert.isClose(-100000, -100000, "-100000 is -100000");
+            assert.isClose(1, 2, 1, "1 is close to 2 with tolerance");
+            assert.isClose(1, 1.05, .1, "1 is 1.05 with tolerance");
+            
+            try {
+                assert.isClose(1, 2, "1 is not close to 2 without tolerance");
+            } catch (error1) {
+                assert.isTrue(error1, "Error should be truthy: 1 != 2");
+            }
+        },
+        
+        "Assert Matches": function () {
+            var a = {a: 1, b: {c: "c"}, d: /d/};
+            var b = "this is b";
+            assert.matches({a: 1}, a, "field a exists");
+            assert.matches({b: {}}, a, "field b exists");
+            assert.matches({b: {c: /c/}}, a, "field c regexp");
+            assert.matches({d: /d/}, a, "field d regexp");
+
+            assert.matches(/is b/, b, "regexp matches");
+
+            try {
+                assert.matches({e: "no field"}, a, "not a field");
+            } catch (error1) {
+                assert.isTrue(error1, "Error should be truthy: a no field e");
+            }
+
+            try {
+                assert.matches(/no match/, b, "regexp no match");
+            } catch (error2) {
+                assert.isTrue(error2, "Error should be truthy: no regexp match");
+            }
+        },
+        
         "Assert Object": function () {
             assert.isObject(obj, "obj should be an object");
             
