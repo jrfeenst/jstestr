@@ -4,9 +4,9 @@ define([
 ], function (Queue) {
     
     var global = this;
-    
+    var browser = {};
     if (global.navigator && navigator.userAgent) {
-        Queue.prototype.browser = {
+        browser = {
     		msie: !!(global.attachEvent && !global.opera),
     		opera: !!global.opera,
     		webkit: navigator.userAgent.indexOf('AppleWebKit/') >= 0,
@@ -44,10 +44,9 @@ define([
     
     setTimeout(executeTests, 0);
     
-    return {
-        addTest: function addTest(func) {
-            tests.push(func);
-            executeTests();
-        }
+    browser.addTest = function addTest(func) {
+        tests.push(func);
+        executeTests();
     };
+    return browser;
 });

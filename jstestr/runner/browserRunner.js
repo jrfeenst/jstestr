@@ -13,6 +13,7 @@ define([
 
     var modules = [];
     var suite;
+    var suites;
     var suiteTest;
     var config = {};
     var configUrl = "";
@@ -29,6 +30,9 @@ define([
                 break;
             case "suite":
                 suite = unescape(value);
+                break;
+            case "suites":
+                suites = unescape(value);
                 break;
             case "test":
                 suiteTest = unescape(value);
@@ -61,6 +65,8 @@ define([
             var future;
             if (suite) {
                 future = test.runSuite(suite);
+            } else if (suites) {
+                future = test.runSuites(suites);
             } else if (suiteTest) {
                 var parts = suiteTest.split(":");
                 future = test.runTest(parts[0], parts[1]);

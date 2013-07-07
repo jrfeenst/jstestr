@@ -1,7 +1,8 @@
 
 define([
+    "./browser",
     "./Queue"
-], function (Queue) {
+], function (browser, Queue) {
     
     var global = this;
     var MAX_INT32 = 4294967296;
@@ -36,7 +37,6 @@ define([
         this.testOrder = {};
         this.randSeed(args.randSeed || (Math.random() * MAX_INT32));
     };
-    
     
     /**
      * Define a suite of tests. There are 4 special keys in the tests objects which are reserved for
@@ -84,16 +84,13 @@ define([
             this.onSuiteDefined(suiteName, i);
         }
 
-        if (!this.suites[suiteName][name]) {
-            test = this._normalizeTest(test);
-            this.suites[suiteName][name] = test;
-
-            i = this.randomOrder ? this.randInt() % (this.testOrder[suiteName].length + 1) : this.testOrder[suiteName].length;
-            this.testOrder[suiteName].splice(i, 0, name);
-            this.onTestDefined(suiteName, name, test, i);
-            this._totalTests++;
+        if (test.parameters) {
+            var generated = this._generateTests(name, test);
+            generated.forEach(function (gen) {
+                this._defineTest(suiteName, gen.name, gen.test);
+            }, this);
         } else {
-            this.doError("Duplicate test definition: " + suiteName + " - " + name);
+            this._defineTest(suiteName, name, test);
         }
     };
     
@@ -123,7 +120,29 @@ define([
         
         return this.testQueue.start();
     };
-    
+
+    /**
+     * Run all the suites which match the pattern. The tests will execute in setTimeout calls.
+     * @return Future An object which can be used to be notified of the end of the test execution.
+     */
+    TestFramework.prototype.runSuites = function runSuite(pattern) {
+        if (typeof pattern === "string") {
+            pattern = new RegExp(pattern.replace(/\*/g, ".*?"), "i");
+        } else if (!(pattern instanceof RegExp)) {
+            pattern = new RegExp(pattern, "i");
+        }
+
+        var suiteNames = this.suiteOrder.filter(function (suiteName) {
+            return pattern.test(suiteName);
+        });
+
+        this._start();
+        suiteNames.forEach(this._runSuite, this);
+        this._end();
+        
+        return this.testQueue.start();
+    };
+
     /**
      * Run all the selected suite of tests. The tests will execute in setTimeout calls.
      * @return Future An object which can be used to be notified of the end of the test execution.
@@ -167,6 +186,9 @@ define([
         return node;
     };
     
+    /**
+     * Listen to the specified event.
+     */
     TestFramework.prototype.on = function on(method, func) {
         var oldMethod = this[method];
         var self = this;
@@ -175,6 +197,11 @@ define([
             oldMethod.apply(self, arguments);
         };
     };
+
+    /**
+     * Conditions used for ignoring tests.
+     */
+    TestFramework.prototype.conditions = browser;
     
     /**
      * Start and end events for all the suites and tests.
@@ -213,11 +240,65 @@ define([
     TestFramework.prototype.onSuiteDefined = function onSuiteDefined(suiteName, index) {};
     TestFramework.prototype.onTestDefined = function onTestDefined(suiteName, testName, test, index) {};
     
+    // Define a single test point. The test must be normalized.
+    TestFramework.prototype._defineTest = function _defineTest(suiteName, name, test) {
+        if (!this.suites[suiteName][name]) {
+            test = this._normalizeTest(test);
+            this.suites[suiteName][name] = test;
+
+            i = this.randomOrder ? this.randInt() % (this.testOrder[suiteName].length + 1) : this.testOrder[suiteName].length;
+            this.testOrder[suiteName].splice(i, 0, name);
+            this.onTestDefined(suiteName, name, test, i);
+            this._totalTests++;
+        } else {
+            this.doError("Duplicate test definition: " + suiteName + " - " + name);
+        }
+    };
+
+    TestFramework.prototype._getParamNames = function _getParamNames(fn) {
+        var funStr = fn.toString();
+        return funStr.slice(funStr.indexOf("(") + 1, funStr.indexOf(")")).match(/([^\s,]+)/g);
+    };
+
+    // Generate a set of tests based on parameter values.
+    TestFramework.prototype._generateTests = function _generateTests(namePattern, test) {
+        var keys = Object.keys(test.parameters);
+        var maxLen = 0;
+        keys.forEach(function (key) {
+            maxLen = Math.max(maxLen, test.parameters[key].length);
+        });
+
+        test = this._normalizeTest(test);
+
+        function createTest(name, args) {
+            return {
+                name: name,
+                test: function () {
+                    return test.test.apply(this, args.concat(Array.prototype.splice.call(arguments, 0)));
+                }
+            };
+        }
+
+        var i, name, args, generated = [];
+        for (i = 0; i < maxLen; i++) {
+            // create the test name using string replacing
+            name = namePattern;
+            keys.forEach(function (key) {
+                name = name.replace(new RegExp("\\$" + key, "g"), test.parameters[key][i]);
+            });
+
+            var parameters = this._getParamNames(test.test);
+            args = parameters.map(function (key) {
+                return test.parameters[key][i];
+            });
+
+            generated.push(createTest(name, args));
+        }
+
+        return generated;
+    };
     
-    
-    /**
-     * Start of all test execution.
-     */
+    // Start of all test execution.
     TestFramework.prototype._start = function _start() {
         this.testQueue = new Queue({timeout: this.timeout});
 
@@ -244,9 +325,7 @@ define([
     };
     
     
-    /**
-     * Run suite helper function. It queues up tasks for execution of all tests in the specified suite.
-     */
+    // Run suite helper function. It queues up tasks for execution of all tests in the specified suite.
     TestFramework.prototype._runSuite = function _runSuite(suiteName) {
         this._startSuite(suiteName);
 
@@ -257,10 +336,8 @@ define([
         this._endSuite(suiteName);
     };
     
-    /**
-     * Main runTest helper function. It queues up a test for execution. It also handles alot of
-     * error cases and asynchronous tests.
-     */
+    // Main runTest helper function. It queues up a test for execution. It also handles alot of
+    // error cases and asynchronous tests.
     TestFramework.prototype._runTest = function _runTest(suiteName, testName) {
         this.totalTests++;
         
@@ -281,7 +358,9 @@ define([
                     var failure = self._testFailure.bind(self, test, done, suiteName, testName);
                     var success = self._testSuccess.bind(self, test, done, failure, suiteName, testName);
 
-                    if (testName.indexOf("//") === 0) {
+                    // check for ignored tests
+                    var conditions = testName.match(/(?:^\/\/)(?:\{(!)?(.*?)\})?/);
+                    if (conditions && (!conditions[2] || (!!conditions[1] ^ self.conditions[conditions[2]]))) {
                         test.ignored = true;
                         self.onIgnore(suiteName, testName);
                         self.onTestEnd(suiteName, testName);
@@ -342,7 +421,7 @@ define([
         });
     };
     
-
+    // Reset the test's fields.
     TestFramework.prototype._resetTest = function _resetTest(test) {
         test.startTime = new Date();
         test.elapsedTime = undefined;
@@ -363,6 +442,7 @@ define([
         return test;
     };
 
+    // Called when the test executes successfully.
     TestFramework.prototype._testSuccess = function _testSuccess(test, done, failure, suiteName, testName) {
         try {
             var specialFunction = this.specialFunctions[suiteName] || {};
@@ -384,6 +464,7 @@ define([
         }
     };
 
+    // Called when the test fails.
     TestFramework.prototype._testFailure = function failure(test, done, suiteName, testName, error) {
         try {
             if (this.pageUnderTestNode) {
@@ -426,6 +507,7 @@ define([
         }
     };
 
+    // Called when the test is done in any situation.
     TestFramework.prototype._testDone = function _testDone(test) {
         clearTimeout(test._timeout);
         if (test._errorHandler) {
@@ -441,6 +523,7 @@ define([
         this.executedTests++;
     };
 
+    // Error handler for uncaught global exceptions.
     TestFramework.prototype._globalErrorHandler = function (test, failure, ev) {
         var message = ev.message + ", " + ev.filename + "@" + ev.lineno;
         if (test.future) {
@@ -455,6 +538,7 @@ define([
         }
     };
 
+    // Async test callback that is passed to test functions as the "done" parameter.
     TestFramework.prototype._doneCallback = function _doneCallback(success, failure, error) {
         if (error === true || error === undefined) {
             success();
@@ -463,6 +547,7 @@ define([
         }
     };
 
+    // Helper function to wrap async callbacks. When the function is done the test is ended.
     TestFramework.prototype._doneWrapper = function _doneWrapper(success, failure, func) {
         return function () {
             try {
@@ -474,7 +559,7 @@ define([
         };
     };
 
-    
+    // Normalize the test object to contain a test field.
     TestFramework.prototype._normalizeTest = function _normalizeTest(test) {
         if (typeof test === "function") {
             return {test: test};
@@ -483,6 +568,7 @@ define([
         }
     };
     
+    // Make sure that a test container node exists in the DOM.
     TestFramework.prototype._ensureTestNodeParentExists = function _ensureTestNodeParentExists() {
         if (!this.testNodeParent) {
             this.testNodeParent = this.document.createElement("div");
@@ -490,25 +576,29 @@ define([
         }
     };
     
+    // Cleanup the test container node.
     TestFramework.prototype._cleanupBeforeTest = function _cleanupBeforeTest() {
         var parent = this.testNodeParent;
         this.testNodes.forEach(function (node) {
             parent.removeChild(node);
         });
+
         if (this.testNodes.length > 0) {
             this.onCleanTestNodes();
             this.testNodes = [];
         }
     };
     
-    TestFramework.prototype.ASYNC_TEST_PATTERN = /^function\s*( [\w\-$]+)?\s*\(done\)/;
+    TestFramework.prototype.ASYNC_TEST_PATTERN = /^function\s*?( [\w\-$]+)?\s*\((\s*\w+\s*,\s*)*done\)/;
     
+    // Special property keys and functions which represent special values.
     TestFramework.prototype._isSpecialFunction = function _isSpecialFunction(name) {
         return name === "beforeEach" || name === "afterEach" ||
             name === "beforeSuite" || name === "afterSuite" ||
             name === "pageUnderTest" || name === "timeout";
     };
     
+
     TestFramework.prototype._startSuite = function _startSuite(suiteName) {
         var self = this;
         this.testQueue.then(function startSuiteTask() {
@@ -603,7 +693,7 @@ define([
         return ((this._rand_z << 16) + this._rand_w + MAX_INT32) % MAX_INT32;
     }
     
-    
+    // Global error handler for catching errors which happen asynchronously from the test
     var errorHandlers = [];
     global.onerror = function (error, fileName, lineNumber) {
         if (typeof error === "string") {
@@ -629,7 +719,10 @@ define([
             }
         }
     }
-    
+
+    // Replace the global console object with some intercepts which allow the test
+    // logger to capture log output.
+
     if (!global.console) {
         global.console = {};
 	}

@@ -179,6 +179,39 @@ define([
             }
         },
         
+        "Assert Matches Any": function () {
+            var a = {a: 1, b: {c: "c"}, d: /d/, e: [1, 2]};
+            var b = "this is b";
+            assert.matches(assert.any(), a, "a is anything");
+            assert.matches({a: assert.any()}, a, "field a is anything");
+            assert.matches(assert.any, b, "b is anything");
+            assert.matches({a: 1, e: [1, assert.any]}, a, "any in an array");
+
+            try {
+                assert.matches({e: assert.any}, a, "not a field");
+            } catch (error1) {
+                assert.isTrue(error1, "Error should be truthy: a no field e");
+            }
+        },
+        
+        "Assert Matches Range": function () {
+            assert.matches({a: assert.range(0, 2)}, {a: 1}, "a is in range");
+            assert.matches(assert.range(1, 3), 1, "1 is in range");
+            assert.matches([assert.range(1, 3), 1], [3, 1], "array value in range");
+
+            try {
+                assert.matches({e: assert.range(0, 2)}, {e: -1}, "field e is out of range");
+            } catch (error1) {
+                assert.isTrue(error1, "Error should be truthy: field is out of range");
+            }
+
+            try {
+                assert.matches(assert.range(-2, -1), 0, "0 is out of range");
+            } catch (error1) {
+                assert.isTrue(error1, "Error should be truthy: 0 is out of range");
+            }
+        },
+        
         "Assert Object": function () {
             assert.isObject(obj, "obj should be an object");
             

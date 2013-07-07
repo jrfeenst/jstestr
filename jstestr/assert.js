@@ -14,6 +14,10 @@ define([], function () {
             return pieces.join(" ");
         } else if (obj === undefined || obj === null) {
             return String(obj);
+        } else if (obj instanceof Function) {
+            return obj.toString();
+        } else if (obj instanceof Array) {
+            return "[" + obj.map(toString).join(",") + "]";
         } else {
             var str;
             try {
@@ -22,9 +26,7 @@ define([], function () {
                 str = obj.toString();
             }
             if (str.length > 50) {
-                str = "\n    '" + str + "'\n";
-            } else {
-                str = "'" + str + "'";
+                str = "\n    " + str + "\n";
             }
             return str;
         }
@@ -151,6 +153,38 @@ define([], function () {
         }
     }
 
+
+    function Any() {
+    }
+
+    /**
+     * Used to represent any value when matching.
+     */
+    function any() {
+        return new Any();
+    }
+
+    any.toString = Any.prototype.toString = function () {
+        return "any";
+    };
+
+    /**
+     * Used to represent a range of numbers when matching.
+     */
+    function Range(start, end) {
+        this.start = start;
+        this.end = end;
+    }
+    
+    Range.prototype.toString = function toString() {
+        return this.start + ":" + this.end;
+    };
+
+    function range(start, end) {
+        return new Range(start, end);
+    }
+
+
     /**
      * Assert that an object has the expected fields and values or matches the expected regular expression.
      */
@@ -162,12 +196,25 @@ define([], function () {
     }
 
     function _matches(expected, actual) {
-        if (expected instanceof RegExp) {
+        if ((expected instanceof Any || expected === any) && actual !== undefined) {
+            return true;
+
+        } else if (expected instanceof Range) {
+            return expected.start <= actual &&  actual <= expected.end;
+
+        } else if (expected instanceof Array) {
+            return expected.every(function (exp, i) {
+                return _matches(exp, actual[i]);
+            });
+
+        } else if (expected instanceof RegExp) {
             return expected.test(actual);
+
         } else if (typeof expected === "object") {
             return Object.keys(expected).every(function (key) {
                 return _matches(expected[key], actual[key]);
             });
+
         } else {
             return _isEqual(expected, actual);
         }
@@ -355,7 +402,6 @@ define([], function () {
         isSame: isSame,
         isNotSame: isNotSame,
         isClose: isClose,
-        matches: matches,
         isObject: isObject,
         isArray: isArray,
         isFunction: isFunction,
@@ -363,6 +409,10 @@ define([], function () {
         isString: isString,
         doesThrow: doesThrow,
         
+        matches: matches,
+        any: any,
+        range: range,
+
         createMockFunction: createMockFunction,
         createMockObject: createMockObject
     };

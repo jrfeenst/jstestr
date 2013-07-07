@@ -129,7 +129,7 @@ define([
             });
             
             Event.on("click", reloadRunAll, function () {
-                location.href = location.href.replace(/(&|\?)suite=[^&]+|(&|\?)test=[^&]+/, "");
+                location.href = location.href.replace(/(&|\?)suite=[^&]+|(&|\?)suites=[^&]+|(&|\?)test=[^&]+/, "");
             });
             
             
