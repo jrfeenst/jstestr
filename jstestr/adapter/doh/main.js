@@ -6,21 +6,14 @@ define([
 
     var doh = {};
 
-    function convertName(name) {
-        name = name.replace(/[\.\-_]/g, " ");
-        var nameParts = name.split(/([A-Z][a-z]+|[A-Z]+|[0-9]+)/);
-        nameParts = nameParts[0] === "test" ? nameParts.slice(1) : nameParts;
-        return nameParts.join(" ").replace(/[ ]+/g, " ");
-    }
-
     doh.register = function (suiteName, tests) {
         var testsObject = {};
         if (tests) {
             tests.forEach(function (test) {
-                testsObject[convertName(test.name)] = test;
+                testsObject[test.name] = test;
             });
         }
-        test.defineSuite(convertName(suiteName), testsObject);
+        test.defineSuite(suiteName, testsObject);
     };
 
 
@@ -74,10 +67,17 @@ define([
         return func;
     };
 
-    doh.assertTrue = assert.isTrue;
-    doh.assertFalse = assert.isFalse;
-    doh.assertEqual = assert.isEqual;
+    doh.t = doh.assertTrue = assert.isTrue;
+    doh.f = doh.assertFalse = assert.isFalse;
+    doh.is = doh.assertEqual = assert.isEqual;
     doh.assertNotEqual = assert.isNotEqual;
+    doh.assertError = function (expected, scope, func, message) {
+        if (typeof func === "string") {
+            assert.doesThrow(expected, scope[func], message);
+        } else {
+            assert.doesThrow(expected, func.apply(scope), message);
+        }
+    };
 
     this.doh = doh;
     return doh;

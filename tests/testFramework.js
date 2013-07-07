@@ -123,7 +123,7 @@ define([
             }, 0);
         },
         
-        "Async Test With Error": function (done) {
+        "Async Test With Error": function () {
             var ran = false;
             var framework = new test.Framework();
             framework.defineSuite("fake suite", {
@@ -135,10 +135,81 @@ define([
                 }
             });
             framework.runSync = true; // useful for testing the tests
-            framework.runAll().then(done.wrap(function () {
+            framework.runAll().then(function () {
                 assert.isTrue(ran, "First test should run");
                 assert.isFalse(framework.suites["fake suite"]["fake test 1d"].success, "Test should fail");
-            }));
+            });
+        },
+        
+        "Ignored Test": function () {
+            var ran = false;
+            var framework = new test.Framework();
+            framework.defineSuite("fake suite", {
+                "//ignored fake test": function () {
+                    ran = true;
+                }
+            });
+            framework.runSync = true; // useful for testing the tests
+            framework.runAll().then(function () {
+                assert.isFalse(ran, "First test should not run");
+                assert.isTrue(framework.suites["fake suite"]["//ignored fake test"].ignored, "Test should be ignored");
+            });
+        },
+        
+        "Conditionally Ignored Test": function () {
+            var ran1 = ran2 = ran3 = false;
+            var framework = new test.Framework();
+            framework.defineSuite("fake suite", {
+                "//{fake1}ignored fake test": function () {
+                    ran1 = true;
+                },
+
+                "//{fake2}ignored fake test 2": function () {
+                    ran2 = true;
+                },
+
+                "//{!fake1}ignored fake test 3": function () {
+                    ran3 = true;
+                }
+            });
+
+            framework.conditions.fake1 = true;
+            framework.conditions.fake2 = false;
+
+            framework.runSync = true; // useful for testing the tests
+            framework.runAll().then(function () {
+                assert.isFalse(ran1, "First test should not run");
+                assert.isTrue(ran2, "Second test should run");
+                assert.isTrue(ran3, "Third test should run");
+                assert.isTrue(framework.suites["fake suite"]["//{fake1}ignored fake test"].ignored, "Test should be ignored");
+                assert.isTrue(framework.suites["fake suite"]["//{fake2}ignored fake test 2"].success, "Test should pass");
+                assert.isFalse(framework.suites["fake suite"]["//{fake2}ignored fake test 2"].ignored, "Test should not be ignored");
+            });
+        },
+
+        "Basic Generative Test": function () {
+            var params = [];
+            var framework = new test.Framework();
+            framework.defineSuite("fake suite", {
+                "Test $name": {
+                    parameters: {
+                        name: ["A", "B"],
+                        param1: ["one", "three"],
+                        param2: ["two", "four"],
+                        expected: [123, 456]
+                    },
+
+                    test: function (param1, param2, expected) {
+                        params.push(Array.prototype.slice.call(arguments, 0));
+                    }
+                }
+            });
+
+            framework.runSync = true; // useful for testing the tests
+            framework.runAll().then(function () {
+                params.sort();
+                assert.matches([["one", "two", 123, assert.any()], ["three", "four", 456, assert.any]], params, "Test parameters");
+            });
         }
     });
     

@@ -33,15 +33,6 @@ define([
         '</div>';
     
     
-    function on(obj, method, func) {
-        var oldMethod = obj[method];
-        obj[method] = function () {
-            func.apply(obj, arguments);
-            oldMethod.apply(obj, arguments);
-        };
-    }
-    
-    
     function addClass(element, className) {
         element.className += " " + className;
     }
@@ -65,17 +56,17 @@ define([
     
             
     function suiteSelector(suiteName) {
-        return '[data-suiteName="' + suiteName + '"]';
+        return '.suite[data-suiteName="' + suiteName + '"]';
     }
 
     function testSelector(suiteName, testName) {
-        return suiteSelector(suiteName) + '[data-testName="' + testName + '"]';
+        return '.test[data-suiteName="' + suiteName + '"]' + '[data-testName="' + testName + '"]';
     }
     
     
-    var escape = function escape(str) {
-      escape.text.data = str;
-      return escape.div.innerHTML;
+    function escape(str) {
+        escape.text.data = str;
+        return escape.div.innerHTML;
     };
     escape.div = document.createElement("div");
     escape.text = document.createTextNode("");
@@ -129,13 +120,16 @@ define([
                 switchTab(doc.getElementById("logTab"));
             }
             
+            function scrollToBottom() {
+                tabContents.scrollTop = tabContents.scrollHeight;
+            }
             
             Event.on("click", runAll, function () {
                 test.runAll();
             });
             
             Event.on("click", reloadRunAll, function () {
-                location.href = location.href.replace(/(&|\?)suite=[^&]+|(&|\?)test=[^&]+/, "");
+                location.href = location.href.replace(/(&|\?)suite=[^&]+|(&|\?)suites=[^&]+|(&|\?)test=[^&]+/, "");
             });
             
             
@@ -201,7 +195,7 @@ define([
             }
             
             
-            function renderSuite(suiteName) {
+            function renderSuite(suiteName, index) {
                 var suiteNode = doc.createElement("div");
                 suiteNode.className = "suite";
                 suiteNode.setAttribute("data-suiteName", suiteName);
@@ -209,9 +203,19 @@ define([
                 var suiteNameNode = doc.createElement("div");
                 suiteNameNode.className = "suiteName";
                 suiteNameNode.innerHTML = suiteName;
-                
                 suiteNode.appendChild(suiteNameNode);
-                testList.appendChild(suiteNode);
+
+                var progressNode = doc.createElement("td");
+                progressNode.className = "suite";
+                progressNode.setAttribute("data-suiteName", suiteName);
+                
+                if (index < testList.children.length) {
+                    testList.insertBefore(suiteNode, testList.children[index]);
+                    testProgressBar.insertBefore(progressNode, testProgressBar.children[index]);
+                } else {
+                    testList.appendChild(suiteNode);
+                    testProgressBar.appendChild(progressNode);
+                }
                 
                 suiteNameNode.appendChild(renderControls(suiteName));
                 
@@ -222,17 +226,33 @@ define([
                 return suiteNode;
             }
             
-            function renderTest(suiteName, testName) {
+            function renderTest(suiteName, testName, test, index) {
                 var testNode = doc.createElement("div");
                 testNode.className = "test";
                 testNode.setAttribute("data-suiteName", suiteName);
                 testNode.setAttribute("data-testName", testName);
                 testNode.innerHTML = testName;
-                
-                var suiteNode = testList.querySelector(suiteSelector(suiteName));
-                suiteNode.appendChild(testNode);
-                
                 testNode.appendChild(renderControls(suiteName, testName));
+
+                var progressNode = doc.createElement("td");
+                progressNode.className = "test";
+                progressNode.setAttribute("data-suiteName", suiteName);
+                progressNode.setAttribute("data-testName", testName);
+                
+
+                var suiteNode = testList.querySelector(suiteSelector(suiteName));
+                if (index + 1 < suiteNode.children.length) {
+                    suiteNode.insertBefore(testNode, suiteNode.children[index + 1]);
+                } else {
+                    suiteNode.appendChild(testNode);
+                }
+
+                var suiteProgressNode = testProgressBar.querySelector(suiteSelector(suiteName));
+                if (index < suiteProgressNode.children.length) {
+                    suiteProgressNode.insertBefore(progressNode, suiteProgressNode.children[index]);
+                } else {
+                    suiteProgressNode.appendChild(progressNode);
+                }
                 
                 Event.on("click", testNode, function () {
                     var output = logContent.querySelector(testSelector(suiteName, testName));
@@ -241,12 +261,6 @@ define([
                     }
                     toggleControls(testNode);
                 });
-
-                var progressNode = doc.createElement("td");
-                progressNode.className = "test";
-                progressNode.setAttribute("data-suiteName", suiteName);
-                progressNode.setAttribute("data-testName", testName);
-                testProgressBar.appendChild(progressNode);
 
                 Event.on("click", progressNode, function () {
                     testNode.scrollIntoView();
@@ -259,26 +273,23 @@ define([
             }
             
             for (var suiteName in test.suites) {
-                renderSuite(suiteName);
+                renderSuite(suiteName, test.suiteOrder.indexOf(suiteName));
                 
                 var suite = test.suites[suiteName];
                 for (var testName in suite) {
-                    renderTest(suiteName, testName);
+                    renderTest(suiteName, testName, suite[testName],
+                            test.testOrder[suiteName].indexOf(testName));
                 }
             }
             
-            on(test, "onSuiteDefined", renderSuite);
-            on(test, "onTestDefined", renderTest);
+            test.on("onSuiteDefined", renderSuite);
+            test.on("onTestDefined", renderTest);
             
-            function scrollToBottom() {
-                tabContents.scrollTop = tabContents.scrollHeight;
-            }
-            
-            on(test, "onStart", function () {
+            test.on("onStart", function () {
                 logContent.innerHTML = "";
             });
             
-            on(test, "onEnd", function () {
+            test.on("onEnd", function () {
                 var endNode = doc.createElement("div");
                 endNode.className = "results";
                 
@@ -297,7 +308,7 @@ define([
                 scrollToBottom();
             });
             
-            on(test, "onSuiteStart", function (suiteName) {
+            test.on("onSuiteStart", function (suiteName) {
                 var suiteNode = doc.createElement("div");
                 suiteNode.className = "suite";
                 suiteNode.setAttribute("data-suiteName", suiteName);
@@ -314,10 +325,11 @@ define([
                 removeClass(suiteListNode, "failure");
                 addClass(suiteListNode, "running");
 
+                suiteListNode.scrollIntoView(false);
                 scrollToBottom();
             });
             
-            on(test, "onSuiteEnd", function (suiteName) {
+            test.on("onSuiteEnd", function (suiteName) {
                 var success = true;
                 for (var testName in test.suites[suiteName]) {
                     success = success && test.suites[suiteName][testName].success !== false;
@@ -330,7 +342,7 @@ define([
                 scrollToBottom();
             });
             
-            on(test, "onTestStart", function (suiteName, testName) {
+            test.on("onTestStart", function (suiteName, testName) {
                 var testNode = doc.createElement("div");
                 testNode.className = "test";
                 testNode.setAttribute("data-suiteName", suiteName);
@@ -362,14 +374,14 @@ define([
                 scrollToBottom();
             });
             
-            on(test, "onTestEnd", function (suiteName, testName) {
+            test.on("onTestEnd", function (suiteName, testName) {
                 removeClass(testList.querySelector(testSelector(suiteName, testName)), "running");
                 removeClass(testProgressBar.querySelector(testSelector(suiteName, testName)), "running");
 
                 scrollToBottom();
             });
             
-            on(test, "onSuccess", function (suiteName, testName) {
+            test.on("onSuccess", function (suiteName, testName) {
                 var testNode = doc.createElement("div");
                 testNode.className = "success";
                 testNode.innerHTML = "[SUCCESS] '" + testName + "' - elapsed time: " +
@@ -381,7 +393,7 @@ define([
                 addClass(testProgressBar.querySelector(testSelector(suiteName, testName)), "success");
             });
             
-            on(test, "onFailure", function (suiteName, testName, error) {
+            test.on("onFailure", function (suiteName, testName, error) {
                 var testPoint = test.suites[suiteName][testName];
 
                 var testNode = doc.createElement("div");
@@ -455,7 +467,19 @@ define([
                 addClass(testProgressBar.querySelector(testSelector(suiteName, testName)), "failure");
             });
             
-            on(test, "onLog", function () {
+            test.on("onIgnore", function (suiteName, testName) {
+                var testNode = doc.createElement("div");
+                testNode.className = "ignore";
+                testNode.innerHTML = "[IGNORE] '" + testName + "' - elapsed time: " +
+                    test.suites[suiteName][testName].elapsedTime + "ms";
+                
+                logContent.querySelector(testSelector(suiteName, testName)).appendChild(testNode);
+                
+                addClass(testList.querySelector(testSelector(suiteName, testName)), "ignore");
+                addClass(testProgressBar.querySelector(testSelector(suiteName, testName)), "ignore");
+            });
+            
+            test.on("onLog", function () {
                 if (this.currentSuiteName && this.currentTestName) {
                     var logNode = doc.createElement("div");
                     logNode.className = "log";
@@ -467,7 +491,7 @@ define([
                 }
             });
             
-            on(test, "onInfo", function () {
+            test.on("onInfo", function () {
                 if (this.currentSuiteName && this.currentTestName) {
                     var logNode = doc.createElement("div");
                     logNode.className = "info";
@@ -479,7 +503,7 @@ define([
                 }
             });
             
-            on(test, "onError", function () {
+            test.on("onError", function () {
                 if (this.currentSuiteName && this.currentTestName) {
                     var logNode = doc.createElement("div");
                     logNode.className = "error";
@@ -492,11 +516,11 @@ define([
             });
             
             
-            on(test, "onNewTestNode", function () {
+            test.on("onNewTestNode", function () {
                 showTestPageTab();
             });
             
-            on(test, "onCleanTestNodes", function () {
+            test.on("onCleanTestNodes", function () {
                 showLogTab();
             });
         }

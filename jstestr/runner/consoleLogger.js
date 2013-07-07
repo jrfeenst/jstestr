@@ -3,36 +3,27 @@ define([], function () {
     
     var global = this;
     
-    function on(obj, method, func) {
-        var oldMethod = obj[method];
-        obj[method] = function () {
-            func.apply(obj, arguments);
-            oldMethod.apply(obj, arguments);
-        };
-    }
-    
-    
     return {
         listen: function (test) {
             
-            on(test, "onLog", function onLog() {
+            test.on("onLog", function onLog() {
                 this.doLog(Array.prototype.join.call(arguments, " "));
             });
             
-            on(test, "onInfo", function onInfo() {
+            test.on("onInfo", function onInfo() {
                 this.doInfo(Array.prototype.join.call(arguments, " "));
             });
             
-            on(test, "onError", function onError() {
+            test.on("onError", function onError() {
                 this.doError(Array.prototype.join.call(arguments, " "));
             });
             
             
-            on(test, "onStart", function onStart() {
+            test.on("onStart", function onStart() {
                 global.console.group("Tests Starting");
             });
             
-            on(test, "onEnd", function onEnd() {
+            test.on("onEnd", function onEnd() {
                 var message;
                 if (this.successfulTests < this.totalTests) {
                     message = "[TESTS FAILED] ";
@@ -44,27 +35,31 @@ define([], function () {
                 global.console.groupEnd();
             });
             
-            on(test, "onSuiteStart", function onSuiteStart(suiteName) {
+            test.on("onSuiteStart", function onSuiteStart(suiteName) {
                 global.console.group("Suite: " + suiteName + ".");
             });
             
-            on(test, "onSuiteEnd", function onSuiteEnd(suiteName) {
+            test.on("onSuiteEnd", function onSuiteEnd(suiteName) {
                 global.console.groupEnd();
             });
             
-            on(test, "onTestStart", function onTestStart(suiteName, testName) {
+            test.on("onTestStart", function onTestStart(suiteName, testName) {
                 global.console.group("Test: " + suiteName + ", " + testName + ".");
             });
             
-            on(test, "onTestEnd", function onTestEnd(suiteName, testName) {
-            });
-            
-            on(test, "onSuccess", function onSuccess(suiteName, testName) {
-                this.doLog("[Success]: " + suiteName + ", " + testName + ".");
+            test.on("onTestEnd", function onTestEnd(suiteName, testName) {
                 global.console.groupEnd();
             });
             
-            on(test, "onFailure", function onFailure(suiteName, testName, error) {
+            test.on("onSuccess", function onSuccess(suiteName, testName) {
+                this.doLog("[Success]: " + suiteName + ", " + testName + ".");
+            });
+            
+            test.on("onIgnore", function onSuccess(suiteName, testName) {
+                this.doLog("[Ignore]: " + suiteName + ", " + testName + ".");
+            });
+            
+            test.on("onFailure", function onFailure(suiteName, testName, error) {
                 var i, testPoint = this.suites[suiteName][testName];
                 this.doError("[Failure]: " + suiteName + ", " + testName + ". " + error.message);
                 global.console.group("Failed function:");
@@ -82,7 +77,6 @@ define([], function () {
                     }
                     global.console.groupEnd();
                 }
-                global.console.groupEnd();
                 global.console.groupEnd();
             });
         }

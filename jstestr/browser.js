@@ -4,17 +4,16 @@ define([
 ], function (Queue) {
     
     var global = this;
-    
+    var browser = {};
     if (global.navigator && navigator.userAgent) {
-        Queue.prototype.browser = {
+        browser = {
     		msie: !!(global.attachEvent && !global.opera),
     		opera: !!global.opera,
     		webkit: navigator.userAgent.indexOf('AppleWebKit/') >= 0,
     		safari: navigator.userAgent.indexOf('AppleWebKit/') >= 0 &&
                     navigator.userAgent.indexOf('Chrome/') === -1,
     		gecko: navigator.userAgent.indexOf('Gecko') >= 0,
-    		mobileSafari: !! navigator.userAgent.match(/Apple.*Mobile.*Safari/),
-    		rhino: navigator.userAgent.match(/Rhino/) && true
+    		mobileSafari: !! navigator.userAgent.match(/Apple.*Mobile.*Safari/)
     	};
     }
     
@@ -44,10 +43,9 @@ define([
     
     setTimeout(executeTests, 0);
     
-    return {
-        addTest: function addTest(func) {
-            tests.push(func);
-            executeTests();
-        }
+    browser.addTest = function addTest(func) {
+        tests.push(func);
+        executeTests();
     };
+    return browser;
 });

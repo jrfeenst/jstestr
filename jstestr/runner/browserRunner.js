@@ -13,9 +13,11 @@ define([
 
     var modules = [];
     var suite;
+    var suites;
     var suiteTest;
     var config = {};
     var configUrl = "";
+    var randomOrder = true;
     var run = true;
 
     for (var i in args) {
@@ -29,32 +31,52 @@ define([
             case "suite":
                 suite = unescape(value);
                 break;
+            case "suites":
+                suites = unescape(value);
+                break;
             case "test":
                 suiteTest = unescape(value);
                 break;
             case "config":
                 config = JSON.parse(value);
                 break;
-            case "configUrl":
+            case "configurl":
                 configUrl = value;
+                break;
+            case "randomorder":
+                randomOrder = value === "true";
+                break;
+            case "randseed":
+                test.randSeed(parseInt(value, 10));
+                break;
             case "run":
                 run = value === "true";
+                break;
             default:
                 console.error("Unknown argument: " + args[i]);
                 break;
         }
     }
 
+    test.randomOrder = randomOrder;
+
     function runTests() {
         if (run) {
+            var future;
             if (suite) {
-                test.runSuite(suite);
+                future = test.runSuite(suite);
+            } else if (suites) {
+                future = test.runSuites(suites);
             } else if (suiteTest) {
                 var parts = suiteTest.split(":");
-                test.runTest(parts[0], parts[1]);
+                future = test.runTest(parts[0], parts[1]);
             } else {
-                test.runAll();
+                future = test.runAll();
             }
+
+            future.then(null, function (failure) {
+                self.doError("The test runner failed to complete: " + failure);
+            });
         } 
     }
 

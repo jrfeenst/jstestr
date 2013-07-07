@@ -1,5 +1,7 @@
 
-define([], function () {
+define([
+    "./browser"
+], function (browser) {
     var global = this;
     
     var Queue = function JSTestr(args) {
@@ -15,15 +17,21 @@ define([], function () {
         onBeforeTask: function () {},
         onAfterTask: function () {}
     };
+
+    Queue.prototype.browser = browser;
     
     /**
      * Add a function to be called at the end of the queue.
      * @param func The function to be called. This function must call <code>next</code> when it is
      * done.
+     * @param cascadeFailure 
      */
-    Queue.prototype.then = function then(func) {
+    Queue.prototype.then = function then(func, cascadeFailure) {
+        if (func instanceof Queue) {
+            func.cascadeFailure = cascadeFailure;
+        }
         this._queue.splice(this._insertionPoint, 0, func);
-        this._insertionPoint++;
+        this._insertionPoint++;   
     };
     
     /**
@@ -52,7 +60,7 @@ define([], function () {
      * @param func Optional function to call next. This will be prepended to the queue.
      */
     Queue.prototype.next = function next(func) {
-        if (func) {
+        if (func instanceof Function) {
             this.then(func);    
         }
         
