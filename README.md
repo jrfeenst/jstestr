@@ -15,4 +15,5 @@ dojoRunner.html page can be modified to include that config script. The git
 submodules are not required and are only used for the framework tests and demos.
 
 [Documentation](http://jrfeenst.github.io/jstestr/docs/index.html)
-[Framework Tests](http://jrfeenst.github.io/jstestr/runner/runner.html?module=tests/testAll)
+
+[Framework Tests](http://jrfeenst.github.io/jstestr/jstestr/runner/runner.html?module=tests/testAll)
