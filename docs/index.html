@@ -36,17 +36,44 @@
             <section>
                 <h2>Overview</h2>
                 <p>
-                    JsTestr is broken up into 3 independent pieces. There is testing framework which
+                    Jstestr is broken up into 3 independent pieces. There is testing framework which
                     includes support for asynchronous tests using a callback or a future, test node
                     creation, and full page testing, console logging and reporting. There is an
                     assert module which includes asserts for equality, truthiness, object types,
                     mock functions with argument verification, and more. Finally, there is synthetic
                     events based GUI testing framework.
                 </p>
+
+                <ol>
+                    <li><a href="#setup">Setup</a></li>
+                    <li><a href="#testFramework">Test Framework</a></li>
+                    <li><a href="#runningTests">Running Tests</a></li>
+                    <li><a href="#testCases">Test Cases</a></li>
+                    <li><a href="#ignoringTests">Ignoring Tests</a></li>
+                    <li><a href="#generatedTests">Generated Tests</a></li>
+                    <li><a href="#specialFunctions">Special Suite Functions</a></li>
+                    <li><a href="#asserts">Asserts</a></li>
+                    <li><a href="#mocks">Mocks</a></li>
+                    <li><a href="#syntheticEvents">Synthetic Events</a></li>
+                </ol>
             </section>
 
             <section>
-                <h2>Test Framework</h2>
+                <h2 id="setup">Setup</h2>
+                <p>
+                    The framework makes use of AMD to load code and define dependencies. Any AMD
+                    compliant loader may be used. There are example runner HTML pages which configure
+                    RequireJS or dojo to load and execute tests. The example runners make some
+                    assumptions about the relative locations of the loader script files. If the
+                    assumptions are not correct the runner HTML page can be copied and configured
+                    correctly. For example, if a dojoConfig variable needs to be set before loading, the
+                    dojoRunner.html page can be modified to include that config script. The git
+                    submodules are not required and are only used for the framework tests and demos.
+                </p>
+            </section>
+
+            <section>
+                <h2 id="testFramework">Test Framework</h2>
                 <p>
                     The test framework provides a way to define suites of tests. It also has
                     provides an HTML page to run all the defined tests. There are two output
@@ -80,18 +107,21 @@ define(["jstestr/test", "jstestr/assert"], function (test, assert) {
 });
                 </code></pre>
 
-                <h3>Runner HTML Page</h3>
+                <h3 id="runningTests">Running Tests</h3>
                 <p>
-                    The test can be executed using the runner HTML page located at
-                    <code>jstestr/runner/runner.html</code>. It accepts a number of different query
-                    parameters which can be used to control how the page loads and executes tests.
-                    It includes a copy of RequireJS to support AMD module loading. The supported
-                    query parameters are:
+                    There are a variety of ways to execute tests (browser, nodejs, phantomjs). In
+                    a browser, a runner HTML page can be used to load the tests. There are example
+                    runner pages in <code>jstestr/runner</code>. Both dojo and RequireJS are
+                    supported out of the box, but any AMD complient loader should work. The
+                    browser loaders accepts a number of different query parameters which can be
+                    used to control how the page loads and executes tests. It includes a copy of
+                    RequireJS to support AMD module loading. The supported query parameters are:
                 </p>
 
                 <ul>
                     <li><code>module</code> - The AMD module to load which defines the tests.</li>
                     <li><code>suite</code> - The name of the suite to execute.</li>
+                    <li><code>suites</code> - A pattern to use to find suites to execute (* as wild cards).</li>
                     <li><code>test</code> - The suite and test name to execute, separated by a colon.</li>
                     <li><code>config</code> - Extra RequireJS configuration (as JSON).</li>
                 </ul>
@@ -103,7 +133,7 @@ define(["jstestr/test", "jstestr/assert"], function (test, assert) {
                     </a>
                 </p>
 
-                <h3>Test Cases</h3>
+                <h3 id="testCases">Test Cases</h3>
                 <p>
                     Test cases are functions which can either execute synchronously or
                     asynchronously. Synchronous tests are considered successful if they complete
@@ -174,7 +204,75 @@ test.defineSuite("Another Test Suite", {
 });
                 </code></pre>
 
-                <h3>Special Suite Function</h3>
+                <h3 id="ignoringTests">Ignoring Tests</h3>
+                <p>
+                    Sometimes a test point needs to be ignored for some reason. Tests can be ignored
+                    by prepending their name with <code>//</code>. The test will still show up in the
+                    list but will not execute. If a test only needs to be disabled in some situations
+                    (on ie or something), then a condition can be added with <code>//{condition}</code>.
+                </p>
+
+                <pre><code>
+test.defineSuite("Test Suite", {
+    "//Simple Ignored": function () {
+        assert.isTrue(false, "This will not run.");
+    },
+
+    "//{ie}Ignored in IE": function () {
+        assert.isFalse(test.conditions.ie, "This will not run in IE.");
+    },
+
+    "//{!ie}Not Ignored in IE": function () {
+        assert.isTrue(test.conditions.ie, "This will only run in IE.");
+    }
+});
+                </code></pre>
+                <p>
+                    There is a default set of conditions available on the <code>test.conditions</code> object:
+                </p>
+
+                <pre><code>
+{
+    msie: !!(global.attachEvent && !global.opera),
+    opera: !!global.opera,
+    webkit: navigator.userAgent.indexOf('AppleWebKit/') >= 0,
+    safari: navigator.userAgent.indexOf('AppleWebKit/') >= 0 &&
+            navigator.userAgent.indexOf('Chrome/') === -1,
+    gecko: navigator.userAgent.indexOf('Gecko') >= 0,
+    mobileSafari: !! navigator.userAgent.match(/Apple.*Mobile.*Safari/)
+}
+                </code></pre>
+
+                <h3 id="generatedTests">Generated Tests</h3>
+                <p>
+                    Tests are sometimes repetative series of asserts with a range of input values.
+                    A set of tests can be generated based on arrays of input values specified in
+                    a <code>parameters</code> field of the test:
+                </p>
+
+                <pre><code>
+test.defineSuite("Generated Tests", {
+    "Test $name": {
+        parameters {
+            name: ["One", "Two", "Three"],
+            a: [1, 2, 3],
+            b: [3, 2, 1],
+            expected: [4, 4, 4]
+        },
+        test: function (a, b, expected) {
+            assert.equal(expected, a + b, "a plus b");
+        }
+    }
+});
+                </code></pre>
+
+                <p>
+                    The example test definition will create 3 test cases with the inputs from the
+                    <code>parameters</code> map. The name of the tests can be generated based on
+                    any of the fields of the <code>parameters</code> map using string replace.
+                </p>
+
+                <h3 id="specialFunctions">Special Suite Function</h3>
                 <p>
                     There are a few special fields that can be defined in the suite object:
                 </p>
@@ -231,7 +329,7 @@ test.defineSuite("Page Under Test", {
             </section>
 
             <section>
-                <h2>Asserts</h2>
+                <h2 id="asserts">Asserts</h2>
                 <p>
                     The assert module provides a number of assertion functions as well as mock
                     functions. The module is available in <code>jstestr/assert</code>. All methods
@@ -246,6 +344,8 @@ test.defineSuite("Page Under Test", {
                     <li><code>isNotEqual(expected, actual, help)</code> - Test for deep inequality.</li>
                     <li><code>isSame(expected, actual, help)</code> - Test for strict equality (===).</li>
                     <li><code>isNotSame(expected, actual, help)</code> - Test for strict inequality (!==).</li>
+                    <li><code>isClose(expected, actual, toleranceOrHelp, help)</code> - Test that the
+                        actual number is close to the expected number within some tolerance.</li>
                     <li><code>isObject(value, help)</code> - Throws if the value is not an object.
                         Arrays are not counted as objects.</li>
                     <li><code>isArray(value, help)</code> - Test for arrays. Checks the constructor,
@@ -253,21 +353,39 @@ test.defineSuite("Page Under Test", {
                     <li><code>isFunction(value, help)</code> - Test for functions.</li>
                     <li><code>isNumber(value, help)</code> - Test for numbers.</li>
                     <li><code>isString(value, help)</code> - Test for strings.</li>
-                    <li><code>doesThrow(expectedType, func, help)</code> - Call the function and
-                        verify that it throws an error of the expected type.</li>
+                    <li><code>doesThrow(expectedType, func, help)</code> - Call the function and verify
+                        that it throws an error of the expected type.</li>
+                    <li><code>matches(expected, actual, help)</code> - Test that the fields and values
+                        in the expected object match the actual value. See the section below for details.</li>
                     <li><code>createMockFunction():Function</code> - Create a mock function which
                         can verify how many times it is called and the arguments passed to it.</li>
                     <li><code>createMockObject(methodsOrObj):Object</code> - Create an object
                         with a set of mock methods. Each method is a mock function.</li>
                 </ul>
 
-                <h3>Mocks</h3>
+                <h3 id="matches">Matches</h3>
+                <p>
+                    The <code>assert.matches</code> function matches the actual value against an
+                    expected pattern. The expected pattern can have fewer fields, use the
+                    <code>assert.any</code>, <code>assert.range(low, high)</code>, and regular
+                    expressions to check the object.
+                </p>
+
+                <pre><code>
+assert.matches(assert.range(1, 2), 1.5, "Number in range of 1:2");
+assert.matches(/a regex/, "a regex should match", "String matching");
+assert.matches({a: 1, b: 2}, {a: 1, b: 2, c: "extra"}, "Extra fields are ignored");
+assert.matches({a: assert.any, b: 2}, {a: "anything", b: 2}, "Field can be anything but undefined");
+                </code></pre>
+
+                <h3 id="mocks">Mocks</h3>
                 <p>
                     Mocks are a way to isolate components from the rest of the system. They are
                     useful in a number of different ways. The assert module provides two ways to use
                     mocks. First, a function can be created which can be configured using the
                     following methods:
                 </p>
+
                 <ul>
                     <li><code>times(num)</code> - Set the mock to expect to be called the specified
                         number of times.</li>
@@ -324,7 +442,7 @@ mock.verify();
             </section>
 
             <section>
-                <h2>Synthetic Events</h2>
+                <h2 id="syntheticEvents">Synthetic Events</h2>
                 <p>
                     The synthetic events module provides functionality for simulating mouse
                     operations, keyboard events such as typing, focus changes. It also provides a
