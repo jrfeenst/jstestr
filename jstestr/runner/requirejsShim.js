@@ -10,9 +10,11 @@ define([], function () {
 
     var oldLoad = require.load;
     require.load = function (context, moduleName, url) {
+        var fileName = url.replace(/\.\.\//g, "");
         function handleXhrResponse(text) {
             try {
-                eval(instrumenter.instrumentSync(text, url) + "\r\n////@ sourceURL=" + url);
+                eval(instrumenter.instrumentSync(text, fileName) + "\r\n////@ sourceURL=" + url);
+                __coverage__[fileName].code = text;
                 context.completeLoad(moduleName);
             } catch (err) {
                 var e = new Error("Error loading with XHR: " + url);
