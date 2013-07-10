@@ -75,7 +75,7 @@ define([
             }
 
             future.then(null, function (failure) {
-                self.doError("The test runner failed to complete: " + failure);
+                test.doError("The test runner failed to complete: " + failure);
             });
         } 
     }

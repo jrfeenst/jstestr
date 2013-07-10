@@ -1,0 +1,55 @@
+#coverageContent {
+    padding: .5em;
+}
+
+#coverageContent table {
+    border: 1px solid gray;
+    border-collapse: collapse;
+}
+
+#coverageContent .functionsSummary {
+    margin-top: 1em;
+    width: 100%;
+}
+
+#coverageContent td,
+#coverageContent th {
+    padding: 3px;
+    border: 1px solid gray;
+    text-align: center;
+}
+
+#coverageContent td:first-child {
+    text-align: left;
+}
+
+#coverageContent .lines {
+    position: absolute;
+    z-index: -1;
+    width: 100%;
+}
+
+#coverageContent .lines .covered1 {
+    background-color: rgb(200, 255, 220);
+}
+
+#coverageContent .lines .covered2 {
+    background-color: rgb(190, 255, 210);
+}
+
+#coverageContent .lines .covered3 {
+    background-color: rgb(180, 255, 200);
+}
+
+#coverageContent .lines .covered4 {
+    background-color: rgb(170, 255, 190);
+}
+
+#coverageContent .lines .covered5 {
+    background-color: rgb(160, 255, 180);
+}
+
+#coverageContent .gutter {
+    float: left;
+    margin-right: 1em;
+}

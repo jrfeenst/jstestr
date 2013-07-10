@@ -1,7 +1,5 @@
 
-define([
-    "./Queue"
-], function (Queue) {
+define([], function () {
     
     var global = this;
     var browser = {};
