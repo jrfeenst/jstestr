@@ -14,8 +14,8 @@
                 height: 100%;
             }
         </style>
-        <link rel="stylesheet" type="text/css" href="graphicalLogger.css"></link>
-        <link rel="stylesheet" type="text/css" href="coverage.css"></link>
+        <link rel="stylesheet" type="text/css" href="../logger/graphicalLogger.css"></link>
+        <link rel="stylesheet" type="text/css" href="../coverage/coverage.css"></link>
     </head>
     <body>
         <div id="graphicalLogger"></div>
@@ -27,10 +27,16 @@
         <script src="../../requirejs/require.js"></script>
 
         <script type="text/javascript">
-            require({baseUrl: "../../"}, ["require", "jstestr/runner/requirejsShim"], function (require) {
-                require(["jstestr/runner/coverage"], function () {
-                    require(["jstestr/runner/browserRunner"]);
-                });
+            require({
+                baseUrl: "../../"
+            }, [
+                "jstestr/coverage/coverageShimRequirejs",
+                "jstestr/logger/browserLoggers",
+                "jstestr/runner/browserRunner"
+            ], function (coverageShimRequirejs, browserLoggers, browserRunner) {
+                coverageShimRequirejs();
+                browserLoggers();
+                browserRunner();
             });
         </script>
         </script>

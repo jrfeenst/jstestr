@@ -7,7 +7,6 @@ define([
     var global = this;
     var MAX_INT32 = 4294967296;
     
-    
     if (!Function.prototype.bind) {
         Function.prototype.bind = Function.prototype.bind || function (that) {
             var fn = this;
@@ -305,6 +304,7 @@ define([
         this.totalTests = 0;
         this.executedTests = 0;
         this.successfulTests = 0;
+        this.ignoredTests = 0;
         
         var self = this;
         this.testQueue.then(function startTask() {
@@ -362,9 +362,11 @@ define([
                     var conditions = testName.match(/(?:^\/\/)(?:\{(!)?(.*?)\})?/);
                     if (conditions && (!conditions[2] || (!!conditions[1] ^ self.conditions[conditions[2]]))) {
                         test.ignored = true;
+                        self.ignoredTests++;
+                        done();
+
                         self.onIgnore(suiteName, testName);
                         self.onTestEnd(suiteName, testName);
-                        done();
                         self.testQueue.next();  
                         return;
                     }
@@ -380,7 +382,7 @@ define([
                     // setup an error handler on the global for this test.
                     var globalError = self._globalErrorHandler.bind(self, test, failure);
                     test._errorHandler = registerErrorHandler(self.global, globalError);
-
+                    
                     // Create the async test done callback
                     var doneCallback = self._doneCallback.bind(self, success, failure);
                     doneCallback.wrap = self._doneWrapper.bind(self, success, failure);

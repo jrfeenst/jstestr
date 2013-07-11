@@ -1,7 +1,7 @@
 
 define([
-    "jstestr/Event"
-], function (Event) {
+    "require"
+], function (require) {
     
     var template =
         '<div class="graphicalLogger">' +
@@ -34,15 +34,15 @@ define([
     
     
     function addClass(element, className) {
-        element.className += " " + className;
+        element.className += ' ' + className;
     }
     
     function removeClass(element, className) {
-        var classes = element.className.split(" ");
+        var classes = element.className.split(' ');
         var i = classes.indexOf(className);
         if (i >= 0) {
             classes.splice(i, 1);
-            element.className = classes.join(" ");
+            element.className = classes.join(' ');
         }
     }
     
@@ -124,11 +124,11 @@ define([
                 tabContents.scrollTop = tabContents.scrollHeight;
             }
             
-            Event.on("click", runAll, function () {
+            runAll.addEventListener("click", function () {
                 test.runAll();
             });
             
-            Event.on("click", reloadRunAll, function () {
+            reloadRunAll.addEventListener("click", function () {
                 location.href = location.href.replace(/(&|\?)suite=[^&]+|(&|\?)suites=[^&]+|(&|\?)test=[^&]+/, "");
             });
             
@@ -165,7 +165,7 @@ define([
                 runReloadNode.innerHTML = "Reload and Run";
                 controlsNode.appendChild(runReloadNode);
                 
-                Event.on("click", runNode, function (ev) {
+                runNode.addEventListener("click", function (ev) {
                     ev.preventDefault();
                     ev.stopPropagation();
                     if (testName) {
@@ -175,7 +175,7 @@ define([
                     }
                 });
                 
-                Event.on("click", runReloadNode, function (ev) {
+                runReloadNode.addEventListener("click", function (ev) {
                     ev.preventDefault();
                     ev.stopPropagation();
                     
@@ -219,7 +219,7 @@ define([
                 
                 suiteNameNode.appendChild(renderControls(suiteName));
                 
-                Event.on("click", suiteNameNode, function () {
+                suiteNameNode.addEventListener("click", function () {
                     toggleControls(suiteNameNode);
                 });
                 
@@ -254,7 +254,7 @@ define([
                     suiteProgressNode.appendChild(progressNode);
                 }
                 
-                Event.on("click", testNode, function () {
+                testNode.addEventListener("click", function () {
                     var output = logContent.querySelector(testSelector(suiteName, testName));
                     if (output) {
                         output.scrollIntoView();
@@ -262,7 +262,7 @@ define([
                     toggleControls(testNode);
                 });
 
-                Event.on("click", progressNode, function () {
+                progressNode.addEventListener("click", function () {
                     testNode.scrollIntoView();
                     var output = logContent.querySelector(testSelector(suiteName, testName));
                     if (output) {
@@ -293,14 +293,14 @@ define([
                 var endNode = doc.createElement("div");
                 endNode.className = "results";
                 
-                if (test.successfulTests < test.totalTests) {
+                if (test.successfulTests + test.ignoredTests < test.totalTests) {
                     endNode.innerHTML = "[TESTS FAILED] ";
                     addClass(endNode, "failure");
                 } else {
                     endNode.innerHTML = "[TESTS PASSED] ";
                     addClass(endNode, "success");
                 }
-                endNode.innerHTML += test.successfulTests + "/" + test.totalTests + " passed!";
+                endNode.innerHTML += test.successfulTests + "/" + test.totalTests + " passed, " + test.ignoredTests + " ignored!";
                 
                 logContent.appendChild(endNode);
                 
@@ -439,7 +439,7 @@ define([
                             ev.preventDefault();
                             ev.stopPropagation();
                             
-                            var domWindow = win.open("snapshot.html");
+                            var domWindow = win.open(require.toUrl("./snapshot.html"));
                             domWindow.onload = function () {
                                 domWindow.document.open();
                                 // strip out scripts so that they don't mess up the dom when run
@@ -457,7 +457,7 @@ define([
                             showSnapshot.innerHTML = "Show DOM Snapshot";
                             snapshotNode.appendChild(showSnapshot);
                             
-                            Event.on("click", showSnapshot, createSnapshotCallback(i));
+                            showSnapshot.addEventListener("click", createSnapshotCallback(i));
                         }
                     }
                 }

@@ -15,11 +15,17 @@
             }
         </style>
         <link rel="stylesheet" type="text/css" href="../logger/graphicalLogger.css"></link>
+        <link rel="stylesheet" type="text/css" href="../coverage/coverage.css"></link>
     </head>
     <body>
         <div id="graphicalLogger"></div>
         
+        <script src="../../esprima/esprima.js"></script>
+        <script src="../../escodegen/escodegen.browser.js"></script>
+        <script src="../../istanbul/lib/instrumenter.js"></script>
+        <script src="../../istanbul/lib/object-utils.js"></script>
         <script src="../../dojo/dojo.js"></script>
+
         <script type="text/javascript">
             require({
                 baseUrl: "../",
@@ -31,12 +37,15 @@
                     location: "../jstestr/adapter/doh"
                 }]
             }, [
+                "jstestr/coverage/coverageShimDojo",
                 "jstestr/logger/browserLoggers",
                 "jstestr/runner/browserRunner"
-            ], function (browserLoggers, browserRunner) {
+            ], function (coverageShimDojo, browserLoggers, browserRunner) {
+                coverageShimDojo();
                 browserLoggers();
                 browserRunner();
             });
+        </script>
         </script>
     </body>
 </html>

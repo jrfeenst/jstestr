@@ -14,14 +14,22 @@
                 height: 100%;
             }
         </style>
-        <link rel="stylesheet" type="text/css" href="graphicalLogger.css"></link>
+        <link rel="stylesheet" type="text/css" href="../logger/graphicalLogger.css"></link>
     </head>
     <body>
         <div id="graphicalLogger"></div>
         
         <script src="../../requirejs/require.js"></script>
         <script type="text/javascript">
-            require({baseUrl: "../../"}, ["jstestr/runner/browserRunner"]);
+            require({
+                baseUrl: "../../"
+            }, [
+                "jstestr/logger/browserLoggers",
+                "jstestr/runner/browserRunner"
+            ], function (browserLoggers, browserRunner) {
+                browserLoggers();
+                browserRunner();
+            });
         </script>
         </script>
     </body>

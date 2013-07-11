@@ -1,0 +1,49 @@
+.coverageReport {
+    padding: .5em;
+}
+
+.coverageReport table {
+    border: 1px solid gray;
+    border-collapse: collapse;
+}
+
+.coverageReport .functionsSummary {
+    margin-top: 1em;
+    width: 100%;
+}
+
+.coverageReport td,
+.coverageReport th {
+    padding: 3px;
+    border: 1px solid gray;
+    text-align: center;
+}
+
+.coverageReport td:first-child {
+    text-align: left;
+}
+
+.coverageReport .functionName {
+    font-weight: bold;
+}
+
+.coverageReport .function {
+    position: relative;
+}
+
+.coverageReport .code .covered0 {
+    background-color: rgb(255, 220, 230);    
+}
+
+.coverageReport .code .covered1 {
+    background-color: rgb(220, 255, 240);
+}
+
+.coverageReport .code .covered2 {
+    background-color: rgb(180, 255, 190);
+}
+
+.coverageReport .gutter {
+    float: left;
+    margin-right: 1em;
+}

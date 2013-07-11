@@ -12,10 +12,12 @@ requirejs.config({baseUrl: ""});
 
 requirejs([
     "jstestr/runner/consoleLogger",
+    "jstestr/runner/memoryLogger",
     "jstestr/test"
-], function (consoleLogger, test) {
+], function (consoleLogger, memoryLogger, test) {
 
     consoleLogger.listen(test);
+    memoryLogger.listen(test);
     
     var args = process.argv.slice(2);
 

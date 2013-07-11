@@ -25,12 +25,12 @@ define([], function () {
             
             test.on("onEnd", function onEnd() {
                 var message;
-                if (this.successfulTests < this.totalTests) {
+                if (this.successfulTests + this.ignoredTests < this.totalTests) {
                     message = "[TESTS FAILED] ";
                 } else {
                     message = "[TESTS PASSED] ";
                 }
-                this.doLog(message + this.successfulTests + "/" + this.totalTests + " passed!");
+                this.doLog(message + this.successfulTests + "/" + this.totalTests + " passed, " + this.ignoredTests + " ignored!");
                 
                 global.console.groupEnd();
             });
