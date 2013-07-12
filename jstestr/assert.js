@@ -340,7 +340,8 @@ define([], function () {
         };
         mock.delegate = function mockDelegate(fn) {
             mock._delegate = fn;
-        }
+            return mock;
+        };
         
         mock.verify = function mockVerify(help) {
             help = help || "";
@@ -350,10 +351,12 @@ define([], function () {
                     isEqual(mock._expectedArgs, mock._actualArgs[i], "Argument missmatch. " + help);
                 }
             }
+            return mock;
         };
         
         mock.reset = function () {
             mock._actualArgs = [];
+            return mock;
         };
         
         return mock;

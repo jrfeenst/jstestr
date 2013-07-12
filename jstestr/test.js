@@ -37,6 +37,7 @@ define([
         this.suiteOrder = [];
         this.testOrder = {};
         this.randSeed(args.randSeed || (Math.random() * MAX_INT32));
+        this._timeoutQueue = [];
     };
     
     /**
@@ -425,7 +426,7 @@ define([
                         return;
                     }
                     // create a timeout that cancels the test after the specified time
-                    test._timeout = setTimeout(function () {
+                    test._timeout = self.doSetTimeout(function () {
                         if (test.future && test.future.cancel) {
                             test.future.cancel();
                         } else {
@@ -547,7 +548,10 @@ define([
 
     // Called when the test is done in any situation.
     TestFramework.prototype._testDone = function _testDone(test) {
-        clearTimeout(test._timeout);
+        this.restoreTime();
+        
+        this.doClearTimeout(test._timeout);
+        
         if (test._errorHandler) {
             test._errorHandler.remove();
         }
@@ -708,9 +712,10 @@ define([
     // normalize the indentation of the function to strip out extra indentation in the source code
     TestFramework.prototype._formatFunction = function _formatFunction(func) {
         var lines = func ? func.toString().split("\n") : [];
+        var offset = 0;
         var numLines = lines.length;
         if (numLines) {
-            var offset = 0;
+            offset = 0;
             while (offset < lines[numLines - 1].length && lines[numLines - 1].charAt(offset) === " ") {
                 offset++;
             }
@@ -729,6 +734,108 @@ define([
         this._rand_z = (36969 * (this._rand_z & 65535) + (this._rand_z >> 16)) % MAX_INT32;
         this._rand_w = (18000 * (this._rand_w & 65535) + (this._rand_w >> 16)) % MAX_INT32;
         return ((this._rand_z << 16) + this._rand_w + MAX_INT32) % MAX_INT32;
+    };
+
+
+    /**
+     * Mock time functionality. mockTime/restoreTime/tick.
+     */
+
+    var oldSetTimeout = global.setTimeout.bind(global);
+    var oldSetInterval = global.setInterval.bind(global);
+    var oldClearTimeout = global.clearTimeout.bind(global);
+    var oldClearInterval = global.clearInterval.bind(global);
+
+    TestFramework.prototype.doSetTimeout = oldSetTimeout;
+    TestFramework.prototype.doClearTimeout = oldClearTimeout;
+
+    if (global.requestAnimationFrame) {
+        var oldRequestAnimationFrame = global.requestAnimationFrame.bind(global);
+        var oldCancelAnimationFrame = global.cancelAnimationFrame.bind(global);
+    }
+
+    TestFramework.prototype.mockTime = function mockTime() {
+        this._time = 0;
+        this._timeoutQueue = [];
+        var cancel = this._cancelTimeout.bind(this);
+        global.setTimeout = this._setTimeout.bind(this);
+        global.clearTimeout = cancel;
+        global.setInterval = this._setInterval.bind(this);
+        global.clearInterval = cancel;
+        global.requestAnimationFrame = this._requestAnimationFrame.bind(this);
+        global.cancelAnimationFrame = cancel;
+    };
+
+    TestFramework.prototype.restoreTime = function mockTime() {
+        global.setTimeout = oldSetTimeout;
+        global.clearTimeout = oldClearTimeout;
+        global.setInterval = oldSetInterval;
+        global.clearInterval = oldClearInterval;
+        global.requestAnimationFrame = oldRequestAnimationFrame;
+        global.cancelAnimationFrame = oldCancelAnimationFrame;
+
+        this.tick();
+    };
+
+    TestFramework.prototype.tick = function tick(ms) {
+        var error;
+        function executeTimeout(timeout) {
+            if (timeout.time < this._time) {
+                try {
+                    timeout();
+                } catch (e) {
+                    // catch errors and save for later throwing
+                    // the first error is likely the most important
+                    error = error || e;
+                }
+            }
+            return timeout.time >= this._time; // keep the untriggered timeouts
+        }
+
+        this._time += ms || 1000000;
+        // loop a few times to allow timeout functions to trigger more timeout functions,
+        // but don't go forever.
+        var i;
+        for (i = 0; i < 10; i++) {
+            this._timeoutQueue = this._timeoutQueue.filter(executeTimeout, this);
+        }
+
+        if (error) {
+            throw error;
+        }
+    };
+
+    TestFramework.prototype._setTimeout = function _setTimeout(func, delay) {
+        func.id = this.randInt();
+        func.time = this._time + (delay || 4);
+        this._timeoutQueue.push(func);
+        return func.id;
+    };
+
+    TestFramework.prototype._setInterval = function _setInterval(func, interval) {
+        var self = this;
+        var intervalFunc = function intervalFunc() {
+            func();
+            intervalFunc.time += interval;
+            self._timeoutQueue.push(intervalFunc);
+        }
+        intervalFunc.id = this.randInt();
+        intervalFunc.time = this._time + (interval || 4);
+        this._timeoutQueue.push(intervalFunc);
+        return intervalFunc.id;
+    };
+
+    TestFramework.prototype._requestAnimationFrame = function _requestAnimationFrame(func) {
+        func.id = this.randInt();
+        func.time = this._time + 33; // trigger at about 30 fps
+        this._timeoutQueue.push(func);
+        return func.id;
+    };
+
+    TestFramework.prototype._cancelTimeout = function _cancelTimeout(id) {
+        this._timeoutQueue = this._timeoutQueue.filter(function (timeout) {
+            return timeout.id !== id;
+        });
     };
     
     // Global error handler for catching errors which happen asynchronously from the test

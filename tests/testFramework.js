@@ -226,6 +226,59 @@ define([
                 params.sort();
                 assert.matches([["one", "two", 123, assert.any()], ["three", "four", 456, assert.any]], params, "Test parameters");
             });
+        },
+
+        "Mock Timeout": function () {
+            test.mockTime();
+            
+            var mock = assert.createMockFunction().times(0);
+            setTimeout(mock, 0);
+
+            mock.verify("Not called yet");
+
+            mock.times(1);
+
+            // flow time multiple times
+            test.tick(10);
+            test.tick(10);
+            test.tick(10);
+
+            mock.verify("Now is called once");
+        },
+
+        "Mock Clear Timeout": function () {
+            test.mockTime();
+            
+            var mock = assert.createMockFunction().times(0);
+            var id = setTimeout(mock, 0);
+
+            mock.verify("Not called yet");
+
+            clearTimeout(id);
+
+            // flow time multiple times
+            test.tick(10);
+            test.tick(10);
+            test.tick(10);
+
+            mock.verify("Still not called");
+        },
+
+        "Mock Interval": function () {
+            test.mockTime();
+            
+            var mock = assert.createMockFunction().times(0);
+            setInterval(mock, 10);
+
+            mock.verify("Not called yet");
+
+            mock.times(1);
+            test.tick(15);
+            mock.verify("now is called once");
+
+            mock.times(2);
+            test.tick(10);
+            mock.verify("called again");
         }
     });
     
