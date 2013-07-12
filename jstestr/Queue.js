@@ -136,7 +136,7 @@ define([
         };
         
         this.onSuccess = function onSuccess() {
-            var args = arguments;
+            var args = Array.prototype.slice.call(arguments, 0, arguments.length);
             future.callbacks.forEach(function (callback) {
                 if (callback.onSuccess) {
                     callback.onSuccess.apply(this, args);
@@ -144,7 +144,7 @@ define([
             }, this);
         };
         this.onFailure = function onFailure() {
-            var args = arguments;
+            var args = Array.prototype.slice.call(arguments, 0, arguments.length);
             future.callbacks.forEach(function (callback) {
                 if (callback.onFailure) {
                     callback.onFailure.apply(this, args);

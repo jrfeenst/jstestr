@@ -121,7 +121,7 @@ define([], function () {
             rows[i] = i + 1;
 
             line = this.document.createElement('div');
-            line.appendChild(this.document.createTextNode(lines[i]));
+            line.appendChild(this.document.createTextNode(lines[i] || " "));
             if (coverage.l[i + 1] !== undefined) {
                 line.setAttribute('class', 'covered covered' + Math.min(Math.ceil(coverage.l[i + 1] / 4), 2));
             }

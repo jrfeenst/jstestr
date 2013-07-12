@@ -28,28 +28,28 @@ define([], function () {
                     type: "log",
                     text: Array.prototype.join.call(arguments, " ")
                 });
-            });
+            }, true);
             
             test.on("onInfo", function onInfo() {
                 getTestResult(this.currentSuiteName, this.currentTestName).log.push({
                     type: "info",
                     text: Array.prototype.join.call(arguments, " ")
                 });
-            });
+            }, true);
             
             test.on("onError", function onError() {
                 getTestResult(this.currentSuiteName, this.currentTestName).log.push({
                     type: "error",
                     text: Array.prototype.join.call(arguments, " ")
                 });
-            });
+            }, true);
             
             
             test.on("onStart", function onStart() {
                 this.results = {
                     suites: {}
                 };
-            });
+            }, true);
             
             test.on("onEnd", function onEnd() {
                 this.results.successfulTests = this.successfulTests;
@@ -57,25 +57,25 @@ define([], function () {
                 this.results.totalTests = this.totalTests;
 
                 this.results.success = this.successfulTests + this.ignoredTests === this.totalTests;
-            });
+            }, true);
             
             test.on("onSuiteStart", function onSuiteStart(suiteName) {
                 this.results.suites[suiteName] = {};
-            });
+            }, true);
 
             test.on("onTestStart", function onTestStart(suiteName, testName) {
                 this.results.suites[suiteName][testName] = {log: []};
-            });
+            }, true);
             
             test.on("onSuccess", function onSuccess(suiteName, testName) {
                 this.results.suites[suiteName][testName].success = true;
                 this.results.suites[suiteName][testName].ignored = false;
-            });
+            }, true);
             
             test.on("onIgnore", function onSuccess(suiteName, testName) {
                 this.results.suites[suiteName][testName].success = false;
                 this.results.suites[suiteName][testName].ignored = true;
-            });
+            }, true);
             
             test.on("onFailure", function onFailure(suiteName, testName, error) {
                 var testResult = this.results.suites[suiteName][testName];
@@ -92,7 +92,7 @@ define([], function () {
                 if (test.suites[suiteName][testName].domSnapshot.length > 0) {
                     testResult.domSnapshot = test.suites[suiteName][testName].domSnapshot;
                 }
-            });
+            }, true);
         }
     };
 });

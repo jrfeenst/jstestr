@@ -1,17 +1,19 @@
 
 define([
     "./browser",
+    "./logger/memoryLogger",
     "./Queue"
-], function (browser, Queue) {
+], function (browser, memoryLogger, Queue) {
     
     var global = this;
     var MAX_INT32 = 4294967296;
     
     if (!Function.prototype.bind) {
         Function.prototype.bind = Function.prototype.bind || function (that) {
+            var args = Array.prototype.slice.call(arguments, 1, arguments.length);
             var fn = this;
             return function () {
-                return fn.apply(that, arguments);
+                return fn.apply(that, args.concat(Array.prototype.slice.call(arguments, 0, arguments.length)));
             };
         };
     }
@@ -186,15 +188,37 @@ define([
     };
     
     /**
-     * Listen to the specified event.
+     * Listen to the specified event. System events are processed first and can throw exceptions.
      */
-    TestFramework.prototype.on = function on(method, func) {
-        var oldMethod = this[method];
-        var self = this;
-        this[method] = function () {
-            func.apply(self, arguments);
-            oldMethod.apply(self, arguments);
-        };
+    TestFramework.prototype.on = function on(method, func, system) {
+        if (!this["_" + method]) {
+            this["_" + method] = this[method];
+            var self = this;
+            this[method] = function dispatch() {
+                var args = Array.prototype.slice.call(arguments, 0, arguments.length);
+                self[method].system.forEach(function (listener) {
+                    listener.apply(this, args);
+                }, this);
+
+                self[method].listeners.forEach(function (listener) {
+                    try {
+                        listener.apply(this, args);
+                    } catch (e) {
+                    }
+                }, this);
+
+                self["_" + method].apply(this, args);
+            };
+
+            this[method].listeners = [];
+            this[method].system = [];
+        }
+
+        if (system) {
+            this[method].system.push(func);
+        } else {
+            this[method].listeners.push(func);
+        }
     };
 
     /**
@@ -238,6 +262,14 @@ define([
      */
     TestFramework.prototype.onSuiteDefined = function onSuiteDefined(suiteName, index) {};
     TestFramework.prototype.onTestDefined = function onTestDefined(suiteName, testName, test, index) {};
+
+    /**
+     * Console log events.
+     */
+    TestFramework.prototype.onLog = function onLog() {};
+    TestFramework.prototype.onInfo = function onInfo() {};
+    TestFramework.prototype.onError = function onError() {};
+
     
     // Define a single test point. The test must be normalized.
     TestFramework.prototype._defineTest = function _defineTest(suiteName, name, test) {
@@ -273,7 +305,7 @@ define([
             return {
                 name: name,
                 test: function () {
-                    return test.test.apply(this, args.concat(Array.prototype.splice.call(arguments, 0)));
+                    return test.test.apply(this, args.concat(Array.prototype.slice.call(arguments, 0, arguments.length)));
                 }
             };
         }
@@ -350,12 +382,16 @@ define([
                     self.currentSuiteName = suiteName;
                     self.currentTestName = testName;
                     
-                    self.onTestStart(suiteName, testName);
-                    
-                    // executed when the test is done, either succesfully or in failure
+                    // executed when the test is done, either successfully or in failure
                     var done = self._testDone.bind(self, test);
 
                     var failure = self._testFailure.bind(self, test, done, suiteName, testName);
+
+                    // setup an error handler on the global for this test.
+                    var globalError = self._globalErrorHandler.bind(self, test, failure);
+                    test._errorHandler = registerErrorHandler(self.global, globalError);
+
+                    self.onTestStart(suiteName, testName);
                     var success = self._testSuccess.bind(self, test, done, failure, suiteName, testName);
 
                     // check for ignored tests
@@ -378,10 +414,6 @@ define([
                     if (specialFunction.beforeEach) {
                         specialFunction.beforeEach.apply(test);
                     }
-
-                    // setup an error handler on the global for this test.
-                    var globalError = self._globalErrorHandler.bind(self, test, failure);
-                    test._errorHandler = registerErrorHandler(self.global, globalError);
                     
                     // Create the async test done callback
                     var doneCallback = self._doneCallback.bind(self, success, failure);
@@ -693,7 +725,7 @@ define([
         this._rand_z = (36969 * (this._rand_z & 65535) + (this._rand_z >> 16)) % MAX_INT32;
         this._rand_w = (18000 * (this._rand_w & 65535) + (this._rand_w >> 16)) % MAX_INT32;
         return ((this._rand_z << 16) + this._rand_w + MAX_INT32) % MAX_INT32;
-    }
+    };
     
     // Global error handler for catching errors which happen asynchronously from the test
     var errorHandlers = [];
@@ -744,41 +776,27 @@ define([
 		global.console.groupEnd = function () {};
 	}
 	
-    var oldLog = Function.prototype.bind.call(global.console.log, global.console);
-    var oldInfo = Function.prototype.bind.call(global.console.info, global.console);
-    var oldError = Function.prototype.bind.call(global.console.error, global.console);
-    
-    TestFramework.prototype.doLog = function () {
-        oldLog.apply(global.console, arguments);
-    };
-    
-    TestFramework.prototype.doInfo = function () {
-        oldInfo.apply(global.console, arguments);
-    };
-    
-    TestFramework.prototype.doError = function () {
-        oldError.apply(global.console, arguments);
-    };
+    TestFramework.prototype.doLog = global.console.log.bind(global.console);
+    TestFramework.prototype.doInfo = global.console.info.bind(global.console);
+    TestFramework.prototype.doError = global.console.error.bind(global.console);
     
 
-    var testModule = new TestFramework();
-    testModule.Framework = TestFramework;
-    
-    testModule.onLog = function () {};
-    testModule.onInfo = function () {};
-    testModule.onError = function () {};
+    var test = new TestFramework();
+    test.Framework = TestFramework;
+
+    memoryLogger.listen(test);
     
     global.console.log = function () {
-        testModule.onLog.apply(testModule, arguments);
+        test.onLog.apply(test, arguments);
     };
     
     global.console.info = function () {
-        testModule.onInfo.apply(testModule, arguments);
+        test.onInfo.apply(test, arguments);
     };
     
     global.console.error = function () {
-        testModule.onError.apply(testModule, arguments);
+        test.onError.apply(test, arguments);
     };
     
-    return testModule;
+    return test;
 });
