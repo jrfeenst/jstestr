@@ -449,6 +449,39 @@ define([
             mock.method1(true);
             
             mock.verify("Reset should reset actual method calls but not expectations");
+        },
+        
+        "Spy Verify and Reset": function () {
+            var result = {};
+            var obj = {
+                func: function (a, b) {
+                    result.a = a;
+                    result.b = b;
+                }
+            };
+
+            // mock from an array of method names
+            var mock = assert.createSpy(obj, "func");
+            
+            mock.expect(1, 2).times(2);
+            
+            obj.func(1, 2);
+            obj.func(1, 2);
+
+            assert.isEqual({a: 1, b: 2}, result, "Arguments are passed through");
+            
+            mock.verify("Spy function should be called twice");
+            
+            mock.reset();
+            
+            obj.func(1, 2);
+            obj.func(1, 2);
+            
+            mock.verify("Reset should reset actual method calls but not expectations");
+
+            obj.func("asdf");
+
+            assert.doesThrow(Error, mock.verify, "Only 1 call with wrong args should fail to verify");
         }
     });
 });

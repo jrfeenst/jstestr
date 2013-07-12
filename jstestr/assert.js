@@ -304,47 +304,56 @@ define([], function () {
      * Construct a mock function which can be used to expect certain args and return certain values.
      */
     function createMockFunction() {
-        var expectedArgs;
-        var actualArgs = [];
-        var expectedCalls = 1;
-        var error;
-        var result;
         var mock = function () {
-            actualArgs.push(Array.prototype.slice.call(arguments));
-            if (error !== undefined) {
-                throw error;
+            mock._actualArgs.push(Array.prototype.slice.call(arguments));
+            if (mock._error !== undefined) {
+                throw mock._error;
             }
-            return result;
+            if (mock._delegate) {
+                return mock._delegate.apply(this, arguments);
+            } else {
+                return mock._result;
+            }
         };
+
+        mock._expectedArgs;
+        mock._actualArgs = [];
+        mock._expectedCalls = 1;
+        mock._error;
+        mock._result;
+
         mock.expect = function mockExpect() {
-            expectedArgs = Array.prototype.slice.call(arguments);
+            mock._expectedArgs = Array.prototype.slice.call(arguments);
             return mock;
         };
         mock.error = function mockError(err) {
-            error = err;
+            mock._error = err;
             return mock;
         };
         mock.result = function mockResult(obj) {
-            result = obj;
+            mock._result = obj;
             return mock;
         };
         mock.times = function mockTimes(num) {
-            expectedCalls = num;
+            mock._expectedCalls = num;
             return mock;
         };
+        mock.delegate = function mockDelegate(fn) {
+            mock._delegate = fn;
+        }
         
         mock.verify = function mockVerify(help) {
             help = help || "";
-            isEqual(expectedCalls, actualArgs.length, "Number of calls. " + help);
-            if (expectedArgs) {
-                for (var i in actualArgs) {
-                    isEqual(expectedArgs, actualArgs[i], "Argument missmatch. " + help);
+            isEqual(mock._expectedCalls, mock._actualArgs.length, "Number of calls. " + help);
+            if (mock._expectedArgs) {
+                for (var i in mock._actualArgs) {
+                    isEqual(mock._expectedArgs, mock._actualArgs[i], "Argument missmatch. " + help);
                 }
             }
         };
         
         mock.reset = function () {
-            actualArgs = [];
+            mock._actualArgs = [];
         };
         
         return mock;
@@ -392,6 +401,25 @@ define([], function () {
         
         return mock;
     }
+
+    /**
+     * Create a mock which spies on a method
+     */
+    function createSpy(obj, method) {
+        var mock = createMockFunction(obj);
+        if (typeof method === "string") {
+            mock.delegate(obj[method].bind(obj));
+            obj[method] = mock;
+        } else {
+            mock.delegate(method.bind(obj));
+            for (var key in obj) {
+                if (obj[key] === method) {
+                    obj[key] = mock;
+                }
+            }
+        }
+        return mock;
+    }
     
     
     return {
@@ -414,6 +442,7 @@ define([], function () {
         range: range,
 
         createMockFunction: createMockFunction,
-        createMockObject: createMockObject
+        createMockObject: createMockObject,
+        createSpy: createSpy
     };
 });
