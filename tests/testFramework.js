@@ -186,6 +186,22 @@ define([
                 assert.isFalse(framework.suites["fake suite"]["//{fake2}ignored fake test 2"].ignored, "Test should not be ignored");
             });
         },
+        
+        "Ignored Suite": function () {
+            var ran = false;
+            var framework = new test.Framework();
+            framework.defineSuite("//fake suite", {
+                "fake test": function () {
+                    ran = true;
+                }
+            });
+
+            framework.runSync = true; // useful for testing the tests
+            framework.runAll().then(function () {
+                assert.isFalse(ran, "Test should not run");
+                assert.isTrue(framework.suites["//fake suite"]["fake test"].ignored, "Test should be ignored");
+            });
+        },
 
         "Basic Generative Test": function () {
             var params = [];

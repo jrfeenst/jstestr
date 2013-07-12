@@ -395,8 +395,7 @@ define([
                     var success = self._testSuccess.bind(self, test, done, failure, suiteName, testName);
 
                     // check for ignored tests
-                    var conditions = testName.match(/(?:^\/\/)(?:\{(!)?(.*?)\})?/);
-                    if (conditions && (!conditions[2] || (!!conditions[1] ^ self.conditions[conditions[2]]))) {
+                    if (self._isIgnored(suiteName) || self._isIgnored(testName)) {
                         test.ignored = true;
                         self.ignoredTests++;
                         done();
@@ -453,6 +452,11 @@ define([
                 setTimeout(testExecutor, 0);
             }
         });
+    };
+
+    TestFramework.prototype._isIgnored = function _isIgnored(name) {
+        var conditions = name.match(/(?:^\/\/)(?:\{(!)?(.*?)\})?/);
+        return conditions && (!conditions[2] || (!!conditions[1] ^ this.conditions[conditions[2]]));
     };
     
     // Reset the test's fields.
