@@ -22,6 +22,6 @@
 		"node": ">=0.8"
 	},
 	"scripts": {
-        "test": "testem -s phantomjs ci"
+        "test": "phantomjs jstestr/runner/phantomRunner.js module=tests/testAll"
 	}
 }
