@@ -66,6 +66,10 @@ define([], function () {
             test.on("onTestStart", function onTestStart(suiteName, testName) {
                 this.results.suites[suiteName][testName] = {log: []};
             }, true);
+
+            test.on("onTestEnd", function onTestStart(suiteName, testName) {
+                this.results.suites[suiteName][testName].elapsedTime = this.suites[suiteName][testName].elapsedTime;
+            }, true);
             
             test.on("onSuccess", function onSuccess(suiteName, testName) {
                 this.results.suites[suiteName][testName].success = true;

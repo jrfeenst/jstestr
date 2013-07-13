@@ -1,0 +1,6 @@
+before_install:
+  - git submodule update --init --recursive
+
+node_js:
+  - "0.11"
+  - "0.10"
