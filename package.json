@@ -22,6 +22,6 @@
 		"node": ">=0.8"
 	},
 	"scripts": {
-        "test": "testem ci"
+        "test": "testem -s phantomjs ci"
 	}
 }
