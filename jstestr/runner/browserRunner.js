@@ -6,6 +6,7 @@ define([
 
         // parse the query string
         var query = location.search.substring(1, location.search.length);
+        query = query.replace(/#.*?/, '');
         var args = query.split("&");
 
         var modules = [];

@@ -210,21 +210,60 @@ define([
     Queue.prototype._mouseDown = function _mouseDown(element, options) {
         this._updateMouseOver(element, options);
         var event = this._createMouseEvent("mousedown", element, options);
-        this._dispatchEvent(event, element, options);
+
+        if (element.tagName.toLowerCase() === "option" && this.browser.chrome) {
+            // on chrome, don't dispatch the event, just do the default action.
+            // firing the event causes an unclosable (by JS) popup to open which hangs
+            // the browser process when using testem.
+            var event = {
+                target: element,
+                shiftKey: event.shiftKey,
+                ctrlKey: event.ctrlKey
+            };
+            this.defaultActions.mousedown.call(this, event);
+        } else {
+            this._dispatchEvent(event, element, options);
+        }
     };
     
     Queue.prototype.defaultActions.mouseup = function mouseUpDefaultAction() {};
     Queue.prototype._mouseUp = function _mouseUp(element, options) {
         this._updateMouseOver(element, options);
         var event = this._createMouseEvent("mouseup", element, options);
-        this._dispatchEvent(event, element, options);
+
+        if (element.tagName.toLowerCase() === "option" && this.browser.chrome) {
+            // on chrome, don't dispatch the event, just do the default action.
+            // firing the event causes an unclosable (by JS) popup to open which hangs
+            // the browser process when using testem.
+            var event = {
+                target: element,
+                shiftKey: event.shiftKey,
+                ctrlKey: event.ctrlKey
+            };
+            this.defaultActions.mouseup.call(this, event);
+        } else {
+            this._dispatchEvent(event, element, options);
+        }
     };
     
     Queue.prototype.defaultActions.click = function mouseClickDefaultAction() {};
     Queue.prototype._mouseClick = function _mouseClick(element, options) {
         this._updateMouseOver(element, options);
         var event = this._createMouseEvent("click", element, options);
-        this._dispatchEvent(event, element, options);
+
+        if (element.tagName.toLowerCase() === "option" && this.browser.chrome) {
+            // on chrome, don't dispatch the event, just do the default action.
+            // firing the event causes an unclosable (by JS) popup to open which hangs
+            // the browser process when using testem.
+            var event = {
+                target: element,
+                shiftKey: event.shiftKey,
+                ctrlKey: event.ctrlKey
+            };
+            this.defaultActions.click.call(this, event);
+        } else {
+            this._dispatchEvent(event, element, options);
+        }
     };
     
     Queue.prototype.defaultActions.dblclick = function mouseDblClickDefaultAction() {};

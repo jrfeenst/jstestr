@@ -7,6 +7,7 @@ define([], function () {
         browser = {
     		msie: !!(global.attachEvent && !global.opera),
     		opera: !!global.opera,
+            chrome: navigator.userAgent.indexOf('Chrome/') >= 0,
     		webkit: navigator.userAgent.indexOf('AppleWebKit/') >= 0,
     		safari: navigator.userAgent.indexOf('AppleWebKit/') >= 0 &&
                     navigator.userAgent.indexOf('Chrome/') === -1,

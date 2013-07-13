@@ -18,28 +18,23 @@
     </head>
     <body>
         <div id="graphicalLogger"></div>
-        
-        <script src="../../dojo/dojo.js"></script>
+
+        <script src="/testem.js"></script>
+        <script src="../../requirejs/require.js"></script>
         <script type="text/javascript">
             require({
-                baseUrl: "../",
-                packages: [{
-                    name: "tests",
-                    location: "../tests" // dojo's loader defautls to overriding the "tests" module, put it back
-                }, {
-                    name:"doh", // replace doh with the doh adapter
-                    location: "../jstestr/adapter/doh"
-                }]
+                baseUrl: "../../"
             }, [
                 "jstestr/test",
-                "jstestr/logger/graphicalLogger",
-                "jstestr/logger/teamcityLogger",
+                "jstestr/logger/browserLoggers",
+                "jstestr/logger/testemLogger",
                 "jstestr/runner/browserRunner"
-            ], function (test, graphicalLogger, teamcityLogger, browserRunner) {
-                teamcityLogger.listen(test);
-                graphicalLogger.listen(test, document.getElementById("graphicalLogger"));
+            ], function (test, browserLoggers, testemLogger, browserRunner) {
+                browserLoggers();
+                testemLogger.listen(test);
                 browserRunner();
             });
+        </script>
         </script>
     </body>
 </html>
