@@ -19,4 +19,4 @@ submodules are not required and are only used for the framework tests and demos.
 [Framework Tests](http://jrfeenst.github.io/jstestr/jstestr/runner/runner.html?module=tests/testAll)
 
 
-[![Build Status](https://travis-ci.org/[jrfeenst]/[jstestr].png)](https://travis-ci.org/[jrfeenst]/[jstestr])
+[![Build Status](https://travis-ci.org/jrfeenst/jstestr.png?branch=master)](https://travis-ci.org/jrfeenst/jstestr)
