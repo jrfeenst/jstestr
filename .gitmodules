@@ -1,15 +1,15 @@
 [submodule "requirejs"]
     path = requirejs
-    url = https://github.com/jrburke/requirejs
+    url = git://github.com/jrburke/requirejs.git
 [submodule "dojo"]
     path = dojo
-    url = https://github.com/dojo/dojo
+    url = git://github.com/dojo/dojo.git
 [submodule "esprima"]
     path = esprima
-    url = https://github.com/ariya/esprima
+    url = git://github.com/ariya/esprima.git
 [submodule "escodegen"]
     path = escodegen
-    url = https://github.com/Constellation/escodegen
+    url = git://github.com/Constellation/escodegen.git
 [submodule "istanbul"]
     path = istanbul
-    url = https://github.com/gotwarlost/istanbul
+    url = git://github.com/gotwarlost/istanbul.git
