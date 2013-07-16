@@ -725,15 +725,16 @@ define([
 
     // Simple seedable random number generator
     TestFramework.prototype.randSeed = function randSeed(seed) {
-        this.doLog("Using random seed: " + seed);
-        this._rand_z = seed;
-        this._rand_w = seed + 1;
+        this.onLog("Using random seed: " + seed);
+        this.seed = seed;
+        this._randZ = seed;
+        this._randW = seed + 1;
     };
 
     TestFramework.prototype.randInt = function randInt() {
-        this._rand_z = (36969 * (this._rand_z & 65535) + (this._rand_z >> 16)) % MAX_INT32;
-        this._rand_w = (18000 * (this._rand_w & 65535) + (this._rand_w >> 16)) % MAX_INT32;
-        return ((this._rand_z << 16) + this._rand_w + MAX_INT32) % MAX_INT32;
+        this._randZ = (36969 * (this._randZ & 65535) + (this._randZ >> 16)) % MAX_INT32;
+        this._randW = (18000 * (this._randW & 65535) + (this._randW >> 16)) % MAX_INT32;
+        return ((this._randZ << 16) + this._randW + MAX_INT32) % MAX_INT32;
     };
 
 

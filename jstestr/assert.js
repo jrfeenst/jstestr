@@ -1,6 +1,6 @@
 
 define([], function () {
-    var function_pattern = /function\s*( [\w\-$]+)?\s*\(/i;
+    var FUNCTION_PATTERN = /function\s*( [\w\-$]+)?\s*\(/i;
     
     function toString(obj) {
         if (obj instanceof Node) {
@@ -41,7 +41,7 @@ define([], function () {
             var curr = arguments.callee.caller;
             var i = 0;
             while (curr && i++ < 20) {
-                fn = function_pattern.test(curr.toString()) ? RegExp.$1 || "anonymous" : "anonymous";
+                fn = FUNCTION_PATTERN.test(curr.toString()) ? RegExp.$1 || "anonymous" : "anonymous";
                 error.stack += fn + "\n";
                 curr = curr.caller;
             }

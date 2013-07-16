@@ -2,7 +2,6 @@
 define([], function () {
 
     function listen(test) {
-        var name = location.search.replace(/.*module=([^&]*).*/, '$1');
 
         function escape(str) {
             if (typeof str !== 'string') {
@@ -40,7 +39,7 @@ define([], function () {
 
 
         test.on('onStart', function () {
-            log('testSuiteStarted', name);
+            log('testSuiteStarted', test.results.name);
         });
 
         test.on('onSuiteStart', function (suiteName) {
@@ -85,7 +84,7 @@ define([], function () {
 
         test.on('onTestEnd', function (suiteName, testName) {
             log('testFinished', testName, {
-                duration: this.results.suites[suiteName][testName].elapsedTime
+                duration: this.results.suites[suiteName].tests[testName].elapsedTime
             });
         });
 
@@ -94,7 +93,7 @@ define([], function () {
         });
 
         test.on('onEnd', function () {
-            log('testSuiteFinished', name);
+            log('testSuiteFinished', test.results.name);
         });
     }
     return {listen: listen};

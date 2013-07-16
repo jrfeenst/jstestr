@@ -24,9 +24,9 @@ define([
     
     var previousKeyDownDefaultAction = Queue.prototype.defaultActions.keydown;
     Queue.prototype.defaultActions.keydown = function keyDownDefaultAction (event) {
-        if (event.charCode === this._lookupCharCode(event.type, "[tab]")) {
+        // if (event.charCode === this._lookupCharCode(event.type, "[tab]")) {
             // todo: focus on the next element in the tab order
-        }
+        // }
         previousKeyDownDefaultAction.apply(this, arguments);
     };
     
