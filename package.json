@@ -1,27 +1,31 @@
 {
 	"name": "jstestr",
-	"preferGlobal": true,
 	"version": "0.3.0",
-	"author": "Joel Feenstra <jrfeenst@gmail.com>",
+	"author": "Joel Feenstra <jrfeenst+jstestr@gmail.com>",
 	"description": "A testing framework for JavaScript UIs.",
+    "bin": {
+        "jstestr": "./bin/jstestr.js"
+    },
+	"scripts": {
+        "test": "phantomjs jstestr/runner/phantomRunner.js module=tests/testAll"
+	},
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/jrfeenst/jstestr.git"
 	},
-	"keywords": [
-		"junit",
-        "test"
-    ],
-	"dependencies": {
+    "dependencies": {
+    	"requirejs": "*"
+   	},
+	"devDependencies": {
 		"phantomjs": ">=1.9",
 		"testem": ">=0.3"
 	},
-	"analyze": false,
-	"license": "BSD",
-	"engines": {
-		"node": ">=0.8"
-	},
-	"scripts": {
-        "test": "phantomjs jstestr/runner/phantomRunner.js module=tests/testAll"
-	}
+	"keywords": [
+		"junit",
+        "javascript",
+        "ecmascript",
+        "test"
+    ],
+	"preferGlobal": true,
+	"license": "BSD"
 }

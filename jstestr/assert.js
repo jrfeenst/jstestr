@@ -2,8 +2,10 @@
 define([], function () {
     var FUNCTION_PATTERN = /function\s*( [\w\-$]+)?\s*\(/i;
     
+    var global = this;
+
     function toString(obj) {
-        if (obj instanceof Node) {
+        if (global.Node && obj instanceof global.Node) {
             var pieces = ["<" + obj.type];
             if (obj.id) {
                 pieces.push('id="' + obj.id + '"');

@@ -8,7 +8,7 @@ define([], function () {
 
             function getTestResult(suiteName, testName) {
                 if (!test.results) {
-                    onStart();
+                    test.onStart();
                 }
                 if (suiteName && testName) {
                     return test.results.suites[suiteName].tests[testName];
@@ -41,7 +41,7 @@ define([], function () {
             
             test.on("onStart", function onStart() {
                 this.results = {
-                    name: location.search.replace(/.*module=([^&]*).*/, "$1"),
+                    name: global.location ? global.location.search.replace(/.*module=([^&]*).*/, "$1") : "node",
                     seed: this.seed,
                     startTime: new Date(),
                     suites: {},

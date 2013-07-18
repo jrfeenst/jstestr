@@ -3,16 +3,42 @@
 // > node jstestr/runner/nodeRunner.js module=tests/testAssert
 
 var requirejs = require("requirejs");
+var PATH = require("path");
+var fs = require("fs");
 
 requirejs.config({
     nodeRequire: require
 });
 
-requirejs.config({baseUrl: ""});
+
+function getModulesFromPath(path) {
+    var files = [];
+
+    function traverse(path) {
+        var stats = fs.statSync(path);
+        if (stats.isDirectory()) {
+            fs.readdirSync(path).forEach(function (dir) {
+                var pathName = PATH.join(path, dir);
+
+                var stats = fs.statSync(pathName);
+                if (stats.isDirectory()) {
+                    traverse(pathName);
+                } else if (stats.isFile()) {
+                    files.push(pathName);
+                }
+            });
+        } else {
+            files.push(path);
+        }
+    }
+
+    traverse(path);
+    return files;
+}
 
 requirejs([
-    "jstestr/runner/consoleLogger",
-    "jstestr/runner/memoryLogger",
+    "jstestr/logger/consoleLogger",
+    "jstestr/logger/memoryLogger",
     "jstestr/test"
 ], function (consoleLogger, memoryLogger, test) {
 
@@ -32,6 +58,9 @@ requirejs([
         var key = arg[0];
         var value = arg[1];
         switch (key.toLowerCase()) {
+            case "path":
+                modules = modules.concat(getModulesFromPath(value));
+                break;
             case "module":
                 modules.push(value);
                 break;
@@ -44,26 +73,26 @@ requirejs([
             case "config":
                 config = JSON.parse(value);
                 break;
-            case "run":
-                run = value === "true";
-            default:
-                console.error("Unknown argument: " + args[i]);
-                break;
         }
     }
 
-    requirejs.config(config);
-
     requirejs(modules, function () {
         if (run) {
+            var result;
             if (suite) {
-                test.runSuite(suite);
+                result = test.runSuite(suite);
             } else if (suiteTest) {
                 var parts = suiteTest.split(":");
-                test.runTest(parts[0], parts[1]);
+                result = test.runTest(parts[0], parts[1])
             } else {
-                test.runAll();
+                result = test.runAll();
             }
+
+            result.then(function () {
+                process.exit(0);
+            }, function () {
+                process.exit(1);
+            });
         } 
     });
 });

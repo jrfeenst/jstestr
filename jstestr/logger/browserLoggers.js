@@ -1,7 +1,7 @@
 define([
     '../test',
-    '../logger/consoleLogger',
-    '../logger/graphicalLogger'
+    './consoleLogger',
+    './graphicalLogger'
 ], function (test, consoleLogger, graphicalLogger) {
     return function () {
         consoleLogger.listen(test);
