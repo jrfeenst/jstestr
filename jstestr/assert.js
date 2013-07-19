@@ -198,7 +198,13 @@ define([], function () {
     }
 
     function _matches(expected, actual) {
-        if ((expected instanceof Any || expected === any) && actual !== undefined) {
+        if (expected === actual) {
+            return true;
+        } else if (expected === null || actual === null) {
+            return expected === actual;
+        } else if (expected === undefined || actual === undefined) {
+            return expected === actual;
+        } else if ((expected instanceof Any || expected === any)) {
             return true;
 
         } else if (expected instanceof Range) {
