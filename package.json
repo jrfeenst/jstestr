@@ -1,6 +1,6 @@
 {
 	"name": "jstestr",
-	"version": "0.3.0",
+	"version": "0.3.1",
 	"author": "Joel Feenstra <jrfeenst+jstestr@gmail.com>",
 	"description": "A testing framework for JavaScript UIs.",
     "bin": {
