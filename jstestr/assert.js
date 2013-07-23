@@ -227,6 +227,30 @@ define([], function () {
             return _isEqual(expected, actual);
         }
     }
+
+    /**
+     * Assert that an array contains all of the specified objects. Each element is deep equals
+     * compared to the expected objects.
+     */
+    function contains(expected, actual, help) {
+        if (expected && actual &&
+                (expected.constructor === Array || (!expected.constructor && expected.every)) &&
+                (actual.constructor === Array || (!actual.constructor && actual.some))) {
+
+            var matches = expected.every(function (exp) {
+                return actual.some(function (act) {
+                    return _isEqual(exp, act);
+                });
+            });
+            if (!matches) {
+                throw createError("Expected to contain " + toString(expected) +
+                    " but found " + toString(actual) + ".", help);
+            }
+        } else {
+            throw createError("Arguments to contains must both be arrays but expected was " +
+                    toString(expected) + " and actual was " + toString(actual) + ".", help);
+        }
+    }
     
     /**
      * Assert that two objects are the same (strict ===).
@@ -451,6 +475,7 @@ define([], function () {
         matches: matches,
         any: any,
         range: range,
+        contains: contains,
 
         createMockFunction: createMockFunction,
         createMockObject: createMockObject,

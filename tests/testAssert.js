@@ -207,8 +207,48 @@ define([
 
             try {
                 assert.matches(assert.range(-2, -1), 0, "0 is out of range");
+            } catch (error2) {
+                assert.isTrue(error2, "Error should be truthy: 0 is out of range");
+            }
+        },
+        
+        "Assert Contains": function () {
+            var array = [1, 2, 3];
+            assert.contains(array, array, "strict same array");
+            assert.contains([1, 2], [1, 2], "same array contents");
+            assert.contains([1, 2], [0, 1, 2, 3], "in order");
+            assert.contains([2, 0], [0, 1, 2, 3], "out of order");
+            assert.contains([2, 1], [2, 1], "out of order same");
+            assert.contains(["a", {b: 1}, 3, [1, 2]], ["0", "a", 2, 3, [1, 2], {b: 1}], "other data types");
+            
+            try {
+                assert.contains([5], [1, 2, 3], "not in array");
             } catch (error1) {
-                assert.isTrue(error1, "Error should be truthy: 0 is out of range");
+                assert.isTrue(error1, "Error should be truthy: not in array");
+            }
+
+            try {
+                assert.contains([5], "string", "invalid argument");
+            } catch (error2) {
+                assert.isTrue(error2, "Error should be truthy: invalid argument");
+            }
+
+            try {
+                assert.contains(5, [1, 2], "invalid expected");
+            } catch (error3) {
+                assert.isTrue(error3, "Error should be truthy: invalid expected");
+            }
+
+            try {
+                assert.contains(null, [1, 2], "null expected");
+            } catch (error4) {
+                assert.isTrue(error4, "Error should be truthy: null expected");
+            }
+
+            try {
+                assert.contains([5], undefined, "undefined actual");
+            } catch (error5) {
+                assert.isTrue(error5, "Error should be truthy: undefined actual");
             }
         },
         
