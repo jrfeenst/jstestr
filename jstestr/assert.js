@@ -56,7 +56,7 @@ define([], function () {
      */
     function isTrue(expression, help) {
         if (!expression) {
-            throw createError("Expression is not true " + toString(expression) + ".", help);
+            throw createError("Expression is not true " + toString(expression), help);
         }
     }
     
@@ -65,7 +65,7 @@ define([], function () {
      */
     function isFalse(expression, help) {
         if (expression) {
-            throw createError("Expression is not false " + toString(expression) + ".", help);
+            throw createError("Expression is not false " + toString(expression), help);
         }
     }
     
@@ -126,8 +126,8 @@ define([], function () {
      */
     function isEqual(expected, actual, help) {
         if (!_isEqual(expected, actual)) {
-            throw createError("Expected " + toString(expected) + " but found " +
-                toString(actual) + ".", help);
+            throw createError("Expected\n" + toString(expected) + "\nbut found\n" +
+                toString(actual), help);
         }
     }
     
@@ -136,8 +136,8 @@ define([], function () {
      */
     function isNotEqual(expected, actual, help) {
         if (_isEqual(expected, actual)) {
-            throw createError("Expected " + toString(expected) + " to be different from " +
-                toString(actual) + ".", help);
+            throw createError("Expected\n" + toString(expected) + "\nto be different from\n" +
+                toString(actual), help);
         }
     }
 
@@ -150,8 +150,8 @@ define([], function () {
         }
         tolerance = typeof toleranceOrHelp === "number" ? toleranceOrHelp : 0.0001;
         if (typeof actual !== "number" || Math.abs(actual - expected) > tolerance) {
-            throw createError("Expected a number close to " + toString(expected) +
-                " but found " + toString(actual) + ".", help);
+            throw createError("Expected a number close to\n" + toString(expected) +
+                "\nbut found\n" + toString(actual), help);
         }
     }
 
@@ -192,8 +192,8 @@ define([], function () {
      */
     function matches(expected, actual, help) {
         if (!_matches(expected, actual)) {
-            throw createError("Expected " + toString(expected) + " to match " + 
-                toString(actual) + ".", help);
+            throw createError("Expected to match\n" + toString(expected) + "\nbut found\n" + 
+                toString(actual), help);
         }
     }
 
@@ -243,12 +243,12 @@ define([], function () {
                 });
             });
             if (!matches) {
-                throw createError("Expected to contain " + toString(expected) +
-                    " but found " + toString(actual) + ".", help);
+                throw createError("Expected to contain\n" + toString(expected) +
+                    "\nbut found\n" + toString(actual), help);
             }
         } else {
-            throw createError("Arguments to contains must both be arrays but expected was " +
-                    toString(expected) + " and actual was " + toString(actual) + ".", help);
+            throw createError("Arguments to contains must both be arrays but expected was\n" +
+                    toString(expected) + "\nand actual was\n" + toString(actual), help);
         }
     }
     
@@ -257,8 +257,8 @@ define([], function () {
      */
     function isSame(expected, actual, help) {
         if (expected !== actual) {
-            throw createError("Expected " + toString(expected) + " but found " +
-                toString(actual) + ".", help);
+            throw createError("Expected same\n" + toString(expected) + "\nbut found\n" +
+                toString(actual), help);
         }
     }
     
@@ -268,7 +268,7 @@ define([], function () {
     function isNotSame(expected, actual, help) {
         if (expected === actual) {
             throw createError("Expected " + toString(expected) + " to be different from " +
-                toString(actual) + ".", help);
+                toString(actual), help);
         }
     }
     
@@ -277,7 +277,7 @@ define([], function () {
      */
     function isObject(obj, help) {
         if (typeof obj !== "object" || obj.constructor === Array) {
-            throw createError("Expected an object, by found " + toString(obj) + ".", help);
+            throw createError("Expected an object, by found " + toString(obj), help);
         }
     }
     
@@ -286,7 +286,7 @@ define([], function () {
      */
     function isFunction(obj, help) {
         if (typeof obj !== "function") {
-            throw createError("Expected a function, by found " + toString(obj) + ".", help);
+            throw createError("Expected a function, by found " + toString(obj), help);
         }
     }
     
@@ -295,7 +295,7 @@ define([], function () {
      */
     function isArray(obj, help) {
         if (obj.constructor !== Array && !(!obj.constructor && obj.forEach)) {
-            throw createError("Expected an array, by found: '" + toString(obj) + "'.", help);
+            throw createError("Expected an array, by found " + toString(obj), help);
         }
     }
     
@@ -304,7 +304,7 @@ define([], function () {
      */
     function isNumber(obj, help) {
         if (typeof obj !== "number") {
-            throw createError("Expected a number, by found: '" + toString(obj) + "'.", help);
+            throw createError("Expected a number, by found " + toString(obj), help);
         }
     }
     
@@ -313,7 +313,7 @@ define([], function () {
      */
     function isString(obj, help) {
         if (typeof obj !== "string") {
-            throw createError("Expected a string, by found: '" + toString(obj) + "'.", help);
+            throw createError("Expected a string, by found " + toString(obj), help);
         }
     }
     
@@ -323,13 +323,14 @@ define([], function () {
     function doesThrow(expected, func, help) {
         try {
             func();
-            throw createError("Did not receive any exception. Expected " + toString(expected) + ".", help);
         } catch (actual) {
             if (!(actual instanceof expected)) {
                 throw createError("Expected exception " + toString(expected) +
-                    ", but received " + toString(actual) + ".", help);
+                    " but received " + toString(actual), help);
             }
+            return;
         }
+        throw createError("Did not receive any exception. Expected " + toString(expected), help);
     }
     
     /**
