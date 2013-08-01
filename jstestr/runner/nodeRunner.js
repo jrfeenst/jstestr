@@ -23,7 +23,7 @@ function getModulesFromPath(path) {
                 var stats = fs.statSync(pathName);
                 if (stats.isDirectory()) {
                     traverse(pathName);
-                } else if (stats.isFile() && /\.js^/.test(pathName)) {
+                } else if (stats.isFile()) {
                     files.push(pathName);
                 }
             });
